@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoLotto - 로또 자동 구매 앱</title>
+  <meta name="description" content="매주 자동으로 로또를 구매하는 Android 앱. 번호 설정, 자동 구매, 당첨 확인까지.">
+  <link rel="icon" type="image/png" href="icon.png">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #2D5BFF;
+      --primary-light: #6B8CFF;
+      --bg-dark: #0D1529;
+      --bg-card: #1A1F3A;
+      --text: #E8ECF4;
+      --text-dim: #8B93A7;
+      --yellow: #FBC400;
+      --blue: #69C8F2;
+      --red: #FF7272;
+      --green: #B0D840;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Language switcher */
+    .lang-switch {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 100;
+      display: flex;
+      gap: 4px;
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 4px;
+      border: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(10px);
+    }
+    .lang-btn {
+      padding: 6px 14px;
+      border: none;
+      background: transparent;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .lang-btn.active {
+      background: var(--primary);
+      color: white;
+    }
+    .lang-btn:hover:not(.active) {
+      color: var(--text);
+    }
+
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 20px;
+      background: radial-gradient(ellipse at 50% 30%, rgba(45,91,255,0.15) 0%, transparent 70%);
+      position: relative;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="30" r="2" fill="%23FBC400" opacity="0.1"/><circle cx="70" cy="20" r="1.5" fill="%2369C8F2" opacity="0.1"/><circle cx="85" cy="60" r="2" fill="%23FF7272" opacity="0.1"/><circle cx="30" cy="80" r="1.5" fill="%23B0D840" opacity="0.1"/><circle cx="55" cy="70" r="2" fill="%232D5BFF" opacity="0.15"/></svg>');
+      pointer-events: none;
+    }
+    .app-icon {
+      width: 120px;
+      height: 120px;
+      border-radius: 28px;
+      margin-bottom: 32px;
+      box-shadow: 0 20px 60px rgba(45,91,255,0.3);
+    }
+    h1 {
+      font-size: 3rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #fff 0%, var(--primary-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .tagline {
+      font-size: 1.25rem;
+      color: var(--text-dim);
+      margin-bottom: 40px;
+      max-width: 500px;
+    }
+    .download-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 40px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      color: white;
+      text-decoration: none;
+      border-radius: 16px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 8px 32px rgba(45,91,255,0.4);
+    }
+    .download-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(45,91,255,0.5);
+    }
+    .download-btn svg { width: 24px; height: 24px; }
+    .version-info {
+      margin-top: 16px;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+    }
+    .balls {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin: 32px 0;
+    }
+    .ball {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: white;
+      animation: float 3s ease-in-out infinite;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    .ball:nth-child(1) { background: var(--yellow); animation-delay: 0s; }
+    .ball:nth-child(2) { background: var(--blue); animation-delay: 0.3s; }
+    .ball:nth-child(3) { background: var(--red); animation-delay: 0.6s; }
+    .ball:nth-child(4) { background: #aaa; animation-delay: 0.9s; }
+    .ball:nth-child(5) { background: var(--green); animation-delay: 1.2s; }
+    .ball:nth-child(6) { background: var(--primary); animation-delay: 1.5s; }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    .features {
+      padding: 80px 20px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .features h2 {
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 48px;
+    }
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    .feature-card {
+      background: var(--bg-card);
+      border-radius: 20px;
+      padding: 32px;
+      border: 1px solid rgba(255,255,255,0.05);
+      transition: transform 0.2s;
+    }
+    .feature-card:hover { transform: translateY(-4px); }
+    .feature-icon { font-size: 2.5rem; margin-bottom: 16px; }
+    .feature-card h3 { font-size: 1.2rem; margin-bottom: 8px; }
+    .feature-card p { color: var(--text-dim); font-size: 0.95rem; }
+    .how-it-works {
+      padding: 80px 20px;
+      background: rgba(45,91,255,0.03);
+    }
+    .how-it-works h2 {
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 48px;
+    }
+    .steps { max-width: 700px; margin: 0 auto; }
+    .step {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 40px;
+      align-items: flex-start;
+    }
+    .step-num {
+      width: 48px;
+      height: 48px;
+      min-width: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.2rem;
+    }
+    .step h3 { margin-bottom: 4px; }
+    .step p { color: var(--text-dim); font-size: 0.95rem; }
+    .notice {
+      max-width: 700px;
+      margin: 0 auto 40px;
+      padding: 20px 24px;
+      background: rgba(255,183,0,0.08);
+      border: 1px solid rgba(255,183,0,0.2);
+      border-radius: 12px;
+      font-size: 0.9rem;
+      color: #d4a050;
+      text-align: center;
+    }
+    footer {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    footer a { color: var(--primary-light); text-decoration: none; }
+    @media (max-width: 600px) {
+      h1 { font-size: 2rem; }
+      .tagline { font-size: 1rem; }
+      .feature-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="lang-switch">
+    <button class="lang-btn active" onclick="setLang('ko')">한국어</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" onclick="setLang('ja')">日本語</button>
+  </div>
+
+  <section class="hero">
+    <img src="icon.png" alt="AutoLotto" class="app-icon">
+    <h1>AutoLotto</h1>
+    <p class="tagline" data-i18n="tagline"></p>
+    <div class="balls">
+      <div class="ball">7</div>
+      <div class="ball">15</div>
+      <div class="ball">25</div>
+      <div class="ball">33</div>
+      <div class="ball">42</div>
+      <div class="ball">+3</div>
+    </div>
+    <a href="https://github.com/umicorp/AutoLotto/releases/latest" class="download-btn">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 13.5L12 19l-5.5-5.5L8 12l2.5 2.5V3h3v11.5L16 12l1.5 1.5zM5 21h14v-2H5v2z"/></svg>
+      <span data-i18n="download"></span>
+    </a>
+    <p class="version-info">v1.0.0 · Android 5.0+ · 52MB</p>
+  </section>
+
+  <section class="features">
+    <h2 data-i18n="features_title"></h2>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <h3 data-i18n="f1_title"></h3>
+        <p data-i18n="f1_desc"></p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⏰</div>
+        <h3 data-i18n="f2_title"></h3>
+        <p data-i18n="f2_desc"></p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔔</div>
+        <h3 data-i18n="f3_title"></h3>
+        <p data-i18n="f3_desc"></p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📋</div>
+        <h3 data-i18n="f4_title"></h3>
+        <p data-i18n="f4_desc"></p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <h3 data-i18n="f5_title"></h3>
+        <p data-i18n="f5_desc"></p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💸</div>
+        <h3 data-i18n="f6_title"></h3>
+        <p data-i18n="f6_desc"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="how-it-works">
+    <h2 data-i18n="how_title"></h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div><h3 data-i18n="s1_title"></h3><p data-i18n="s1_desc"></p></div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div><h3 data-i18n="s2_title"></h3><p data-i18n="s2_desc"></p></div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div><h3 data-i18n="s3_title"></h3><p data-i18n="s3_desc"></p></div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div><h3 data-i18n="s4_title"></h3><p data-i18n="s4_desc"></p></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="notice" data-i18n="notice"></div>
+
+  <footer>
+    <p>© 2026 <a href="https://umicorp.kr">UMI Corp</a> · 
+    <a href="https://github.com/umicorp/AutoLotto">GitHub</a></p>
+    <p style="margin-top:8px" data-i18n="disclaimer"></p>
+  </footer>
+
+  <script>
+    const i18n = {
+      ko: {
+        tagline: '매주 자동으로 로또를 구매하는 가장 간편한 방법.\n설정 한 번이면 끝.',
+        download: 'APK 다운로드',
+        features_title: '✨ 주요 기능',
+        f1_title: '번호 설정', f1_desc: '수동 번호와 자동 번호를 게임별로 자유롭게 조합. 최대 5게임까지 설정.',
+        f2_title: '자동 구매', f2_desc: '매주 일요일 오전 9시, 설정한 번호대로 자동 구매. 앱을 켜지 않아도 동작.',
+        f3_title: '알림', f3_desc: '구매 완료, 당첨 결과를 푸시 알림으로 받아보세요. 서버 없이 로컬에서 동작.',
+        f4_title: '구매 기록', f4_desc: '동행복권에서 최근 구매 내역을 자동 조회. 번호와 당첨 여부를 한눈에.',
+        f5_title: '보안', f5_desc: '계정 정보는 Android Keystore로 암호화 저장. 서버 전송 없음.',
+        f6_title: '완전 무료', f6_desc: '광고 없음. 구독 없음. 서버 비용 없음. 오픈소스.',
+        how_title: '📱 사용 방법',
+        s1_title: 'APK 설치', s1_desc: '위 버튼으로 APK를 다운로드하고 설치하세요.',
+        s2_title: '동행복권 로그인', s2_desc: '설정 탭에서 동행복권 계정으로 로그인합니다.',
+        s3_title: '번호 설정', s3_desc: '게임별로 수동/자동 번호를 설정하고 저장합니다.',
+        s4_title: '자동 구매 ON', s4_desc: '설정에서 자동 구매를 켜면 끝! 매주 알아서 구매합니다.',
+        notice: '⚠️ 이 앱은 동행복권(dhlottery.co.kr) 계정이 필요합니다.\n예치금이 충분해야 자동 구매가 진행됩니다.',
+        disclaimer: '본 앱은 동행복권의 공식 앱이 아닙니다.',
+      },
+      en: {
+        tagline: 'The easiest way to buy Korean Lotto automatically every week.\nSet it once, forget it.',
+        download: 'Download APK',
+        features_title: '✨ Features',
+        f1_title: 'Number Setup', f1_desc: 'Freely combine manual and auto numbers per game. Up to 5 games.',
+        f2_title: 'Auto Purchase', f2_desc: 'Every Sunday at 9 AM, auto-buy with your configured numbers. Works even when the app is closed.',
+        f3_title: 'Notifications', f3_desc: 'Get push notifications for purchase confirmations and winning results. No server needed.',
+        f4_title: 'Purchase History', f4_desc: 'Auto-fetch recent purchases from DHLottery. See numbers and results at a glance.',
+        f5_title: 'Security', f5_desc: 'Credentials encrypted via Android Keystore. No data sent to external servers.',
+        f6_title: 'Completely Free', f6_desc: 'No ads. No subscription. No server costs. Open source.',
+        how_title: '📱 How to Use',
+        s1_title: 'Install APK', s1_desc: 'Download and install the APK using the button above.',
+        s2_title: 'Login', s2_desc: 'Log in with your DHLottery account in the Settings tab.',
+        s3_title: 'Set Numbers', s3_desc: 'Configure manual/auto numbers per game and save.',
+        s4_title: 'Turn On Auto', s4_desc: 'Enable auto-purchase in Settings. That\'s it! It buys every week.',
+        notice: '⚠️ This app requires a DHLottery (dhlottery.co.kr) account.\nSufficient deposit balance is needed for auto-purchase.',
+        disclaimer: 'This app is not an official DHLottery product.',
+      },
+      ja: {
+        tagline: '毎週自動でロトを購入する最も簡単な方法。\n一度設定すれば、あとはお任せ。',
+        download: 'APKダウンロード',
+        features_title: '✨ 主な機能',
+        f1_title: '番号設定', f1_desc: '手動番号と自動番号をゲームごとに自由に組み合わせ。最大5ゲームまで設定可能。',
+        f2_title: '自動購入', f2_desc: '毎週日曜日の午前9時に設定した番号で自動購入。アプリを開かなくても動作します。',
+        f3_title: '通知', f3_desc: '購入完了、当選結果をプッシュ通知でお届け。サーバー不要でローカル動作。',
+        f4_title: '購入履歴', f4_desc: '同行福券から最近の購入履歴を自動取得。番号と当選結果を一目で確認。',
+        f5_title: 'セキュリティ', f5_desc: 'アカウント情報はAndroid Keystoreで暗号化保存。外部サーバーへの送信なし。',
+        f6_title: '完全無料', f6_desc: '広告なし。サブスクなし。サーバー費用なし。オープンソース。',
+        how_title: '📱 使い方',
+        s1_title: 'APKインストール', s1_desc: '上のボタンからAPKをダウンロードしてインストール。',
+        s2_title: 'ログイン', s2_desc: '設定タブで同行福券アカウントにログインします。',
+        s3_title: '番号設定', s3_desc: 'ゲームごとに手動/自動番号を設定して保存します。',
+        s4_title: '自動購入ON', s4_desc: '設定で自動購入をオンにすれば完了！毎週自動で購入します。',
+        notice: '⚠️ このアプリは同行福券（dhlottery.co.kr）のアカウントが必要です。\n自動購入には十分なデポジット残高が必要です。',
+        disclaimer: 'このアプリは同行福券の公式アプリではありません。',
+      }
+    };
+
+    function setLang(lang) {
+      document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector(`.lang-btn[onclick="setLang('${lang}')"]`).classList.add('active');
+      document.documentElement.lang = lang;
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        const text = i18n[lang]?.[key] || i18n.ko[key] || '';
+        el.innerHTML = text.replace(/\n/g, '<br>');
+      });
+      localStorage.setItem('lang', lang);
+    }
+
+    // 초기 언어 (저장된 값 → 브라우저 언어 → 한국어)
+    const saved = localStorage.getItem('lang');
+    const browserLang = navigator.language?.slice(0, 2);
+    const initLang = saved || (['en','ja'].includes(browserLang) ? browserLang : 'ko');
+    setLang(initLang);
+  </script>
+
+</body>
+</html>
