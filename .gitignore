@@ -12,51 +12,45 @@
 .swiftpm/
 migrate_working_dir/
 
-# IntelliJ related
+# IDE
 *.iml
 *.ipr
 *.iws
 .idea/
+.vscode/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
+# Flutter/Dart
 .dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
 /build/
 /coverage/
+**/doc/api/
 
-# Symbolication related
-app.*.symbols
+# Unused platforms (Android only)
+ios/
+macos/
+linux/
+windows/
+web/
 
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
+# Android build artifacts
 /android/app/debug
 /android/app/profile
 /android/app/release
-
-# Local properties (SDK paths)
 android/local.properties
-
-# OMC (oh-my-claudecode) session data
-.omc/
-
-# Gradle cache (Android build)
 android/.gradle/
 android/.kotlin/
 android/build/
 
-# Generated Hive adapters (rebuild with build_runner)
-# *.g.dart  ← 커밋해도 되지만, 취향에 따라 주석 해제
+# Symbolication / Obfuscation
+app.*.symbols
+app.*.map.json
 
-# Flutter plugin cache
-.flutter-plugins
+# OMC (oh-my-claudecode)
+.omc/
+
+# Flutter metadata
+.metadata
