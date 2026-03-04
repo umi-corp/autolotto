@@ -184,6 +184,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  Future<void> _checkBatteryOptimization() async {
+    try {
+      await _batteryChannel.invokeMethod<String>('requestIgnoreBatteryOptimizations');
+    } catch (_) {}
+  }
+
   Future<void> _requestBatteryOptimization() async {
     try {
       final result = await _batteryChannel.invokeMethod<String>('requestIgnoreBatteryOptimizations');
@@ -308,6 +314,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         minute: purchaseMinute,
                       );
                       await SchedulerService.scheduleCheckResult();
+                      // 배터리 최적화 미해제 시 안내
+                      _checkBatteryOptimization();
                     } else {
                       await SchedulerService.cancelAll();
                     }
