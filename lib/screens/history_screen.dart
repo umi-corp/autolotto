@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/providers.dart';
 import '../models/purchase.dart';
 import '../utils/ui_helpers.dart';
@@ -48,7 +49,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _error = '$e');
+      debugPrint('구매내역 로드 오류: $e');
+      if (mounted) setState(() => _error = '데이터를 불러올 수 없습니다.');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -59,7 +61,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
-        title: const Text('구매 기록', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(AppLocalizations.of(context)!.historyTitle, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: _primary, elevation: 0, centerTitle: true,
         actions: [
           IconButton(
@@ -79,13 +81,13 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                       const SizedBox(height: 16),
                       Text(
                         ref.watch(isLoggedInProvider)
-                            ? '구매 기록이 없습니다'
-                            : '로그인하면 구매 기록을 불러옵니다',
+                            ? AppLocalizations.of(context)!.historyNoRecords
+                            : AppLocalizations.of(context)!.historyLoginToLoad,
                         style: TextStyle(color: Colors.grey[500], fontSize: 16),
                       ),
                       if (_error != null) ...[
                         const SizedBox(height: 8),
-                        Text('조회 실패: $_error', style: TextStyle(color: Colors.red[300], fontSize: 13)),
+                        Text(AppLocalizations.of(context)!.historyLoadError(_error!), style: TextStyle(color: Colors.red[300], fontSize: 13)),
                       ],
                     ],
                   ),
@@ -111,29 +113,30 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   }
 
   /// 게임별 등수 배지 색상
-  static Color _rankBadgeColor(String rank) {
-    switch (rank) {
-      case '1등': return const Color(0xFFE65100);
-      case '2등': return const Color(0xFFFBC400);
-      case '3등': return const Color(0xFF2D5BFF);
-      case '4등': return const Color(0xFF4CAF50);
-      case '5등': return const Color(0xFF8BC34A);
+  Color _rankBadgeColor(String rankCode) {
+    switch (rankCode) {
+      case 'rank1': return const Color(0xFFE65100);
+      case 'rank2': return const Color(0xFFFBC400);
+      case 'rank3': return const Color(0xFF2D5BFF);
+      case 'rank4': return const Color(0xFF4CAF50);
+      case 'rank5': return const Color(0xFF8BC34A);
       default: return const Color(0xFFBDBDBD);
     }
   }
 
   Widget _buildHistoryCard(Purchase item) {
-    final isWinner = item.rank != null && item.rank != '낙첨';
+    final l10n = AppLocalizations.of(context)!;
+    final isWinner = item.rank != null && item.rank != 'nowin';
     final dateStr = '${item.date.year}-${item.date.month.toString().padLeft(2, '0')}-${item.date.day.toString().padLeft(2, '0')}';
 
     // 헤더 태그 텍스트 결정
     String headerTag;
     if (!item.checked) {
-      headerTag = '확인 대기';
+      headerTag = l10n.statusPending;
     } else if (isWinner) {
-      headerTag = '${item.rank} 🎉';
+      headerTag = l10n.rankWithEmoji(localizedRank(l10n, item.rank!));
     } else {
-      headerTag = '낙첨';
+      headerTag = l10n.statusNoWin;
     }
 
     return Container(
@@ -156,7 +159,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(children: [
-                  Text('제 ${item.round}회', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text(l10n.roundLabel(item.round), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(width: 8),
                   Text(dateStr, style: TextStyle(color: Colors.grey[500], fontSize: 13)),
                 ]),
@@ -186,7 +189,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                 final gameRank = (item.gameRanks != null && i < item.gameRanks!.length)
                     ? item.gameRanks![i]
                     : null;
-                final isGameWinner = gameRank != null && gameRank != '낙첨';
+                final isGameWinner = gameRank != null && gameRank != 'nowin';
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
@@ -212,7 +215,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
-                          isGameWinner ? '$gameRank 🎉' : gameRank,
+                          isGameWinner ? l10n.rankWithEmoji(localizedRank(l10n, gameRank)) : localizedRank(l10n, gameRank),
                           style: TextStyle(
                             color: isGameWinner ? _rankBadgeColor(gameRank) : Colors.grey[500],
                             fontWeight: FontWeight.bold,
@@ -233,7 +236,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                 color: Color(0xFFFFF8E1),
                 borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
               ),
-              child: Text('당첨금: ₩${formatNumber(item.prize)}',
+              child: Text(l10n.prizeLabel(formatNumber(item.prize)),
                 style: const TextStyle(color: Color(0xFFE65100), fontWeight: FontWeight.bold, fontSize: 15),
                 textAlign: TextAlign.center),
             ),

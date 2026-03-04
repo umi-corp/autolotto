@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'l10n/app_localizations.dart';
 import 'screens/home_screen.dart';
 import 'screens/number_screen.dart';
 import 'screens/history_screen.dart';
@@ -61,11 +62,11 @@ class _AppShellState extends State<AppShell> {
         elevation: 8,
         currentIndex: _currentIndex,
         onTap: switchTab,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: '홈'),
-          BottomNavigationBarItem(icon: Icon(Icons.confirmation_number_rounded), label: '번호설정'),
-          BottomNavigationBarItem(icon: Icon(Icons.history_rounded), label: '기록'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings_rounded), label: '설정'),
+        items: [
+          BottomNavigationBarItem(icon: const Icon(Icons.home_rounded), label: AppLocalizations.of(context)!.bottomNavHome),
+          BottomNavigationBarItem(icon: const Icon(Icons.confirmation_number_rounded), label: AppLocalizations.of(context)!.bottomNavNumbers),
+          BottomNavigationBarItem(icon: const Icon(Icons.history_rounded), label: AppLocalizations.of(context)!.bottomNavHistory),
+          BottomNavigationBarItem(icon: const Icon(Icons.settings_rounded), label: AppLocalizations.of(context)!.bottomNavSettings),
         ],
       ),
     );

@@ -2,7 +2,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../app.dart';
+import '../l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/providers.dart';
+import '../services/balance_alert_service.dart';
 import '../services/purchase_service.dart';
 import '../utils/ui_helpers.dart';
 
@@ -62,8 +65,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           _winningRound = result.round;
         });
       }
-    } catch (_) {
-      // 실패 시 무시 (오프라인 등)
+    } catch (e) {
+      debugPrint('당첨번호 조회 실패: $e');
     } finally {
       if (mounted) setState(() => _loadingNumbers = false);
     }
@@ -81,6 +84,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final balance = await auth.getBalance();
     if (mounted) {
       ref.read(balanceProvider.notifier).state = balance;
+      // 잔액 부족 알림 체크
+      await BalanceAlertService.checkAndNotify(
+        balance: balance,
+        enabled: ref.read(balanceAlertEnabledProvider),
+        threshold: ref.read(balanceAlertThresholdProvider),
+      );
     }
   }
 
@@ -90,6 +99,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final balance = ref.watch(balanceProvider);
     final autoEnabled = ref.watch(autoEnabledProvider);
     final isLoggedIn = ref.watch(isLoggedInProvider);
+    final balanceAlertEnabled = ref.watch(balanceAlertEnabledProvider);
+    final balanceAlertThreshold = ref.watch(balanceAlertThresholdProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
@@ -116,7 +127,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const SizedBox(height: 24),
               _buildWinningNumbers(),
               const SizedBox(height: 24),
-              _buildBalanceCard(balance),
+              _buildBalanceCard(balance, balanceAlertEnabled, balanceAlertThreshold),
               const SizedBox(height: 16),
 
               // 자동 구매 상태
@@ -130,11 +141,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     color: autoEnabled ? Colors.green : Colors.grey, size: 28),
                   const SizedBox(width: 12),
                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(autoEnabled ? '자동 구매 활성화' : '자동 구매 비활성화',
+                    Text(autoEnabled ? AppLocalizations.of(context)!.autoPurchaseEnabled : AppLocalizations.of(context)!.autoPurchaseDisabled,
                       style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
                     Text(autoEnabled
-                      ? '${formatPurchaseSchedule(ref.watch(autoPurchaseDayProvider), ref.watch(autoPurchaseHourProvider), ref.watch(autoPurchaseMinuteProvider))}에 자동 구매됩니다'
-                      : '설정에서 활성화해주세요',
+                      ? AppLocalizations.of(context)!.autoPurchaseSchedule(formatPurchaseScheduleL10n(AppLocalizations.of(context)!, ref.watch(autoPurchaseDayProvider), ref.watch(autoPurchaseHourProvider), ref.watch(autoPurchaseMinuteProvider)))
+                      : AppLocalizations.of(context)!.enableInSettings,
                       style: TextStyle(color: Colors.grey[500], fontSize: 13)),
                   ])),
                 ]),
@@ -149,7 +160,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2D5BFF),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     elevation: 4, shadowColor: const Color(0xFF2D5BFF).withValues(alpha: 0.4)),
-                  child: const Text('🎯 번호 설정하기',
+                  child: Text(AppLocalizations.of(context)!.buttonSetupNumbers,
                     style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ),
@@ -176,16 +187,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         boxShadow: [BoxShadow(color: const Color(0xFF2D5BFF).withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 6))],
       ),
       child: Column(children: [
-        Text('제 $round회 추첨까지', style: const TextStyle(color: Colors.white70, fontSize: 14)),
+        Text(AppLocalizations.of(context)!.countdownTitle(round), style: const TextStyle(color: Colors.white70, fontSize: 14)),
         const SizedBox(height: 8),
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          _countdownUnit('$days', '일'),
+          _countdownUnit('$days', AppLocalizations.of(context)!.countdownDays),
           const SizedBox(width: 16),
-          _countdownUnit('$hours', '시간'),
+          _countdownUnit('$hours', AppLocalizations.of(context)!.countdownHours),
           const SizedBox(width: 16),
-          _countdownUnit('$mins', '분'),
+          _countdownUnit('$mins', AppLocalizations.of(context)!.countdownMinutes),
           const SizedBox(width: 16),
-          _countdownUnit(secs.toString().padLeft(2, '0'), '초'),
+          _countdownUnit(secs.toString().padLeft(2, '0'), AppLocalizations.of(context)!.countdownSeconds),
         ]),
       ]),
     );
@@ -203,7 +214,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          _winningRound != null ? '🏆 제 $_winningRound회 당첨번호' : '🏆 지난 당첨번호',
+          _winningRound != null ? AppLocalizations.of(context)!.winningNumbersWithRound(_winningRound!) : AppLocalizations.of(context)!.winningNumbersPrevious,
           style: const TextStyle(color: Colors.black87, fontSize: 15, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 12),
@@ -222,7 +233,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ])
                   : Center(child: Padding(
                       padding: const EdgeInsets.all(8),
-                      child: Text('당첨번호를 불러올 수 없습니다', style: TextStyle(color: Colors.grey[400], fontSize: 14)),
+                      child: Text(AppLocalizations.of(context)!.winningNumbersLoadError, style: TextStyle(color: Colors.grey[400], fontSize: 14)),
                     )),
         ),
       ],
@@ -239,22 +250,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildBalanceCard(int balance) {
+  Widget _buildBalanceCard(int balance, bool alertEnabled, int threshold) {
+    final isLow = alertEnabled && balance <= threshold && balance > 0;
     return Container(
       width: double.infinity, padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)]),
-      child: Row(children: [
-        Container(padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(color: const Color(0xFFE8F0FE), borderRadius: BorderRadius.circular(12)),
-          child: const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFF2D5BFF), size: 24)),
-        const SizedBox(width: 12),
-        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('예치금 잔액', style: TextStyle(color: Colors.black54, fontSize: 13)),
-          const SizedBox(height: 4),
-          Text('₩${formatNumber(balance)}', style: const TextStyle(color: Colors.black87, fontSize: 22, fontWeight: FontWeight.bold)),
-        ]),
-      ]),
+      child: Column(
+        children: [
+          Row(children: [
+            Container(padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(color: isLow ? const Color(0xFFFFF3E0) : const Color(0xFFE8F0FE), borderRadius: BorderRadius.circular(12)),
+              child: Icon(Icons.account_balance_wallet_rounded, color: isLow ? Colors.orange : const Color(0xFF2D5BFF), size: 24)),
+            const SizedBox(width: 12),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(AppLocalizations.of(context)!.balanceTitle, style: const TextStyle(color: Colors.black54, fontSize: 13)),
+              const SizedBox(height: 4),
+              Text('₩${formatNumber(balance)}', style: TextStyle(color: isLow ? Colors.orange : Colors.black87, fontSize: 22, fontWeight: FontWeight.bold)),
+            ])),
+          ]),
+          if (isLow) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => launchUrl(Uri.parse('https://www.dhlottery.co.kr/mypage/mndpChrg'), mode: LaunchMode.externalApplication),
+                icon: const Icon(Icons.add_card_rounded, size: 18),
+                label: Text(AppLocalizations.of(context)!.chargeNow),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.orange,
+                  side: const BorderSide(color: Colors.orange),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 

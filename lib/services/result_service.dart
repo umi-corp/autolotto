@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../utils/constants.dart';
 
 /// 당첨 확인 서비스
@@ -55,7 +56,8 @@ class ResultService {
         prize2nd: item['rnk2WnAmt'] as int? ?? 0,
         prize3rd: item['rnk3WnAmt'] as int? ?? 0,
       );
-    } catch (_) {
+    } catch (e) {
+      debugPrint('당첨번호 조회 실패: $e');
       return null;
     }
   }
@@ -79,22 +81,22 @@ class ResultService {
       int prize;
 
       if (count == 6) {
-        rank = '1등';
+        rank = 'rank1';
         prize = 0; // 변동
       } else if (count == 5 && bonusMatch) {
-        rank = '2등';
+        rank = 'rank2';
         prize = 0; // 변동
       } else if (count == 5) {
-        rank = '3등';
+        rank = 'rank3';
         prize = 0; // 변동
       } else if (count == 4) {
-        rank = '4등';
+        rank = 'rank4';
         prize = 50000;
       } else if (count == 3) {
-        rank = '5등';
+        rank = 'rank5';
         prize = 5000;
       } else {
-        rank = '낙첨';
+        rank = 'nowin';
         prize = 0;
       }
 
@@ -158,5 +160,5 @@ class MatchResult {
     required this.prize,
   });
 
-  bool get isWinner => rank != '낙첨';
+  bool get isWinner => rank != 'nowin';
 }
