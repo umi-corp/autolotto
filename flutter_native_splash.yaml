@@ -1,0 +1,10 @@
+flutter_native_splash:
+  color: "#15152D"
+  image: assets/autolotto_icon.png
+  color_dark: "#15152D"
+  image_dark: assets/autolotto_icon.png
+  android_12:
+    color: "#15152D"
+    image: assets/autolotto_icon.png
+    color_dark: "#15152D"
+    image_dark: assets/autolotto_icon.png

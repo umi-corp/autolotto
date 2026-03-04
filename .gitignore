@@ -36,6 +36,11 @@ linux/
 windows/
 web/
 
+# Signing keys (NEVER commit)
+android/key.properties
+**/*.jks
+**/*.keystore
+
 # Android build artifacts
 /android/app/debug
 /android/app/profile
@@ -52,5 +57,9 @@ app.*.map.json
 # OMC (oh-my-claudecode)
 .omc/
 
+# APK binaries
+*.apk
+
 # Flutter metadata
 .metadata
+/test/

@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'auth_service.dart';
+import 'balance_alert_service.dart';
 import 'purchase_service.dart';
 import 'result_service.dart';
 
@@ -94,10 +96,19 @@ Future<void> _onAutoPurchaseAlarm() async {
   try {
     await _executeAutoPurchase();
   } catch (e) {
-    final msg = e.toString().replaceAll(RegExp(r"(Exception: |\[\w+\] )"), "");
+    debugPrint('자동구매 오류: $e');
+    final msg = e.toString();
+    String body;
+    if (msg.contains('[login]')) {
+      body = "로그인에 실패했습니다. 아이디/비밀번호를 확인해주세요.";
+    } else if (msg.contains('[purchase]')) {
+      body = "구매 처리 중 오류가 발생했습니다. 잔액 또는 구매 가능 시간을 확인해주세요.";
+    } else {
+      body = "자동 구매에 실패했습니다. 앱을 열어 상태를 확인해주세요.";
+    }
     await SchedulerService.showNotification(
       title: "⚠️ AutoLotto 오류",
-      body: msg,
+      body: body,
       id: 99,
     );
   }
@@ -121,7 +132,14 @@ Future<void> _onAutoPurchaseAlarm() async {
         minute: minute,
       );
     }
-  } catch (_) {}
+  } catch (e) {
+    debugPrint('알람 재등록 오류: $e');
+    await SchedulerService.showNotification(
+      title: '⚠️ AutoLotto 오류',
+      body: '알람 재등록에 실패했습니다.',
+      id: 98,
+    );
+  }
 }
 
 @pragma('vm:entry-point')
@@ -129,9 +147,10 @@ Future<void> _onCheckResultAlarm() async {
   try {
     await _executeCheckResult();
   } catch (e) {
+    debugPrint('당첨확인 오류: $e');
     await SchedulerService.showNotification(
       title: '⚠️ AutoLotto 오류',
-      body: '$e',
+      body: '당첨 결과 확인에 실패했습니다.',
       id: 99,
     );
   }
@@ -145,7 +164,13 @@ Future<void> _onCheckResultAlarm() async {
     if (autoEnabled == 'true') {
       await SchedulerService.scheduleCheckResult();
     }
-  } catch (_) {}
+  } catch (e) {
+    await SchedulerService.showNotification(
+      title: '⚠️ AutoLotto 오류',
+      body: '결과확인 알람 재등록 실패: $e',
+      id: 98,
+    );
+  }
 }
 
 Future<void> _executeAutoPurchase() async {
@@ -211,6 +236,12 @@ Future<void> _executeAutoPurchase() async {
         autoGames: autoGames,
         manualNumbers: manualNumbers,
       );
+
+      // 구매 후 잔액 체크
+      try {
+        final postBalance = await auth.getBalance();
+        await BalanceAlertService.checkAndNotify(balance: postBalance);
+      } catch (_) {}
 
       step = 'notify';
       final numbersText = result.numbers

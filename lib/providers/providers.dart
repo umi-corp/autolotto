@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/auth_service.dart';
 import '../services/purchase_service.dart';
@@ -50,6 +51,15 @@ final autoPurchaseHourProvider = StateProvider<int>((ref) => 9);
 
 /// 자동 구매 분
 final autoPurchaseMinuteProvider = StateProvider<int>((ref) => 0);
+
+/// 잔액 부족 알림 활성화
+final balanceAlertEnabledProvider = StateProvider<bool>((ref) => false);
+
+/// 잔액 부족 알림 임계값 (기본 5000원)
+final balanceAlertThresholdProvider = StateProvider<int>((ref) => 5000);
+
+/// 앱 언어 설정 (null = 시스템 기본)
+final appLocaleProvider = StateProvider<Locale?>((ref) => null);
 
 /// 현재 회차
 final currentRoundProvider = Provider<int>((ref) {

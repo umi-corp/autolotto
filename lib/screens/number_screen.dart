@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/providers.dart';
 import '../utils/ui_helpers.dart';
 
@@ -53,7 +54,9 @@ class _NumberScreenState extends ConsumerState<NumberScreen> {
           }
         });
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('저장된 번호 로드 실패: $e');
+    }
   }
 
   void _toggleNumber(int n) {
@@ -105,8 +108,9 @@ class _NumberScreenState extends ConsumerState<NumberScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('✅ $_configuredCount게임 설정 저장 완료! '
-            '${formatPurchaseSchedule(ref.read(autoPurchaseDayProvider), ref.read(autoPurchaseHourProvider), ref.read(autoPurchaseMinuteProvider))}에 자동 구매됩니다.'),
+          content: Text(AppLocalizations.of(context)!.snackbarSaveSuccess(
+            _configuredCount,
+            formatPurchaseScheduleL10n(AppLocalizations.of(context)!, ref.read(autoPurchaseDayProvider), ref.read(autoPurchaseHourProvider), ref.read(autoPurchaseMinuteProvider)))),
           backgroundColor: Colors.green,
         ),
       );
@@ -120,7 +124,7 @@ class _NumberScreenState extends ConsumerState<NumberScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
-        title: const Text('번호 설정', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(AppLocalizations.of(context)!.numberSetupTitle, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: _primary, elevation: 0, centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -142,7 +146,7 @@ class _NumberScreenState extends ConsumerState<NumberScreen> {
                 child: Row(children: [
                   Icon(Icons.warning_amber_rounded, color: Colors.orange[700], size: 20),
                   const SizedBox(width: 8),
-                  Expanded(child: Text('설정에서 자동 구매를 활성화해주세요',
+                  Expanded(child: Text(AppLocalizations.of(context)!.bannerEnableAutoPurchase,
                     style: TextStyle(color: Colors.orange[700], fontSize: 13))),
                 ]),
               ),
@@ -156,8 +160,8 @@ class _NumberScreenState extends ConsumerState<NumberScreen> {
                 color: _primary.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Text(
-                '매주 자동 구매할 번호를 설정하세요.\n수동 번호는 매주 고정, 자동은 매주 랜덤 생성됩니다.',
+              child: Text(
+                AppLocalizations.of(context)!.numberSetupInstruction,
                 style: TextStyle(color: Color(0xFF2D5BFF), fontSize: 13, height: 1.5),
               ),
             ),
@@ -181,9 +185,9 @@ class _NumberScreenState extends ConsumerState<NumberScreen> {
                 child: Column(children: [
                   Icon(Icons.casino_rounded, size: 48, color: _primary.withValues(alpha: 0.5)),
                   const SizedBox(height: 12),
-                  const Text('자동 번호', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                  Text(AppLocalizations.of(context)!.autoNumberTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 4),
-                  Text('매주 랜덤으로 생성됩니다', style: TextStyle(color: Colors.grey[500], fontSize: 14)),
+                  Text(AppLocalizations.of(context)!.autoNumberSubtitle, style: TextStyle(color: Colors.grey[500], fontSize: 14)),
                 ]),
               ),
 
@@ -196,7 +200,7 @@ class _NumberScreenState extends ConsumerState<NumberScreen> {
                 style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   side: BorderSide(color: Colors.grey[300]!)),
-                child: const Text('초기화', style: TextStyle(fontSize: 15)),
+                child: Text(AppLocalizations.of(context)!.buttonReset, style: const TextStyle(fontSize: 15)),
               )),
               const SizedBox(width: 12),
               Expanded(flex: 2, child: ElevatedButton(
@@ -204,7 +208,7 @@ class _NumberScreenState extends ConsumerState<NumberScreen> {
                 style: ElevatedButton.styleFrom(backgroundColor: _primary, disabledBackgroundColor: Colors.grey[300],
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), elevation: 2),
-                child: Text('게임 ${String.fromCharCode(65 + _currentSlot)} 확정 ✓',
+                child: Text(AppLocalizations.of(context)!.buttonConfirmGame(String.fromCharCode(65 + _currentSlot)),
                   style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
               )),
             ]),
@@ -228,7 +232,7 @@ class _NumberScreenState extends ConsumerState<NumberScreen> {
                     Icon(_saved ? Icons.check_circle : Icons.save_rounded, color: Colors.white, size: 20),
                     const SizedBox(width: 8),
                     Text(
-                      _saved ? '저장 완료!' : '$_configuredCount게임 설정 저장',
+                      _saved ? AppLocalizations.of(context)!.buttonSaveDone : AppLocalizations.of(context)!.buttonSaveGames(_configuredCount),
                       style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ],
@@ -267,8 +271,8 @@ class _NumberScreenState extends ConsumerState<NumberScreen> {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(12)),
       child: Row(children: [
-        _modeButton('✏️ 수동', false),
-        _modeButton('🎲 자동', true),
+        _modeButton(AppLocalizations.of(context)!.modeManual, false),
+        _modeButton(AppLocalizations.of(context)!.modeAuto, true),
       ]),
     );
   }
@@ -321,7 +325,7 @@ class _NumberScreenState extends ConsumerState<NumberScreen> {
       width: double.infinity, padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Text('선택: ${_selected.length}/6  ', style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+        Text(AppLocalizations.of(context)!.selectionCount(_selected.length), style: TextStyle(color: Colors.grey[600], fontSize: 14)),
         ...(_selected.toList()..sort()).map((n) => Padding(
           padding: const EdgeInsets.only(right: 6),
           child: Container(width: 36, height: 36,
@@ -338,14 +342,15 @@ class _NumberScreenState extends ConsumerState<NumberScreen> {
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)]),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('📋 게임 설정', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+        Text(AppLocalizations.of(context)!.gameSummaryTitle, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
         const SizedBox(height: 12),
         ...List.generate(5, (i) {
           final g = _games[i];
           final isConfirmed = g != null;
+          final l10n = AppLocalizations.of(context)!;
           final label = g == null
-              ? (i == _currentSlot ? '선택 중...' : '미설정')
-              : (g.isEmpty ? '🎲 자동 (매주 랜덤)' : g.join(', '));
+              ? (i == _currentSlot ? l10n.gameSummarySelecting : l10n.gameSummaryNotSet)
+              : (g.isEmpty ? l10n.gameSummaryAuto : g.join(', '));
           return Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Row(children: [

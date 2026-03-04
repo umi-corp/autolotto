@@ -13,7 +13,7 @@ class AuthService {
 
   bool get isLoggedIn => _isLoggedIn;
   Dio get dio => _dio;
-  String get debugInfo => _debugLog.join('\n');
+  String get debugInfo => kDebugMode ? _debugLog.join('\n') : '';
 
   void _log(String msg) {
     if (!kDebugMode) return;
@@ -101,8 +101,11 @@ class AuthService {
   String _buildCookieHeader(String host) {
     final merged = <String, String>{};
     _domainCookies.forEach((domain, cookies) {
-      if (domain.startsWith('.') && host.endsWith(domain.substring(1))) {
-        merged.addAll(cookies);
+      if (domain.startsWith('.')) {
+        final suffix = domain.substring(1);
+        if (host == suffix || host.endsWith('.$suffix')) {
+          merged.addAll(cookies);
+        }
       }
     });
     final hostCookies = _domainCookies[host];
@@ -199,7 +202,7 @@ class AuthService {
       _log('\n--- Step 4: 로그인 POST ---');
       final loginResp = await _dio.post(
         ApiConstants.loginUrl,
-        data: 'userId=$encryptedId&userPswdEncn=$encryptedPw&inpUserId=$userId',
+        data: 'userId=$encryptedId&userPswdEncn=$encryptedPw&inpUserId=${Uri.encodeComponent(userId)}',
         options: Options(
           contentType: Headers.formUrlEncodedContentType,
           headers: {
@@ -234,6 +237,14 @@ class AuthService {
         _log('ol 쿠키 키: ${olCookies.keys.toList()}');
       }
 
+      _log('\n--- Step 6: 로그인 검증 ---');
+      final verified = await _verifyLogin();
+      if (!verified) {
+        _isLoggedIn = false;
+        _log('========== 로그인 실패 (인증 거부) ==========');
+        throw Exception('INVALID_CREDENTIALS');
+      }
+
       _isLoggedIn = true;
       _log('========== 로그인 성공 ==========');
       return true;
@@ -244,6 +255,24 @@ class AuthService {
       _log('Stack: ${stack.toString().split('\n').take(5).join('\n')}');
       _logCookieState('실패 시점');
       rethrow;
+    }
+  }
+
+  /// 실제 로그인 여부 검증 (mypage API 호출)
+  Future<bool> _verifyLogin() async {
+    try {
+      final resp = await _dio.get(
+        '${ApiConstants.baseUrl}/mypage/selectUserMndp.do',
+        options: Options(
+          headers: {'X-Requested-With': 'XMLHttpRequest'},
+          validateStatus: (status) => status != null,
+        ),
+      );
+      _log('검증 응답: ${resp.statusCode}');
+      return resp.statusCode == 200;
+    } catch (e) {
+      _log('검증 실패: $e');
+      return false;
     }
   }
 
@@ -265,7 +294,9 @@ class AuthService {
       if (data is Map) {
         return data['data']?['userMndp']?['crntEntrsAmt'] ?? 0;
       }
-    } catch (_) {}
+    } catch (e) {
+      _log('잔액 조회 실패: $e');
+    }
     return 0;
   }
 

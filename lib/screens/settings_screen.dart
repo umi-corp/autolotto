@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/providers.dart';
 import '../app.dart';
 import '../services/scheduler_service.dart';
@@ -18,7 +19,7 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   static const _primary = Color(0xFF2D5BFF);
   static const _batteryChannel = MethodChannel('com.umicorp.autolotto/battery');
-  static const _dayNames = ['월', '화', '수', '목', '금', '토', '일'];
+  // _dayNames는 이제 l10n에서 동적으로 가져옴
 
   final _idController = TextEditingController();
   final _pwController = TextEditingController();
@@ -52,13 +53,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ 로그인 성공!'), backgroundColor: Colors.green),
+          SnackBar(content: Text(AppLocalizations.of(context)!.snackbarLoginSuccess), backgroundColor: Colors.green),
         );
       }
     } catch (e) {
       if (mounted) {
+        debugPrint('로그인 오류: $e');
+        final msg = e.toString().contains('INVALID_CREDENTIALS')
+            ? AppLocalizations.of(context)!.errorInvalidCredentials
+            : '로그인에 실패했습니다. 다시 시도해주세요.';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('❌ $msg'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -72,28 +77,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('동행복권 로그인'),
+        title: Text(AppLocalizations.of(context)!.dialogLoginTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: _idController,
-              decoration: const InputDecoration(labelText: '아이디', prefixIcon: Icon(Icons.person)),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.inputUserId, prefixIcon: const Icon(Icons.person)),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _pwController,
-              decoration: const InputDecoration(labelText: '비밀번호', prefixIcon: Icon(Icons.lock)),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context)!.inputPassword, prefixIcon: const Icon(Icons.lock)),
               obscureText: true,
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('취소')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(context)!.buttonCancel)),
           ElevatedButton(
             onPressed: _isLoggingIn ? null : () { Navigator.pop(ctx); _login(); },
             style: ElevatedButton.styleFrom(backgroundColor: _primary),
-            child: Text(_isLoggingIn ? '로그인 중...' : '로그인', style: const TextStyle(color: Colors.white)),
+            child: Text(_isLoggingIn ? AppLocalizations.of(context)!.buttonLoggingIn : AppLocalizations.of(context)!.buttonLogin, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -115,7 +120,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     ref.read(balanceProvider.notifier).state = 0;
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('로그아웃 완료')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.snackbarLogoutSuccess)),
       );
     }
   }
@@ -127,8 +132,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (!_isValidPurchaseTime(day, hour, minute)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('현재 설정된 시간이 해당 요일에 구매 불가합니다. 시간을 먼저 변경해주세요.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.errorInvalidPurchaseTime),
             backgroundColor: Colors.red,
           ),
         );
@@ -152,8 +157,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (!_isValidPurchaseTime(day, picked.hour, picked.minute)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('해당 시간에는 구매할 수 없습니다.\n평일/일: 06:00~23:59, 토: 06:00~19:59'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.errorPurchaseTimeRestriction),
             backgroundColor: Colors.red,
           ),
         );
@@ -185,17 +190,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (!mounted) return;
       if (result == 'already_excluded') {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ 이미 배터리 최적화에서 제외되어 있습니다'), backgroundColor: Colors.green),
+          SnackBar(content: Text(AppLocalizations.of(context)!.snackbarBatteryAlreadyExcluded), backgroundColor: Colors.green),
         );
       } else if (result == 'fallback') {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('앱 설정에서 배터리 최적화를 직접 해제해주세요')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.snackbarBatteryManualDisable)),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('배터리 최적화 설정을 열 수 없습니다: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(AppLocalizations.of(context)!.errorBatterySettings('설정을 변경할 수 없습니다.')), backgroundColor: Colors.red),
         );
       }
     }
@@ -232,7 +237,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
-        title: const Text('설정', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(AppLocalizations.of(context)!.settingsTitle, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: _primary,
         elevation: 0,
         centerTitle: true,
@@ -241,28 +246,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         padding: const EdgeInsets.all(20),
         children: [
           // 계정 섹션
-          _sectionTitle('👤 계정'),
+          _sectionTitle(AppLocalizations.of(context)!.sectionAccount),
           _card(
             child: Column(
               children: [
                 _tile(
                   icon: Icons.person_rounded,
-                  title: '동행복권 계정',
-                  subtitle: isLoggedIn ? '로그인됨' : '로그인 필요',
+                  title: AppLocalizations.of(context)!.dhLotteryAccount,
+                  subtitle: isLoggedIn ? AppLocalizations.of(context)!.statusLoggedIn : AppLocalizations.of(context)!.statusLoginRequired,
                   trailing: TextButton(
                     onPressed: isLoggedIn ? _logout : _showLoginDialog,
-                    child: Text(isLoggedIn ? '로그아웃' : '로그인', style: const TextStyle(color: _primary)),
+                    child: Text(isLoggedIn ? AppLocalizations.of(context)!.buttonLogout : AppLocalizations.of(context)!.buttonLogin, style: const TextStyle(color: _primary)),
                   ),
                 ),
                 const Divider(height: 1),
-                _tile(
-                  icon: Icons.account_balance_wallet_rounded,
-                  title: '예치금 잔액',
-                  subtitle: '₩${formatNumber(balance)}',
-                  trailing: isLoggedIn ? IconButton(
-                    icon: const Icon(Icons.refresh_rounded, color: _primary, size: 20),
-                    onPressed: _refreshBalance,
-                  ) : null,
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(color: const Color(0xFFE8F0FE), borderRadius: BorderRadius.circular(10)),
+                    child: const Icon(Icons.account_balance_wallet_rounded, color: _primary, size: 22),
+                  ),
+                  title: Text(AppLocalizations.of(context)!.balanceTitle, style: const TextStyle(fontWeight: FontWeight.w500)),
+                  subtitle: Text('₩${formatNumber(balance)}'),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isLoggedIn) IconButton(
+                        icon: const Icon(Icons.refresh_rounded, color: _primary, size: 20),
+                        onPressed: _refreshBalance,
+                      ),
+                      if (isLoggedIn) IconButton(
+                        icon: const Icon(Icons.add_card_rounded, color: Colors.orange, size: 20),
+                        tooltip: AppLocalizations.of(context)!.chargeNow,
+                        onPressed: () => launchUrl(Uri.parse('https://www.dhlottery.co.kr/mypage/mndpChrg'), mode: LaunchMode.externalApplication),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -270,13 +289,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 24),
 
           // 자동 구매 섹션
-          _sectionTitle('⏰ 자동 구매'),
+          _sectionTitle(AppLocalizations.of(context)!.sectionAutoPurchase),
           _card(
             child: Column(
               children: [
                 SwitchListTile(
-                  title: const Text('자동 구매 활성화', style: TextStyle(fontWeight: FontWeight.w500)),
-                  subtitle: !isLoggedIn ? const Text('로그인 후 사용 가능', style: TextStyle(color: Colors.red, fontSize: 12)) : null,
+                  title: Text(AppLocalizations.of(context)!.settingEnableAutoPurchase, style: const TextStyle(fontWeight: FontWeight.w500)),
+                  subtitle: !isLoggedIn ? Text(AppLocalizations.of(context)!.hintLoginRequired, style: const TextStyle(color: Colors.red, fontSize: 12)) : null,
                   value: autoEnabled,
                   activeThumbColor: _primary,
                   onChanged: !isLoggedIn ? null : (v) async {
@@ -302,8 +321,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       decoration: BoxDecoration(color: const Color(0xFFE8F0FE), borderRadius: BorderRadius.circular(10)),
                       child: const Icon(Icons.confirmation_number_rounded, color: _primary, size: 22),
                     ),
-                    title: Text('$autoGames게임 설정됨', style: const TextStyle(fontWeight: FontWeight.w500)),
-                    subtitle: Text(autoGames > 0 ? '번호 설정 탭에서 변경' : '번호 설정 탭에서 게임을 설정해주세요', style: const TextStyle(fontSize: 13)),
+                    title: Text(AppLocalizations.of(context)!.gamesConfigured(autoGames), style: const TextStyle(fontWeight: FontWeight.w500)),
+                    subtitle: Text(autoGames > 0 ? AppLocalizations.of(context)!.hintChangeInNumberTab : AppLocalizations.of(context)!.hintSetupGamesInNumberTab, style: const TextStyle(fontSize: 13)),
                     trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey),
                     onTap: () => AppShell.of(context)?.switchTab(1),
                   ),
@@ -315,13 +334,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       decoration: BoxDecoration(color: const Color(0xFFE8F0FE), borderRadius: BorderRadius.circular(10)),
                       child: const Icon(Icons.calendar_today_rounded, color: _primary, size: 22),
                     ),
-                    title: const Text('구매 요일', style: TextStyle(fontWeight: FontWeight.w500)),
+                    title: Text(AppLocalizations.of(context)!.settingPurchaseDay, style: const TextStyle(fontWeight: FontWeight.w500)),
                     trailing: DropdownButton<int>(
                       value: purchaseDay,
                       underline: const SizedBox(),
                       items: List.generate(7, (i) {
                         final d = i + 1;
-                        return DropdownMenuItem(value: d, child: Text('${_dayNames[i]}요일'));
+                        final dayNames = localizedDayNames(AppLocalizations.of(context)!);
+                        return DropdownMenuItem(value: d, child: Text(AppLocalizations.of(context)!.dayFormat(dayNames[i])));
                       }),
                       onChanged: _onPurchaseDayChanged,
                     ),
@@ -334,7 +354,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       decoration: BoxDecoration(color: const Color(0xFFE8F0FE), borderRadius: BorderRadius.circular(10)),
                       child: const Icon(Icons.access_time_rounded, color: _primary, size: 22),
                     ),
-                    title: const Text('구매 시간', style: TextStyle(fontWeight: FontWeight.w500)),
+                    title: Text(AppLocalizations.of(context)!.settingPurchaseTime, style: const TextStyle(fontWeight: FontWeight.w500)),
                     trailing: TextButton(
                       onPressed: _pickPurchaseTime,
                       child: Text(
@@ -351,8 +371,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       decoration: BoxDecoration(color: const Color(0xFFFFF3E0), borderRadius: BorderRadius.circular(10)),
                       child: const Icon(Icons.battery_saver_rounded, color: Colors.orange, size: 22),
                     ),
-                    title: const Text('배터리 최적화 제외', style: TextStyle(fontWeight: FontWeight.w500)),
-                    subtitle: const Text('정시 실행을 위해 권장', style: TextStyle(fontSize: 12)),
+                    title: Text(AppLocalizations.of(context)!.settingBatteryOptimization, style: const TextStyle(fontWeight: FontWeight.w500)),
+                    subtitle: Text(AppLocalizations.of(context)!.hintBatteryOptimization, style: const TextStyle(fontSize: 12)),
                     trailing: const Icon(Icons.open_in_new_rounded, size: 18, color: Colors.grey),
                     onTap: _requestBatteryOptimization,
                   ),
@@ -363,36 +383,40 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 24),
 
           // 알림 섹션
-          _sectionTitle('🔔 알림'),
+          _sectionTitle(AppLocalizations.of(context)!.sectionNotifications),
           _card(
             child: Column(
               children: [
                 SwitchListTile(
-                  title: const Text('구매 완료 알림'),
-                  subtitle: Text(formatPurchaseSchedule(purchaseDay, purchaseHour, purchaseMinute)),
+                  title: Text(AppLocalizations.of(context)!.settingPurchaseNoti),
+                  subtitle: Text(formatPurchaseScheduleL10n(AppLocalizations.of(context)!, purchaseDay, purchaseHour, purchaseMinute)),
                   value: _purchaseNoti,
                   activeThumbColor: _primary,
                   onChanged: (v) => setState(() => _purchaseNoti = v),
                 ),
                 const Divider(height: 1),
                 SwitchListTile(
-                  title: const Text('당첨 결과 알림'),
-                  subtitle: const Text('매주 토요일 21:00'),
+                  title: Text(AppLocalizations.of(context)!.settingResultNoti),
+                  subtitle: Text(AppLocalizations.of(context)!.notificationResultTime),
                   value: _resultNoti,
                   activeThumbColor: _primary,
                   onChanged: (v) => setState(() => _resultNoti = v),
                 ),
+                const Divider(height: 1),
+                _buildBalanceAlertSection(),
               ],
             ),
           ),
           const SizedBox(height: 24),
 
           // 정보 섹션
-          _sectionTitle('📱 앱 정보'),
+          _sectionTitle(AppLocalizations.of(context)!.sectionAppInfo),
           _card(
             child: Column(
               children: [
-                _tile(icon: Icons.info_outline_rounded, title: '버전', subtitle: '1.0.0'),
+                _tile(icon: Icons.info_outline_rounded, title: AppLocalizations.of(context)!.settingVersion, subtitle: '1.0.0'),
+                const Divider(height: 1),
+                _buildLanguageTile(context),
                 const Divider(height: 1),
                 ListTile(
                   leading: Container(
@@ -400,7 +424,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     decoration: BoxDecoration(color: const Color(0xFFE8F0FE), borderRadius: BorderRadius.circular(10)),
                     child: const Icon(Icons.code_rounded, color: _primary, size: 22),
                   ),
-                  title: const Text('오픈소스', style: TextStyle(fontWeight: FontWeight.w500)),
+                  title: Text(AppLocalizations.of(context)!.settingOpenSource, style: const TextStyle(fontWeight: FontWeight.w500)),
                   subtitle: const Text('github.com/free4416/umicorp-autolotto'),
                   trailing: const Icon(Icons.open_in_new_rounded, size: 16, color: Colors.grey),
                   onTap: () => launchUrl(Uri.parse('https://github.com/free4416/umicorp-autolotto'), mode: LaunchMode.externalApplication),
@@ -408,7 +432,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 const Divider(height: 1),
                 ListTile(
                   leading: Icon(Icons.delete_outline_rounded, color: Colors.red[400]),
-                  title: Text('데이터 초기화', style: TextStyle(color: Colors.red[400])),
+                  title: Text(AppLocalizations.of(context)!.settingResetData, style: TextStyle(color: Colors.red[400])),
                   onTap: () => _showResetDialog(context),
                 ),
               ],
@@ -451,14 +475,148 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  Widget _buildLanguageTile(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final currentLocale = ref.watch(appLocaleProvider);
+
+    // 현재 선택된 언어 표시 텍스트
+    String currentLabel;
+    if (currentLocale == null) {
+      currentLabel = l10n.languageSystem;
+    } else if (currentLocale.languageCode == 'ko') {
+      currentLabel = l10n.languageKo;
+    } else if (currentLocale.languageCode == 'en') {
+      currentLabel = l10n.languageEn;
+    } else {
+      currentLabel = l10n.languageJa;
+    }
+
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(color: const Color(0xFFE8F0FE), borderRadius: BorderRadius.circular(10)),
+        child: const Icon(Icons.language_rounded, color: _primary, size: 22),
+      ),
+      title: Text(l10n.settingLanguage, style: const TextStyle(fontWeight: FontWeight.w500)),
+      subtitle: Text(currentLabel, style: const TextStyle(fontSize: 12)),
+      trailing: DropdownButton<String>(
+        value: currentLocale?.languageCode ?? 'system',
+        underline: const SizedBox(),
+        items: [
+          DropdownMenuItem(value: 'system', child: Text(l10n.languageSystem)),
+          DropdownMenuItem(value: 'ko', child: Text(l10n.languageKo)),
+          DropdownMenuItem(value: 'en', child: Text(l10n.languageEn)),
+          DropdownMenuItem(value: 'ja', child: Text(l10n.languageJa)),
+        ],
+        onChanged: (value) async {
+          Locale? newLocale;
+          if (value != null && value != 'system') {
+            newLocale = Locale(value);
+          }
+          ref.read(appLocaleProvider.notifier).state = newLocale;
+          // 설정 저장
+          final storage = ref.read(secureStorageProvider);
+          await storage.setLanguage(value ?? 'system');
+        },
+      ),
+    );
+  }
+
+  Widget _buildBalanceAlertSection() {
+    final l10n = AppLocalizations.of(context)!;
+    final alertEnabled = ref.watch(balanceAlertEnabledProvider);
+    final threshold = ref.watch(balanceAlertThresholdProvider);
+
+    return Column(children: [
+      SwitchListTile(
+        title: Text(l10n.balanceAlertTitle),
+        subtitle: Text(l10n.balanceAlertDesc),
+        value: alertEnabled,
+        activeThumbColor: _primary,
+        onChanged: (v) async {
+          ref.read(balanceAlertEnabledProvider.notifier).state = v;
+          await ref.read(secureStorageProvider).setBalanceAlertEnabled(v);
+        },
+      ),
+      if (alertEnabled) ...[
+        const Divider(height: 1),
+        ListTile(
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: const Color(0xFFFFF3E0), borderRadius: BorderRadius.circular(10)),
+            child: const Icon(Icons.monetization_on_rounded, color: Colors.orange, size: 22),
+          ),
+          title: Text(l10n.balanceThreshold, style: const TextStyle(fontWeight: FontWeight.w500)),
+          trailing: DropdownButton<int>(
+            value: [5000, 10000, 20000].contains(threshold) ? threshold : -1,
+            underline: const SizedBox(),
+            items: [
+              DropdownMenuItem(value: 5000, child: Text('₩${formatNumber(5000)}')),
+              DropdownMenuItem(value: 10000, child: Text('₩${formatNumber(10000)}')),
+              DropdownMenuItem(value: 20000, child: Text('₩${formatNumber(20000)}')),
+              DropdownMenuItem(value: -1, child: Text(
+                [5000, 10000, 20000].contains(threshold) ? l10n.thresholdCustom : '₩${formatNumber(threshold)}',
+              )),
+            ],
+            onChanged: (v) async {
+              if (v == null) return;
+              if (v == -1) {
+                _showThresholdInputDialog();
+                return;
+              }
+              ref.read(balanceAlertThresholdProvider.notifier).state = v;
+              await ref.read(secureStorageProvider).setBalanceAlertThreshold(v);
+            },
+          ),
+        ),
+      ],
+    ]);
+  }
+
+  void _showThresholdInputDialog() {
+    final l10n = AppLocalizations.of(context)!;
+    final controller = TextEditingController(
+      text: ref.read(balanceAlertThresholdProvider).toString(),
+    );
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.thresholdInputTitle),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            hintText: l10n.thresholdInputHint,
+            prefixText: '₩ ',
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.buttonCancel)),
+          ElevatedButton(
+            onPressed: () async {
+              final value = int.tryParse(controller.text.trim());
+              if (value != null && value > 0) {
+                ref.read(balanceAlertThresholdProvider.notifier).state = value;
+                await ref.read(secureStorageProvider).setBalanceAlertThreshold(value);
+              }
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: _primary),
+            child: Text(l10n.buttonConfirm, style: const TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showResetDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('데이터 초기화'),
-        content: const Text('모든 설정과 구매 기록이 삭제됩니다.\n정말 초기화하시겠습니까?'),
+        title: Text(AppLocalizations.of(context)!.dialogResetTitle),
+        content: Text(AppLocalizations.of(context)!.dialogResetMessage),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('취소')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(context)!.buttonCancel)),
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
@@ -467,7 +625,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ref.read(balanceProvider.notifier).state = 0;
               ref.read(autoEnabledProvider.notifier).state = false;
             },
-            child: Text('초기화', style: TextStyle(color: Colors.red[400])),
+            child: Text(AppLocalizations.of(context)!.buttonReset2, style: TextStyle(color: Colors.red[400])),
           ),
         ],
       ),

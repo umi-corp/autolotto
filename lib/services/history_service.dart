@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'auth_service.dart';
 import '../models/purchase.dart';
@@ -9,10 +10,10 @@ class HistoryService {
 
   HistoryService(this._auth);
 
-  /// API rank 숫자 → 한글 등수 (0=낙첨, 1~5=등수)
+  /// API rank 숫자 → 코드값 (0=nowin, 1~5=rank1~rank5)
   static String _rankLabel(int rank) {
-    if (rank >= 1 && rank <= 5) return '$rank등';
-    return '낙첨';
+    if (rank >= 1 && rank <= 5) return 'rank$rank';
+    return 'nowin';
   }
 
   /// 최근 구매 내역 가져오기
@@ -115,8 +116,8 @@ class HistoryService {
         int totalPrize = 0;
 
         if (checked) {
-          const rankOrder = ['1등', '2등', '3등', '4등', '5등', '낙첨'];
-          bestRank = '낙첨';
+          const rankOrder = ['rank1', 'rank2', 'rank3', 'rank4', 'rank5', 'nowin'];
+          bestRank = 'nowin';
           for (final r in gameRanks) {
             if (rankOrder.indexOf(r) < rankOrder.indexOf(bestRank!)) {
               bestRank = r;
@@ -141,7 +142,8 @@ class HistoryService {
 
         purchases.add(purchase);
         if (purchases.length >= count) break;
-      } catch (_) {
+      } catch (e) {
+        debugPrint('구매 상세 조회 실패 (ntslOrdrNo: $ntslOrdrNo): $e');
         continue;
       }
     }
