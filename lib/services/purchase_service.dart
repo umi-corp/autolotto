@@ -95,7 +95,8 @@ class PurchaseService {
         if (nums.length == 6 && nums.every((n) => n >= 1 && n <= 45)) {
           allNumbers.add(nums);
         }
-      } catch (_) {
+      } catch (e) {
+        debugPrint('번호 파싱 실패: $e (원본: $str)');
         continue;
       }
     }

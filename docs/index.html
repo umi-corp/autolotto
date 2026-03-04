@@ -143,12 +143,12 @@
       animation: float 3s ease-in-out infinite;
       box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
-    .ball:nth-child(1) { background: var(--yellow); animation-delay: 0s; }
-    .ball:nth-child(2) { background: var(--blue); animation-delay: 0.3s; }
-    .ball:nth-child(3) { background: var(--red); animation-delay: 0.6s; }
-    .ball:nth-child(4) { background: #aaa; animation-delay: 0.9s; }
-    .ball:nth-child(5) { background: var(--green); animation-delay: 1.2s; }
-    .ball:nth-child(6) { background: var(--primary); animation-delay: 1.5s; }
+    .ball:nth-child(1) { animation-delay: 0s; }
+    .ball:nth-child(2) { animation-delay: 0.3s; }
+    .ball:nth-child(3) { animation-delay: 0.6s; }
+    .ball:nth-child(4) { animation-delay: 0.9s; }
+    .ball:nth-child(5) { animation-delay: 1.2s; }
+    .ball:nth-child(6) { animation-delay: 1.5s; }
     @keyframes float {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-10px); }
@@ -248,18 +248,18 @@
     <h1>AutoLotto</h1>
     <p class="tagline" data-i18n="tagline"></p>
     <div class="balls">
-      <div class="ball">7</div>
-      <div class="ball">15</div>
-      <div class="ball">25</div>
-      <div class="ball">33</div>
-      <div class="ball">42</div>
-      <div class="ball">+3</div>
+      <div class="ball" style="background:#FBC400">7</div>
+      <div class="ball" style="background:#69C8F2">14</div>
+      <div class="ball" style="background:#FF7272">22</div>
+      <div class="ball" style="background:#AAAAAA">37</div>
+      <div class="ball" style="background:#B0D840">41</div>
+      <div class="ball bonus" style="background:#69C8F2">+16</div>
     </div>
     <a href="autolotto-v1.0.0.apk" class="download-btn" download>
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 13.5L12 19l-5.5-5.5L8 12l2.5 2.5V3h3v11.5L16 12l1.5 1.5zM5 21h14v-2H5v2z"/></svg>
       <span data-i18n="download"></span>
     </a>
-    <p class="version-info">v1.0.0 · Android 5.0+ · 52MB</p>
+    <p class="version-info">v1.0.0 · Android 7.0+ · 64MB</p>
   </section>
 
   <section class="features">
