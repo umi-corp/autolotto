@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../providers/providers.dart';
 import '../services/balance_alert_service.dart';
 import '../services/purchase_service.dart';
+import '../services/scheduler_service.dart';
 import '../utils/ui_helpers.dart';
 
 /// 홈 화면
@@ -31,6 +32,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     _fetchWinningNumbers();
     _updateCountdown();
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) => _updateCountdown());
+    // Android 13+ 알림 권한 요청
+    SchedulerService.requestNotificationPermission();
   }
 
   @override

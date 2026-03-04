@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'auth_service.dart';
 import 'balance_alert_service.dart';
 import 'purchase_service.dart';
@@ -21,6 +22,15 @@ class SchedulerService {
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const initSettings = InitializationSettings(android: androidSettings);
     await _notifications.initialize(initSettings);
+
+  }
+
+  /// Android 13+ 알림 권한 런타임 요청
+  static Future<bool> requestNotificationPermission() async {
+    final status = await Permission.notification.status;
+    if (status.isGranted) return true;
+    final result = await Permission.notification.request();
+    return result.isGranted;
   }
 
   /// 자동 구매 알람 등록 (one-shot exact)
@@ -97,12 +107,13 @@ Future<void> _onAutoPurchaseAlarm() async {
     await _executeAutoPurchase();
   } catch (e) {
     debugPrint('자동구매 오류: $e');
-    final msg = e.toString();
+    final msg = e.toString().replaceAll(RegExp(r'^Exception: '), '');
     String body;
     if (msg.contains('[login]')) {
       body = "로그인에 실패했습니다. 아이디/비밀번호를 확인해주세요.";
-    } else if (msg.contains('[purchase]')) {
-      body = "구매 처리 중 오류가 발생했습니다. 잔액 또는 구매 가능 시간을 확인해주세요.";
+    } else if (msg.contains('구매 실패:')) {
+      // API 응답 메시지 그대로 전달 (주간구매금액 초과 등)
+      body = msg.replaceAll(RegExp(r'\[purchase\] '), '');
     } else {
       body = "자동 구매에 실패했습니다. 앱을 열어 상태를 확인해주세요.";
     }
