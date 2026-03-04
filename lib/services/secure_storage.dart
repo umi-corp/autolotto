@@ -14,6 +14,10 @@ class SecureStorageService {
   static const _keyAutoPurchaseDay = 'auto_purchase_day';
   static const _keyAutoPurchaseHour = 'auto_purchase_hour';
   static const _keyAutoPurchaseMinute = 'auto_purchase_minute';
+  static const _keyLanguage = 'app_language';
+  static const _keyBalanceAlertEnabled = 'balance_alert_enabled';
+  static const _keyBalanceAlertThreshold = 'balance_alert_threshold';
+  static const _keyBalanceAlertLastDate = 'balance_alert_last_date';
 
   // === 계정 ===
 
@@ -95,6 +99,44 @@ class SecureStorageService {
   Future<int> getAutoPurchaseMinute() async {
     final val = await _storage.read(key: _keyAutoPurchaseMinute);
     return int.tryParse(val ?? '') ?? 0; // 기본: 00분
+  }
+
+  // === 언어 설정 ===
+
+  Future<void> setLanguage(String lang) async {
+    await _storage.write(key: _keyLanguage, value: lang);
+  }
+
+  Future<String> getLanguage() async {
+    return await _storage.read(key: _keyLanguage) ?? 'system';
+  }
+
+  // === 잔액 부족 알림 ===
+
+  Future<void> setBalanceAlertEnabled(bool enabled) async {
+    await _storage.write(key: _keyBalanceAlertEnabled, value: enabled.toString());
+  }
+
+  Future<bool> getBalanceAlertEnabled() async {
+    final val = await _storage.read(key: _keyBalanceAlertEnabled);
+    return val == 'true';
+  }
+
+  Future<void> setBalanceAlertThreshold(int threshold) async {
+    await _storage.write(key: _keyBalanceAlertThreshold, value: threshold.toString());
+  }
+
+  Future<int> getBalanceAlertThreshold() async {
+    final val = await _storage.read(key: _keyBalanceAlertThreshold);
+    return int.tryParse(val ?? '') ?? 5000;
+  }
+
+  Future<void> setBalanceAlertLastDate(String date) async {
+    await _storage.write(key: _keyBalanceAlertLastDate, value: date);
+  }
+
+  Future<String?> getBalanceAlertLastDate() async {
+    return await _storage.read(key: _keyBalanceAlertLastDate);
   }
 
   // === 전체 초기화 ===
