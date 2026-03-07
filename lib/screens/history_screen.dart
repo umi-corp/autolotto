@@ -189,7 +189,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                 final gameRank = (item.gameRanks != null && i < item.gameRanks!.length)
                     ? item.gameRanks![i]
                     : null;
-                final isGameWinner = gameRank != null && gameRank != 'nowin';
+                final isGameWinner = gameRank != null && gameRank != 'nowin' && gameRank != 'pending';
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),

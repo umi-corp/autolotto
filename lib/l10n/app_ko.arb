@@ -36,6 +36,7 @@
   "modeAuto": "🎲 자동",
   "autoNumberTitle": "자동 번호",
   "autoNumberSubtitle": "매주 랜덤으로 생성됩니다",
+  "buttonAllAuto": "전부 자동",
   "buttonReset": "초기화",
   "buttonConfirmGame": "게임 {letter} 확정 ✓",
   "@buttonConfirmGame": { "placeholders": { "letter": { "type": "String" } } },
@@ -149,5 +150,12 @@
   "thresholdCustom": "직접입력",
   "thresholdInputTitle": "알림 기준 금액 입력",
   "thresholdInputHint": "금액 (원)",
-  "buttonConfirm": "확인"
+  "buttonConfirm": "확인",
+  "sectionDonation": "개발자 후원하기",
+  "donationTitle": "커피 한 잔 후원",
+  "donationIcecream": "아이스크림",
+  "donationCoffee": "커피",
+  "donationBurger": "햄버거",
+  "donationChicken": "치킨",
+  "donationPizza": "피자"
 }

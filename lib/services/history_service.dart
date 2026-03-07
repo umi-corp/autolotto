@@ -101,7 +101,7 @@ class HistoryService {
             // API가 제공하는 게임별 등수/당첨금
             final apiRank = game['rank'] as int? ?? 0;
             final apiAmt = game['amt'] as int? ?? 0;
-            gameRanks.add(_rankLabel(apiRank));
+            gameRanks.add(drawed ? _rankLabel(apiRank) : 'pending');
             gamePrizes.add(apiAmt);
           }
         }

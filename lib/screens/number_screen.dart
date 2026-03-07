@@ -167,6 +167,8 @@ class _NumberScreenState extends ConsumerState<NumberScreen> {
             ),
 
             _buildSlotTabs(),
+            const SizedBox(height: 8),
+            _buildAllAutoButton(),
             const SizedBox(height: 16),
             _buildModeToggle(),
             const SizedBox(height: 16),
@@ -241,6 +243,37 @@ class _NumberScreenState extends ConsumerState<NumberScreen> {
             ),
             const SizedBox(height: 24),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _setAllAuto() {
+    setState(() {
+      for (var i = 0; i < 5; i++) {
+        _games[i] = []; // 자동
+      }
+      _selected.clear();
+      _isAuto = true;
+      _saved = false;
+    });
+  }
+
+  Widget _buildAllAutoButton() {
+    final allAuto = _games.every((g) => g != null && g.isEmpty);
+    return Align(
+      alignment: Alignment.centerRight,
+      child: TextButton.icon(
+        onPressed: allAuto ? null : _setAllAuto,
+        icon: Icon(Icons.auto_awesome_rounded, size: 16,
+          color: allAuto ? Colors.grey[400] : _primary),
+        label: Text(AppLocalizations.of(context)!.buttonAllAuto,
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
+            color: allAuto ? Colors.grey[400] : _primary)),
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
       ),
     );

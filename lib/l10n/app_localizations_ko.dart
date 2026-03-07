@@ -94,6 +94,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get autoNumberSubtitle => '매주 랜덤으로 생성됩니다';
 
   @override
+  String get buttonAllAuto => '전부 자동';
+
+  @override
   String get buttonReset => '초기화';
 
   @override
@@ -387,4 +390,25 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get buttonConfirm => '확인';
+
+  @override
+  String get sectionDonation => '개발자 후원하기';
+
+  @override
+  String get donationTitle => '커피 한 잔 후원';
+
+  @override
+  String get donationIcecream => '아이스크림';
+
+  @override
+  String get donationCoffee => '커피';
+
+  @override
+  String get donationBurger => '햄버거';
+
+  @override
+  String get donationChicken => '치킨';
+
+  @override
+  String get donationPizza => '피자';
 }
