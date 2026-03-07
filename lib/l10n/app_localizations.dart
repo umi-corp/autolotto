@@ -256,6 +256,12 @@ abstract class AppLocalizations {
   /// **'매주 랜덤으로 생성됩니다'**
   String get autoNumberSubtitle;
 
+  /// No description provided for @buttonAllAuto.
+  ///
+  /// In ko, this message translates to:
+  /// **'전부 자동'**
+  String get buttonAllAuto;
+
   /// No description provided for @buttonReset.
   ///
   /// In ko, this message translates to:
@@ -789,6 +795,48 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'확인'**
   String get buttonConfirm;
+
+  /// No description provided for @sectionDonation.
+  ///
+  /// In ko, this message translates to:
+  /// **'개발자 후원하기'**
+  String get sectionDonation;
+
+  /// No description provided for @donationTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'커피 한 잔 후원'**
+  String get donationTitle;
+
+  /// No description provided for @donationIcecream.
+  ///
+  /// In ko, this message translates to:
+  /// **'아이스크림'**
+  String get donationIcecream;
+
+  /// No description provided for @donationCoffee.
+  ///
+  /// In ko, this message translates to:
+  /// **'커피'**
+  String get donationCoffee;
+
+  /// No description provided for @donationBurger.
+  ///
+  /// In ko, this message translates to:
+  /// **'햄버거'**
+  String get donationBurger;
+
+  /// No description provided for @donationChicken.
+  ///
+  /// In ko, this message translates to:
+  /// **'치킨'**
+  String get donationChicken;
+
+  /// No description provided for @donationPizza.
+  ///
+  /// In ko, this message translates to:
+  /// **'피자'**
+  String get donationPizza;
 }
 
 class _AppLocalizationsDelegate

@@ -33,6 +33,7 @@
   "modeAuto": "🎲 自動",
   "autoNumberTitle": "自動番号",
   "autoNumberSubtitle": "毎週ランダムに生成されます",
+  "buttonAllAuto": "すべて自動",
   "buttonReset": "リセット",
   "buttonConfirmGame": "ゲーム{letter} 確定 ✓",
   "selectionCount": "選択: {count}/6  ",
@@ -134,5 +135,12 @@
   "thresholdCustom": "直接入力",
   "thresholdInputTitle": "通知基準額を入力",
   "thresholdInputHint": "金額 (ウォン)",
-  "buttonConfirm": "確認"
+  "buttonConfirm": "確認",
+  "sectionDonation": "開発者を応援する",
+  "donationTitle": "コーヒー1杯おごる",
+  "donationIcecream": "アイス",
+  "donationCoffee": "コーヒー",
+  "donationBurger": "ハンバーガー",
+  "donationChicken": "チキン",
+  "donationPizza": "ピザ"
 }
