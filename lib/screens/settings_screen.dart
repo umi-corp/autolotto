@@ -26,6 +26,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _isLoggingIn = false;
   bool _purchaseNoti = true;
   bool _resultNoti = true;
+  String? _loggedInUserId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserId();
+  }
+
+  Future<void> _loadUserId() async {
+    final cred = await ref.read(secureStorageProvider).getCredentials();
+    if (mounted) setState(() => _loggedInUserId = cred.userId);
+  }
 
   @override
   void dispose() {
@@ -47,6 +59,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       // 저장
       await ref.read(secureStorageProvider).saveCredentials(id, pw);
       ref.read(isLoggedInProvider.notifier).state = true;
+      setState(() => _loggedInUserId = id);
 
       // 잔액 즉시 조회
       ref.read(balanceProvider.notifier).state = await auth.getBalance();
@@ -118,6 +131,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     await ref.read(secureStorageProvider).deleteCredentials();
     ref.read(isLoggedInProvider.notifier).state = false;
     ref.read(balanceProvider.notifier).state = 0;
+    setState(() => _loggedInUserId = null);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context)!.snackbarLogoutSuccess)),
@@ -259,7 +273,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 _tile(
                   icon: Icons.person_rounded,
                   title: AppLocalizations.of(context)!.dhLotteryAccount,
-                  subtitle: isLoggedIn ? AppLocalizations.of(context)!.statusLoggedIn : AppLocalizations.of(context)!.statusLoginRequired,
+                  subtitle: isLoggedIn ? (_loggedInUserId ?? AppLocalizations.of(context)!.statusLoggedIn) : AppLocalizations.of(context)!.statusLoginRequired,
                   trailing: TextButton(
                     onPressed: isLoggedIn ? _logout : _showLoginDialog,
                     child: Text(isLoggedIn ? AppLocalizations.of(context)!.buttonLogout : AppLocalizations.of(context)!.buttonLogin, style: const TextStyle(color: _primary)),
@@ -433,9 +447,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     child: const Icon(Icons.code_rounded, color: _primary, size: 22),
                   ),
                   title: Text(AppLocalizations.of(context)!.settingOpenSource, style: const TextStyle(fontWeight: FontWeight.w500)),
-                  subtitle: const Text('github.com/free4416/umicorp-autolotto'),
+                  subtitle: const Text('github.com/umi-corp/autolotto'),
                   trailing: const Icon(Icons.open_in_new_rounded, size: 16, color: Colors.grey),
-                  onTap: () => launchUrl(Uri.parse('https://github.com/free4416/umicorp-autolotto'), mode: LaunchMode.externalApplication),
+                  onTap: () => launchUrl(Uri.parse('https://github.com/umi-corp/autolotto'), mode: LaunchMode.externalApplication),
                 ),
                 const Divider(height: 1),
                 ListTile(
@@ -446,11 +460,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ],
             ),
           ),
+          const SizedBox(height: 24),
+
+          // 개발자 응원 섹션
+          _sectionTitle(AppLocalizations.of(context)!.sectionDonation),
+          _card(
+            child: ListTile(
+              leading: const Text('☕', style: TextStyle(fontSize: 28)),
+              title: Text(AppLocalizations.of(context)!.donationTitle, style: const TextStyle(fontWeight: FontWeight.w500)),
+              trailing: const Icon(Icons.open_in_new_rounded, size: 20, color: Colors.grey),
+              onTap: () => launchUrl(Uri.parse('https://buymeacoffee.com/umicorp'), mode: LaunchMode.externalApplication),
+            ),
+          ),
+
           const SizedBox(height: 40),
         ],
       ),
     );
   }
+
+
 
   Widget _sectionTitle(String title) {
     return Padding(

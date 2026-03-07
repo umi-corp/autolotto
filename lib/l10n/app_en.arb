@@ -33,6 +33,7 @@
   "modeAuto": "🎲 Auto",
   "autoNumberTitle": "Auto Numbers",
   "autoNumberSubtitle": "Randomly generated each week",
+  "buttonAllAuto": "All Auto",
   "buttonReset": "Reset",
   "buttonConfirmGame": "Confirm Game {letter} ✓",
   "selectionCount": "Selected: {count}/6  ",
@@ -134,5 +135,12 @@
   "thresholdCustom": "Custom",
   "thresholdInputTitle": "Enter Alert Threshold",
   "thresholdInputHint": "Amount (KRW)",
-  "buttonConfirm": "OK"
+  "buttonConfirm": "OK",
+  "sectionDonation": "Support Developer",
+  "donationTitle": "Buy Me a Coffee",
+  "donationIcecream": "Ice Cream",
+  "donationCoffee": "Coffee",
+  "donationBurger": "Burger",
+  "donationChicken": "Chicken",
+  "donationPizza": "Pizza"
 }

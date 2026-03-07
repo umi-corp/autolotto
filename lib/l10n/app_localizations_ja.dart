@@ -94,6 +94,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get autoNumberSubtitle => '毎週ランダムに生成されます';
 
   @override
+  String get buttonAllAuto => 'すべて自動';
+
+  @override
   String get buttonReset => 'リセット';
 
   @override
@@ -386,4 +389,25 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get buttonConfirm => '確認';
+
+  @override
+  String get sectionDonation => '開発者を応援する';
+
+  @override
+  String get donationTitle => 'コーヒー1杯おごる';
+
+  @override
+  String get donationIcecream => 'アイス';
+
+  @override
+  String get donationCoffee => 'コーヒー';
+
+  @override
+  String get donationBurger => 'ハンバーガー';
+
+  @override
+  String get donationChicken => 'チキン';
+
+  @override
+  String get donationPizza => 'ピザ';
 }

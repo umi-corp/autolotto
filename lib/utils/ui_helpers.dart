@@ -32,6 +32,7 @@ String localizedRank(AppLocalizations l10n, String rankCode) {
     case 'rank4': return l10n.rank4th;
     case 'rank5': return l10n.rank5th;
     case 'nowin': return l10n.statusNoWin;
+    case 'pending': return l10n.statusPending;
     default: return rankCode;
   }
 }
