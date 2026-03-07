@@ -31,7 +31,17 @@ class PurchaseService {
 
     final daysDiff = thisSaturday.difference(_firstRoundDate).inDays;
     final weeksPassed = daysDiff ~/ 7;
-    return 1 + weeksPassed;
+    var round = 1 + weeksPassed;
+
+    // 토요일 20:45(추첨시간) 이후면 다음 회차 표시
+    if (now.weekday == DateTime.saturday) {
+      final drawTime = DateTime(now.year, now.month, now.day, 20, 45);
+      if (now.isAfter(drawTime)) {
+        round += 1;
+      }
+    }
+
+    return round;
   }
 
   /// 추첨일, 지급기한 계산
