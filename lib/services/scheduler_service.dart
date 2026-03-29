@@ -290,9 +290,6 @@ Future<void> _executeCheckResult() async {
   final winning = await resultService.getWinningNumbers();
   if (winning == null) return;
 
-  // TODO: DB에서 해당 회차 구매기록 로드 → 매칭
-  // 백그라운드에서 Hive 접근은 별도 초기화 필요 (Phase 2에서 개선)
-
   await SchedulerService.showNotification(
     title: '🎱 제 ${winning.round}회 당첨번호',
     body: '${winning.numbers.join(", ")} + ${winning.bonus}',

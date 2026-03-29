@@ -95,7 +95,6 @@ class _NumberScreenState extends ConsumerState<NumberScreen> {
   int get _configuredCount => _games.where((g) => g != null).length;
 
   Future<void> _saveConfig() async {
-    // TODO: SecureStorage에 번호 설정 저장
     // 게임 수도 설정된 슬롯 수로 자동 반영
     ref.read(autoGamesProvider.notifier).state = _configuredCount;
     await ref.read(secureStorageProvider).setAutoGames(_configuredCount);
