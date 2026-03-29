@@ -137,10 +137,5 @@
   "thresholdInputHint": "金額 (ウォン)",
   "buttonConfirm": "確認",
   "sectionDonation": "開発者を応援する",
-  "donationTitle": "コーヒー1杯おごる",
-  "donationIcecream": "アイス",
-  "donationCoffee": "コーヒー",
-  "donationBurger": "ハンバーガー",
-  "donationChicken": "チキン",
-  "donationPizza": "ピザ"
+  "donationTitle": "コーヒー1杯おごる"
 }

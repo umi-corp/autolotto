@@ -6,7 +6,6 @@ import '../services/result_service.dart';
 import '../services/history_service.dart';
 import '../services/secure_storage.dart';
 import '../data/repositories/purchase_repo.dart';
-import '../data/repositories/result_repo.dart';
 
 // === 서비스 ===
 final authServiceProvider = Provider<AuthService>((ref) => AuthService());
@@ -22,7 +21,6 @@ final secureStorageProvider = Provider<SecureStorageService>((ref) => SecureStor
 
 // === 리포지토리 ===
 final purchaseRepoProvider = Provider<PurchaseRepository>((ref) => PurchaseRepository());
-final resultRepoProvider = Provider<ResultRepository>((ref) => ResultRepository());
 
 // === 상태 ===
 

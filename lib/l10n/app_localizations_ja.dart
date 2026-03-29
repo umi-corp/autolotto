@@ -395,19 +395,4 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get donationTitle => 'コーヒー1杯おごる';
-
-  @override
-  String get donationIcecream => 'アイス';
-
-  @override
-  String get donationCoffee => 'コーヒー';
-
-  @override
-  String get donationBurger => 'ハンバーガー';
-
-  @override
-  String get donationChicken => 'チキン';
-
-  @override
-  String get donationPizza => 'ピザ';
 }

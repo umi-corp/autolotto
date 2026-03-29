@@ -137,10 +137,5 @@
   "thresholdInputHint": "Amount (KRW)",
   "buttonConfirm": "OK",
   "sectionDonation": "Support Developer",
-  "donationTitle": "Buy Me a Coffee",
-  "donationIcecream": "Ice Cream",
-  "donationCoffee": "Coffee",
-  "donationBurger": "Burger",
-  "donationChicken": "Chicken",
-  "donationPizza": "Pizza"
+  "donationTitle": "Buy Me a Coffee"
 }
