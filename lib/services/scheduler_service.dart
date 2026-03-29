@@ -47,6 +47,7 @@ class SchedulerService {
       _onAutoPurchaseAlarm,
       exact: true,
       wakeup: true,
+      allowWhileIdle: true,
       rescheduleOnReboot: true,
     );
   }
@@ -61,6 +62,7 @@ class SchedulerService {
       _onCheckResultAlarm,
       exact: true,
       wakeup: true,
+      allowWhileIdle: true,
       rescheduleOnReboot: true,
     );
   }
