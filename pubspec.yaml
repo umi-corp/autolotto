@@ -11,14 +11,12 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  cupertino_icons: ^1.0.8
   flutter_riverpod: ^2.6.1
   dio: ^5.7.0
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   flutter_secure_storage: ^9.2.4
   android_alarm_manager_plus: ^4.0.4
-  flutter_foreground_task: ^8.12.0
   flutter_local_notifications: ^18.0.1
   pointycastle: ^3.9.1
   intl: ^0.20.2

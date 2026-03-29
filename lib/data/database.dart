@@ -1,5 +1,4 @@
 import 'package:hive_flutter/hive_flutter.dart';
-import '../models/game.dart';
 import '../models/purchase.dart';
 import '../models/result.dart';
 
@@ -11,7 +10,7 @@ class AppDatabase {
     await Hive.initFlutter();
 
     // 어댑터 등록
-    Hive.registerAdapter(GameAdapter());
+    // Note: typeId 0 was previously used by Game — do not reuse
     Hive.registerAdapter(PurchaseAdapter());
     Hive.registerAdapter(WinningNumbersAdapter());
 

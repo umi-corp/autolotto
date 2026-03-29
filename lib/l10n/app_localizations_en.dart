@@ -400,19 +400,4 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get donationTitle => 'Buy Me a Coffee';
-
-  @override
-  String get donationIcecream => 'Ice Cream';
-
-  @override
-  String get donationCoffee => 'Coffee';
-
-  @override
-  String get donationBurger => 'Burger';
-
-  @override
-  String get donationChicken => 'Chicken';
-
-  @override
-  String get donationPizza => 'Pizza';
 }

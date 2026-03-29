@@ -152,10 +152,5 @@
   "thresholdInputHint": "금액 (원)",
   "buttonConfirm": "확인",
   "sectionDonation": "개발자 후원하기",
-  "donationTitle": "커피 한 잔 후원",
-  "donationIcecream": "아이스크림",
-  "donationCoffee": "커피",
-  "donationBurger": "햄버거",
-  "donationChicken": "치킨",
-  "donationPizza": "피자"
+  "donationTitle": "커피 한 잔 후원"
 }

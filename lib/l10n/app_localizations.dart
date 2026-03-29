@@ -807,36 +807,6 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'커피 한 잔 후원'**
   String get donationTitle;
-
-  /// No description provided for @donationIcecream.
-  ///
-  /// In ko, this message translates to:
-  /// **'아이스크림'**
-  String get donationIcecream;
-
-  /// No description provided for @donationCoffee.
-  ///
-  /// In ko, this message translates to:
-  /// **'커피'**
-  String get donationCoffee;
-
-  /// No description provided for @donationBurger.
-  ///
-  /// In ko, this message translates to:
-  /// **'햄버거'**
-  String get donationBurger;
-
-  /// No description provided for @donationChicken.
-  ///
-  /// In ko, this message translates to:
-  /// **'치킨'**
-  String get donationChicken;
-
-  /// No description provided for @donationPizza.
-  ///
-  /// In ko, this message translates to:
-  /// **'피자'**
-  String get donationPizza;
 }
 
 class _AppLocalizationsDelegate

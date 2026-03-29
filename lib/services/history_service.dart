@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'auth_service.dart';
 import '../models/purchase.dart';
+import '../utils/constants.dart';
 
 /// 동행복권 마이페이지에서 구매 내역 조회
 class HistoryService {
@@ -28,7 +29,7 @@ class HistoryService {
 
     // 2. 구매 목록 조회
     final listResp = await _auth.dio.get(
-      'https://www.dhlottery.co.kr/mypage/selectMyLotteryledger.do',
+      ApiConstants.purchaseHistoryUrl,
       queryParameters: {
         'srchStrDt': fromStr,
         'srchEndDt': todayStr,
@@ -54,6 +55,7 @@ class HistoryService {
       final ntslOrdrNo = item['ntslOrdrNo']?.toString() ?? '';
       final gmInfo = item['gmInfo']?.toString() ?? '';
       final purchaseDateStr = item['eltOrdrDt']?.toString() ?? '';
+      final drawDateStr = item['epsdRflDt']?.toString() ?? '';
 
       if (ntslOrdrNo.isEmpty || gmInfo.isEmpty) continue;
 
@@ -128,7 +130,7 @@ class HistoryService {
 
         final purchase = Purchase(
           round: round,
-          date: DateTime.tryParse(purchaseDateStr) ?? now,
+          date: DateTime.tryParse(drawDateStr) ?? DateTime.tryParse(purchaseDateStr) ?? now,
           numbers: numbers,
           autoCount: autoCount,
           manualCount: manualCount,

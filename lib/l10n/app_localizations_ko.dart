@@ -396,19 +396,4 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get donationTitle => '커피 한 잔 후원';
-
-  @override
-  String get donationIcecream => '아이스크림';
-
-  @override
-  String get donationCoffee => '커피';
-
-  @override
-  String get donationBurger => '햄버거';
-
-  @override
-  String get donationChicken => '치킨';
-
-  @override
-  String get donationPizza => '피자';
 }

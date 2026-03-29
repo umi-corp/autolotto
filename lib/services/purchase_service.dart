@@ -248,12 +248,4 @@ class PurchaseResult {
   });
 
   int get totalGames => autoCount + manualCount;
-
-  Map<String, dynamic> toJson() => {
-        'round': round,
-        'numbers': numbers,
-        'autoCount': autoCount,
-        'manualCount': manualCount,
-        'amount': amount,
-      };
 }
