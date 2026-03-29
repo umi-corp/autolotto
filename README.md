@@ -45,48 +45,47 @@
 flutter pub get
 
 # Hive 어댑터 재생성 (필요 시)
-flutter pub run build_runner build
+dart run build_runner build --delete-conflicting-outputs
 
-# 디버그 APK 빌드
-flutter build apk --debug
-
-# 릴리즈 APK 빌드
-flutter build apk --release
+# 릴리즈 APK 빌드 (ABI별 분리)
+flutter build apk --release --split-per-abi
 ```
 
-빌드된 APK: `build/app/outputs/flutter-apk/app-release.apk`
+빌드된 APK: `build/app/outputs/flutter-apk/app-arm64-v8a-release.apk`
 
 ## 📂 프로젝트 구조
 
 ```
 lib/
-├── main.dart                 # 앱 진입점, 자동 로그인
-├── app.dart                  # 하단 탭 네비게이션
-├── models/                   # 데이터 모델 (Hive)
-│   ├── game.dart
+├── main.dart                      # 앱 진입점, 자동 로그인
+├── app.dart                       # 하단 탭 네비게이션
+├── models/                        # 데이터 모델 (Hive)
 │   ├── purchase.dart
 │   └── result.dart
 ├── data/
-│   ├── database.dart         # Hive 초기화
-│   └── repositories/         # 로컬 DB CRUD
+│   ├── database.dart              # Hive 초기화
+│   └── repositories/              # 로컬 DB CRUD
 ├── services/
-│   ├── auth_service.dart     # 동행복권 로그인 (RSA 암호화)
-│   ├── purchase_service.dart # 로또 구매 API
-│   ├── result_service.dart   # 당첨번호 조회
-│   ├── history_service.dart  # 구매 내역 조회
-│   ├── scheduler_service.dart# AlarmManager 스케줄링
-│   └── secure_storage.dart   # 암호화 저장소
+│   ├── auth_service.dart          # 동행복권 로그인 (RSA 암호화)
+│   ├── purchase_service.dart      # 로또 구매 API
+│   ├── result_service.dart        # 당첨번호 조회
+│   ├── history_service.dart       # 구매 내역 조회
+│   ├── scheduler_service.dart     # AlarmManager 스케줄링
+│   ├── balance_alert_service.dart # 잔액 부족 알림
+│   └── secure_storage.dart        # 암호화 저장소
 ├── screens/
-│   ├── home_screen.dart      # 홈 (카운트다운, 당첨번호)
-│   ├── number_screen.dart    # 번호 설정 (수동/자동)
-│   ├── history_screen.dart   # 구매/당첨 기록
-│   └── settings_screen.dart  # 설정 (계정, 자동구매)
+│   ├── splash_screen.dart         # 스플래시 (자동 로그인)
+│   ├── home_screen.dart           # 홈 (카운트다운, 당첨번호)
+│   ├── number_screen.dart         # 번호 설정 (수동/자동)
+│   ├── history_screen.dart        # 구매/당첨 기록
+│   └── settings_screen.dart       # 설정 (계정, 자동구매)
 ├── providers/
-│   └── providers.dart        # Riverpod 상태 관리
+│   └── providers.dart             # Riverpod 상태 관리
+├── l10n/                          # 다국어 지원 (ko, en, ja)
 └── utils/
-    ├── constants.dart        # API URL 상수
-    ├── crypto.dart           # RSA 암호화
-    └── ui_helpers.dart       # 공통 UI 유틸
+    ├── constants.dart             # API URL 상수
+    ├── crypto.dart                # RSA 암호화
+    └── ui_helpers.dart            # 공통 UI 유틸
 ```
 
 ## 🔐 보안
