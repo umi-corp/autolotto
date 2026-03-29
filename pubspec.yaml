@@ -1,7 +1,7 @@
 name: autolotto
 description: "로또 6/45 자동 구매 & 당첨 확인 앱"
 publish_to: 'none'
-version: 1.0.3
+version: 1.0.0
 
 environment:
   sdk: ^3.11.0
