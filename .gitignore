@@ -62,4 +62,3 @@ app.*.map.json
 
 # Flutter metadata
 .metadata
-/test/
