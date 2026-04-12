@@ -81,6 +81,9 @@ class HistoryService {
         final gameDtl = ticket['game_dtl'] as List? ?? [];
         final drawed = ticket['drawed'] as bool? ?? false;
 
+        // 당첨번호 추출
+        final winNum = (ticket['win_num'] as List?)?.cast<int>();
+        final bonusNum = ticket['bonus_num'] as int?;
         final numbers = <List<int>>[];
         var autoCount = 0;
         var manualCount = 0;
@@ -141,6 +144,8 @@ class HistoryService {
         purchase.prize = totalPrize;
         purchase.gameRanks = gameRanks;
         purchase.gamePrizes = gamePrizes;
+        purchase.winningNumbers = winNum;
+        purchase.bonusNumber = bonusNum;
 
         purchases.add(purchase);
         if (purchases.length >= count) break;
