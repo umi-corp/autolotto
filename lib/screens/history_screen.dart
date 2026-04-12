@@ -197,13 +197,34 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                     SizedBox(width: 24,
                       child: Text(String.fromCharCode(65 + i),
                         style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.bold, fontSize: 13))),
-                    ...item.numbers[i].map((n) => Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: Container(width: 32, height: 32,
-                        decoration: BoxDecoration(shape: BoxShape.circle, color: ballColor(n)),
-                        child: Center(child: Text('$n',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)))),
-                    )),
+                    ...item.numbers[i].map((n) {
+                      final wr = item.winningNumbers;
+                      final isMatch = wr != null && wr.contains(n);
+                      final isBonusMatch = item.bonusNumber != null && item.bonusNumber == n;
+                      final isHighlighted = isMatch || isBonusMatch;
+                      final hasResult = item.checked && wr != null;
+
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: Container(width: 32, height: 32,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: hasResult && !isHighlighted
+                                ? ballColor(n).withValues(alpha: 0.3)
+                                : ballColor(n),
+                            border: isBonusMatch
+                                ? Border.all(color: Colors.black26, width: 2)
+                                : null,
+                            boxShadow: isHighlighted
+                                ? [BoxShadow(color: ballColor(n).withValues(alpha: 0.4), blurRadius: 4)]
+                                : null,
+                          ),
+                          child: Center(child: Text('$n',
+                            style: TextStyle(
+                              color: hasResult && !isHighlighted ? Colors.white70 : Colors.white,
+                              fontWeight: FontWeight.bold, fontSize: 12)))),
+                      );
+                    }),
                     if (gameRank != null) ...[
                       const SizedBox(width: 4),
                       Container(

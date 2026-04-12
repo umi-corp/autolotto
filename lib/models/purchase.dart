@@ -37,6 +37,10 @@ class Purchase extends HiveObject {
   @HiveField(10)
   List<int>? gamePrizes; // 게임별 당첨금
 
+  // Hive 비저장, API 응답에서만 사용
+  List<int>? winningNumbers;
+  int? bonusNumber;
+
   Purchase({
     required this.round,
     required this.date,
