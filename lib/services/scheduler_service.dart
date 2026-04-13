@@ -6,6 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'auth_service.dart';
 import 'balance_alert_service.dart';
+import 'history_service.dart';
 import 'purchase_service.dart';
 import 'result_service.dart';
 
@@ -290,9 +291,65 @@ Future<void> _executeCheckResult() async {
   final winning = await resultService.getWinningNumbers();
   if (winning == null) return;
 
-  await SchedulerService.showNotification(
-    title: '🎱 제 ${winning.round}회 당첨번호',
-    body: '${winning.numbers.join(", ")} + ${winning.bonus}',
-    id: 2,
-  );
+  final winningLine = '당첨번호: ${winning.numbers.join(", ")} + ${winning.bonus}';
+
+  // 로그인 → 구매이력 조회 → 매칭 결과 알림
+  try {
+    final userId = await storage.read(key: 'dhlottery_user_id');
+    final password = await storage.read(key: 'dhlottery_password');
+    if (userId == null || password == null) throw Exception('no_credentials');
+
+    final auth = AuthService();
+    await auth.login(userId, password);
+
+    final history = HistoryService(auth);
+    final purchases = await history.fetchRecentPurchases(count: 5);
+    final purchase = purchases.where((p) => p.round == winning.round).firstOrNull;
+    if (purchase == null) throw Exception('no_matching_purchase');
+
+    // 게임별 결과 텍스트 생성
+    const rankNames = {
+      'rank1': '1등', 'rank2': '2등', 'rank3': '3등',
+      'rank4': '4등', 'rank5': '5등', 'nowin': '낙첨',
+    };
+
+    final gameLines = <String>[];
+    for (var i = 0; i < purchase.numbers.length; i++) {
+      final nums = purchase.numbers[i].join(",");
+      final rank = (purchase.gameRanks != null && i < purchase.gameRanks!.length)
+          ? purchase.gameRanks![i]
+          : 'nowin';
+      final rankText = rankNames[rank] ?? '낙첨';
+      gameLines.add('${String.fromCharCode(65 + i)}: $nums → $rankText');
+    }
+
+    final isWinner = purchase.rank != null && purchase.rank != 'nowin';
+    final title = isWinner
+        ? '🎉 제 ${winning.round}회 당첨!!!'
+        : '😔 제 ${winning.round}회 낙첨...';
+
+    var body = '$winningLine\n\n${gameLines.join('\n')}';
+    if (isWinner && purchase.prize > 0) {
+      body += '\n\n총 당첨금: ₩${_formatPrize(purchase.prize)}';
+    }
+
+    await SchedulerService.showNotification(title: title, body: body, id: 2);
+  } catch (_) {
+    // 로그인/이력 조회 실패 시 기존처럼 당첨번호만 알림
+    await SchedulerService.showNotification(
+      title: '🎱 제 ${winning.round}회 당첨번호',
+      body: '${winning.numbers.join(", ")} + ${winning.bonus}',
+      id: 2,
+    );
+  }
+}
+
+String _formatPrize(int amount) {
+  final str = amount.toString();
+  final buf = StringBuffer();
+  for (var i = 0; i < str.length; i++) {
+    if (i > 0 && (str.length - i) % 3 == 0) buf.write(',');
+    buf.write(str[i]);
+  }
+  return buf.toString();
 }
