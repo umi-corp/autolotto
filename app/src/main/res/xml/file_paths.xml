@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- 업데이트 APK 다운로드 위치(cacheDir/updates)를 FileProvider로 공유. -->
+    <cache-path name="updates" path="updates/" />
+</paths>

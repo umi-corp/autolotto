@@ -3,8 +3,9 @@
 동행복권 로또 6/45 자동 구매 & 당첨 확인 앱
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Flutter](https://img.shields.io/badge/Flutter-3.41+-blue.svg)](https://flutter.dev)
-[![Platform](https://img.shields.io/badge/Platform-Android-green.svg)](https://developer.android.com)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.2-blue.svg)](https://kotlinlang.org)
+[![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203%20Expressive-green.svg)](https://developer.android.com/jetpack/compose)
+[![Platform](https://img.shields.io/badge/Platform-Android%2012+-green.svg)](https://developer.android.com)
 
 
 <p align="center">
@@ -19,7 +20,9 @@
 - **수동/자동 번호** — 게임별로 수동 번호 지정 또는 자동 생성 선택
 - **당첨 확인** — 매주 토요일 21:00 자동 당첨 확인 & 푸시 알림
 - **구매 기록** — 게임별 번호, 등수, 당첨금 한눈에 확인
-- **보안 저장** — 계정 정보는 Android Keystore 암호화 저장
+- **보안 저장** — 계정 정보는 Android Keystore(EncryptedSharedPreferences) 암호화 저장
+- **모던 디자인** — Material 3 Expressive 'Lucky Gloss', 네이티브 Jetpack Compose · 스프링 인터랙션
+- **자동 업데이트** — 앱 내에서 새 버전 원탭 설치 (사이드로드 배포)
 
 ## 📱 스크린샷
 
@@ -34,63 +37,59 @@
 
 ### 요구 사항
 
-- Flutter 3.41 이상
-- Android SDK 36
-- Java 17
+- Android SDK 36 (compileSdk / targetSdk 36), minSdk 31 (Android 12+)
+- JDK 17
+- Android Studio 또는 Gradle
 
 ### 빌드 & 설치
 
 ```bash
-# 의존성 설치
-flutter pub get
+# 디버그 빌드 + 유닛 테스트
+./gradlew :app:assembleDebug :app:testDebugUnitTest
 
-# Hive 어댑터 재생성 (필요 시)
-dart run build_runner build --delete-conflicting-outputs
-
-# 릴리즈 APK 빌드 (ABI별 분리)
-flutter build apk --release --split-per-abi
+# 릴리스 APK (서명: 루트 key.properties 필요)
+./gradlew :app:assembleRelease
 ```
 
-빌드된 APK: `build/app/outputs/flutter-apk/app-arm64-v8a-release.apk`
+빌드된 APK: `app/build/outputs/apk/release/app-release.apk`
+릴리스 서명은 루트 `key.properties`(gitignore)가 있을 때만 활성화됩니다.
 
 ## 📂 프로젝트 구조
 
 ```
-lib/
-├── main.dart                      # 앱 진입점, 자동 로그인
-├── app.dart                       # 하단 탭 네비게이션
-├── models/                        # 데이터 모델 (Hive)
-│   ├── purchase.dart
-│   └── result.dart
+app/src/main/kotlin/com/umicorp/autolotto/
+├── MainActivity.kt              # 진입점 (Compose setContent)
+├── AppContainer.kt              # 앱 스코프 컴포지션 루트 (상태·서비스·업데이트)
+├── dhlottery/                   # 동행복권 역공학 세션
+│   ├── AuthService.kt           # RSA 로그인 (도메인별 쿠키)
+│   ├── PurchaseService.kt       # 로또 구매 (execBuy.do)
+│   ├── ResultService.kt         # 당첨번호 조회
+│   ├── HistoryService.kt        # 구매 내역
+│   ├── DhlotterySession.kt      # OkHttp 세션 (수동 리다이렉트)
+│   └── RsaCrypto.kt             # RSA PKCS1
 ├── data/
-│   ├── database.dart              # Hive 초기화
-│   └── repositories/              # 로컬 DB CRUD
-├── services/
-│   ├── auth_service.dart          # 동행복권 로그인 (RSA 암호화)
-│   ├── purchase_service.dart      # 로또 구매 API
-│   ├── result_service.dart        # 당첨번호 조회
-│   ├── history_service.dart       # 구매 내역 조회
-│   ├── scheduler_service.dart     # AlarmManager 스케줄링
-│   ├── balance_alert_service.dart # 잔액 부족 알림
-│   └── secure_storage.dart        # 암호화 저장소
-├── screens/
-│   ├── splash_screen.dart         # 스플래시 (자동 로그인)
-│   ├── home_screen.dart           # 홈 (카운트다운, 당첨번호)
-│   ├── number_screen.dart         # 번호 설정 (수동/자동)
-│   ├── history_screen.dart        # 구매/당첨 기록
-│   └── settings_screen.dart       # 설정 (계정, 자동구매)
-├── providers/
-│   └── providers.dart             # Riverpod 상태 관리
-├── l10n/                          # 다국어 지원 (ko, en, ja)
-└── utils/
-    ├── constants.dart             # API URL 상수
-    ├── crypto.dart                # RSA 암호화
-    └── ui_helpers.dart            # 공통 UI 유틸
+│   ├── SecureStore.kt           # EncryptedSharedPreferences (+ Flutter 마이그레이션)
+│   ├── Purchase.kt
+│   └── WinningResult.kt
+├── scheduler/                   # AlarmManager 자가연쇄 + WorkManager
+│   ├── AlarmScheduler.kt        # 알람 등록 (자동구매 1001 / 결과확인 1002)
+│   ├── AutoPurchaseWorker.kt    # 백그라운드 자동 구매
+│   ├── CheckResultWorker.kt     # 백그라운드 당첨 확인
+│   ├── SchedulerReceivers.kt    # 부팅·앱 업데이트 시 알람 복원
+│   └── Notifications.kt         # 알림 (구매/당첨/잔액)
+├── update/
+│   └── AppUpdater.kt            # 인앱 업데이트 (GitHub 릴리스 확인·설치)
+└── ui/                          # Jetpack Compose · Material 3 Expressive
+    ├── App.kt                   # 하단 pill 네비 + 4탭 페이저
+    ├── SplashScreen.kt          # 스플래시 (자동 로그인)
+    ├── screen/                  # Home · Number · History · Settings
+    ├── theme/                   # Lucky Gloss 테마·색·모션
+    └── util/                    # 볼 색상·포맷 등 UI 헬퍼
 ```
 
 ## 🔐 보안
 
-- 계정 정보는 `flutter_secure_storage`로 **Android Keystore** 암호화 저장
+- 계정 정보는 **EncryptedSharedPreferences**(Android Keystore)로 암호화 저장 (Flutter판에서 자동 마이그레이션)
 - 로그인 비밀번호는 동행복권 서버의 **RSA 공개키로 암호화** 후 전송
 - 디버그 로그는 릴리즈 빌드에서 비활성화
 - 모든 API 통신은 HTTPS

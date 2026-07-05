@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ja (원본 app_ja.arb 1:1 포트). -->
+<resources>
+    <string name="nav_home">ホーム</string>
+    <string name="nav_numbers">番号</string>
+    <string name="nav_history">履歴</string>
+    <string name="nav_settings">設定</string>
+    <string name="bottomNavHome">ホーム</string>
+    <string name="bottomNavNumbers">番号設定</string>
+    <string name="bottomNavHistory">履歴</string>
+    <string name="bottomNavSettings">設定</string>
+
+    <string name="appTitle">AutoLotto</string>
+
+    <string name="autoPurchaseEnabled">自動購入 有効</string>
+    <string name="autoPurchaseDisabled">自動購入 無効</string>
+    <string name="autoPurchaseSchedule">%1$sに自動購入されます</string>
+    <string name="enableInSettings">設定で有効にしてください</string>
+    <string name="buttonSetupNumbers">🎯 番号を設定する</string>
+
+    <string name="countdownTitle">第%1$d回 抽選まで</string>
+    <string name="countdownDays">日</string>
+    <string name="countdownHours">時</string>
+    <string name="countdownMinutes">分</string>
+    <string name="countdownSeconds">秒</string>
+
+    <string name="winningNumbersWithRound">🏆 第%1$d回 当選番号</string>
+    <string name="winningNumbersPrevious">🏆 前回の当選番号</string>
+    <string name="winningNumbersLoadError">当選番号を読み込めません</string>
+
+    <string name="balanceTitle">預り金残高</string>
+
+    <string name="numberSetupTitle">番号設定</string>
+    <string name="bannerEnableAutoPurchase">設定で自動購入を有効にしてください</string>
+    <string name="numberSetupInstruction">毎週自動購入する番号を設定してください。\n手動番号は毎週固定、自動は毎週ランダム生成されます。</string>
+    <string name="modeManual">✏️ 手動</string>
+    <string name="modeAuto">🎲 自動</string>
+    <string name="autoNumberTitle">自動番号</string>
+    <string name="autoNumberSubtitle">毎週ランダムに生成されます</string>
+    <string name="buttonAllAuto">すべて自動</string>
+    <string name="buttonReset">リセット</string>
+    <string name="buttonConfirmGame">ゲーム%1$s 確定 ✓</string>
+    <string name="selectionCount">選択: %1$d/6</string>
+    <string name="gameSummaryTitle">📋 ゲーム設定</string>
+    <string name="gameSummarySelecting">いま設定中</string>
+    <string name="rollingAllAuto">運試し中</string>
+    <string name="gameSummaryNotSet">未設定</string>
+    <string name="gameSummaryAuto">🎲 自動 (毎週ランダム)</string>
+    <string name="buttonSaveDone">保存完了！</string>
+    <string name="buttonSaveGames">%1$dゲーム設定を保存</string>
+    <string name="snackbarSaveSuccess">✅ %1$dゲーム設定保存完了！ %2$sに自動購入されます。</string>
+
+    <string name="historyTitle">購入履歴</string>
+    <string name="historyNoRecords">購入履歴がありません</string>
+    <string name="historyLoginToLoad">ログインすると購入履歴を表示します</string>
+    <string name="historyLoadError">読み込み失敗: %1$s</string>
+    <string name="statusPending">確認待ち</string>
+    <string name="statusNoWin">落選</string>
+    <string name="rankWithEmoji">%1$s 🎉</string>
+    <string name="roundLabel">第%1$d回</string>
+    <string name="prizeLabel">当選金: ₩%1$s</string>
+    <string name="rank1st">1等</string>
+    <string name="rank2nd">2等</string>
+    <string name="rank3rd">3等</string>
+    <string name="rank4th">4等</string>
+    <string name="rank5th">5等</string>
+
+    <string name="settingsTitle">設定</string>
+    <string name="sectionAccount">👤 アカウント</string>
+    <string name="sectionAutoPurchase">⏰ 自動購入</string>
+    <string name="sectionNotifications">🔔 通知</string>
+    <string name="sectionAppInfo">📱 アプリ情報</string>
+
+    <string name="dhLotteryAccount">同行福券アカウント</string>
+    <string name="statusLoggedIn">ログイン済み</string>
+    <string name="statusLoginRequired">ログインが必要</string>
+    <string name="buttonLogout">ログアウト</string>
+    <string name="buttonLogin">ログイン</string>
+
+    <string name="dialogLoginTitle">同行福券ログイン</string>
+    <string name="inputUserId">ユーザーID</string>
+    <string name="inputPassword">パスワード</string>
+    <string name="buttonCancel">キャンセル</string>
+    <string name="buttonLoggingIn">ログイン中...</string>
+
+    <string name="snackbarLoginSuccess">✅ ログイン成功！</string>
+    <string name="snackbarLogoutSuccess">ログアウト完了</string>
+
+    <string name="settingEnableAutoPurchase">自動購入を有効にする</string>
+    <string name="hintLoginRequired">ログイン後に利用可能</string>
+    <string name="gamesConfigured">%1$dゲーム設定済み</string>
+    <string name="hintChangeInNumberTab">番号設定タブで変更</string>
+    <string name="hintSetupGamesInNumberTab">番号設定タブでゲームを設定してください</string>
+    <string name="settingPurchaseDay">購入曜日</string>
+    <string name="settingPurchaseTime">購入時間</string>
+    <string name="settingBatteryOptimization">バッテリー最適化を除外</string>
+    <string name="hintBatteryOptimization">定時実行のため推奨</string>
+
+    <string name="settingPurchaseNoti">購入完了通知</string>
+    <string name="settingResultNoti">当選結果通知</string>
+    <string name="notificationResultTime">毎週土曜日 21:00</string>
+
+    <string name="settingVersion">バージョン</string>
+    <string name="settingOpenSource">オープンソース</string>
+    <string name="settingResetData">データ初期化</string>
+    <string name="dialogResetTitle">データ初期化</string>
+    <string name="dialogResetMessage">すべての設定と購入履歴が削除されます。\n本当に初期化しますか？</string>
+    <string name="buttonReset2">初期化</string>
+
+    <string name="errorInvalidPurchaseTime">現在の設定時間ではこの曜日に購入できません。先に時間を変更してください。</string>
+    <string name="errorPurchaseTimeRestriction">この時間帯は購入できません。\n平日/日: 06:00~23:59、土: 06:00~19:59</string>
+    <string name="snackbarBatteryAlreadyExcluded">✅ すでにバッテリー最適化から除外されています</string>
+    <string name="snackbarBatteryManualDisable">アプリ設定でバッテリー最適化を手動で解除してください</string>
+    <string name="errorBatterySettings">バッテリー設定を開けません: %1$s</string>
+
+    <string name="dayMon">月</string>
+    <string name="dayTue">火</string>
+    <string name="dayWed">水</string>
+    <string name="dayThu">木</string>
+    <string name="dayFri">金</string>
+    <string name="daySat">土</string>
+    <string name="daySun">日</string>
+    <string name="dayFormat">%1$s曜日</string>
+    <string name="weeklySchedule">毎週%1$s曜日 %2$s</string>
+
+    <string name="settingLanguage">言語</string>
+    <string name="languageSystem">システムデフォルト</string>
+    <string name="languageKo">한국어</string>
+    <string name="languageEn">English</string>
+    <string name="languageJa">日本語</string>
+    <string name="errorInvalidCredentials">IDまたはパスワードが正しくありません。</string>
+
+    <string name="balanceAlertTitle">残高不足通知</string>
+    <string name="balanceAlertDesc">設定金額以下で通知</string>
+    <string name="balanceThreshold">通知基準額</string>
+    <string name="chargeNow">チャージする</string>
+    <string name="balanceLowNotifTitle">残高不足</string>
+    <string name="balanceLowNotifBody">預り金残高が%1$sウォンです。チャージが必要です。</string>
+    <string name="thresholdCustom">直接入力</string>
+    <string name="thresholdInputTitle">通知基準額を入力</string>
+    <string name="thresholdInputHint">金額 (ウォン)</string>
+    <string name="buttonConfirm">確認</string>
+    <string name="sectionDonation">開発者を応援する</string>
+    <string name="donationTitle">コーヒー1杯おごる</string>
+
+    <string name="snackbarLoginFailed">ログインに失敗しました。もう一度お試しください。</string>
+    <string name="permissionNotification">通知権限</string>
+    <string name="permissionNotificationDesc">購入・当選通知の受信に必要</string>
+    <string name="permissionExactAlarm">正確なアラーム</string>
+    <string name="permissionExactAlarmDesc">定時自動購入に必要</string>
+    <string name="permissionGranted">許可済み</string>
+    <string name="buttonGrant">許可</string>
+
+    <!-- アクセシビリティ(contentDescription) -->
+    <string name="cdRefresh">更新</string>
+    <string name="cdRemoveGame">ゲーム削除</string>
+
+    <!-- アプリ内アップデート(サイドロード) -->
+    <string name="updateAvailableTitle">新バージョン %1$s</string>
+    <string name="buttonUpdateNow">アップデート</string>
+    <string name="buttonUpdateLater">後で</string>
+    <string name="updateDownloading">ダウンロード中…</string>
+</resources>

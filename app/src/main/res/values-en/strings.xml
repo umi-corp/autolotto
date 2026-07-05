@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- en (원본 app_en.arb 1:1 포트). -->
+<resources>
+    <string name="nav_home">Home</string>
+    <string name="nav_numbers">Numbers</string>
+    <string name="nav_history">History</string>
+    <string name="nav_settings">Settings</string>
+    <string name="bottomNavHome">Home</string>
+    <string name="bottomNavNumbers">Numbers</string>
+    <string name="bottomNavHistory">History</string>
+    <string name="bottomNavSettings">Settings</string>
+
+    <string name="appTitle">AutoLotto</string>
+
+    <string name="autoPurchaseEnabled">Auto Purchase Enabled</string>
+    <string name="autoPurchaseDisabled">Auto Purchase Disabled</string>
+    <string name="autoPurchaseSchedule">Auto purchase at %1$s</string>
+    <string name="enableInSettings">Enable in Settings</string>
+    <string name="buttonSetupNumbers">🎯 Set Up Numbers</string>
+
+    <string name="countdownTitle">Draw #%1$d in</string>
+    <string name="countdownDays">D</string>
+    <string name="countdownHours">H</string>
+    <string name="countdownMinutes">M</string>
+    <string name="countdownSeconds">S</string>
+
+    <string name="winningNumbersWithRound">🏆 Draw #%1$d Winning Numbers</string>
+    <string name="winningNumbersPrevious">🏆 Previous Winning Numbers</string>
+    <string name="winningNumbersLoadError">Unable to load winning numbers</string>
+
+    <string name="balanceTitle">Deposit Balance</string>
+
+    <string name="numberSetupTitle">Number Setup</string>
+    <string name="bannerEnableAutoPurchase">Please enable auto purchase in Settings</string>
+    <string name="numberSetupInstruction">Set numbers for weekly auto purchase.\nManual numbers are fixed weekly, auto numbers are randomly generated.</string>
+    <string name="modeManual">✏️ Manual</string>
+    <string name="modeAuto">🎲 Auto</string>
+    <string name="autoNumberTitle">Auto Numbers</string>
+    <string name="autoNumberSubtitle">Randomly generated each week</string>
+    <string name="buttonAllAuto">All Auto</string>
+    <string name="buttonReset">Reset</string>
+    <string name="buttonConfirmGame">Confirm Game %1$s ✓</string>
+    <string name="selectionCount">Selected: %1$d/6</string>
+    <string name="gameSummaryTitle">📋 Game Settings</string>
+    <string name="gameSummarySelecting">Now picking</string>
+    <string name="rollingAllAuto">Rolling for luck</string>
+    <string name="gameSummaryNotSet">Not set</string>
+    <string name="gameSummaryAuto">🎲 Auto (Weekly Random)</string>
+    <string name="buttonSaveDone">Saved!</string>
+    <string name="buttonSaveGames">Save %1$d Games</string>
+    <string name="snackbarSaveSuccess">✅ %1$d games saved! Auto purchase at %2$s.</string>
+
+    <string name="historyTitle">Purchase History</string>
+    <string name="historyNoRecords">No purchase records</string>
+    <string name="historyLoginToLoad">Login to load purchase history</string>
+    <string name="historyLoadError">Load failed: %1$s</string>
+    <string name="statusPending">Pending</string>
+    <string name="statusNoWin">No Win</string>
+    <string name="rankWithEmoji">%1$s 🎉</string>
+    <string name="roundLabel">Draw #%1$d</string>
+    <string name="prizeLabel">Prize: ₩%1$s</string>
+    <string name="rank1st">1st</string>
+    <string name="rank2nd">2nd</string>
+    <string name="rank3rd">3rd</string>
+    <string name="rank4th">4th</string>
+    <string name="rank5th">5th</string>
+
+    <string name="settingsTitle">Settings</string>
+    <string name="sectionAccount">👤 Account</string>
+    <string name="sectionAutoPurchase">⏰ Auto Purchase</string>
+    <string name="sectionNotifications">🔔 Notifications</string>
+    <string name="sectionAppInfo">📱 App Info</string>
+
+    <string name="dhLotteryAccount">DHLottery Account</string>
+    <string name="statusLoggedIn">Logged in</string>
+    <string name="statusLoginRequired">Login required</string>
+    <string name="buttonLogout">Logout</string>
+    <string name="buttonLogin">Login</string>
+
+    <string name="dialogLoginTitle">DHLottery Login</string>
+    <string name="inputUserId">User ID</string>
+    <string name="inputPassword">Password</string>
+    <string name="buttonCancel">Cancel</string>
+    <string name="buttonLoggingIn">Logging in...</string>
+
+    <string name="snackbarLoginSuccess">✅ Login successful!</string>
+    <string name="snackbarLogoutSuccess">Logged out</string>
+
+    <string name="settingEnableAutoPurchase">Enable Auto Purchase</string>
+    <string name="hintLoginRequired">Login required</string>
+    <string name="gamesConfigured">%1$d games configured</string>
+    <string name="hintChangeInNumberTab">Change in Numbers tab</string>
+    <string name="hintSetupGamesInNumberTab">Set up games in Numbers tab</string>
+    <string name="settingPurchaseDay">Purchase Day</string>
+    <string name="settingPurchaseTime">Purchase Time</string>
+    <string name="settingBatteryOptimization">Disable Battery Optimization</string>
+    <string name="hintBatteryOptimization">Recommended for on-time execution</string>
+
+    <string name="settingPurchaseNoti">Purchase Notification</string>
+    <string name="settingResultNoti">Result Notification</string>
+    <string name="notificationResultTime">Every Saturday 21:00</string>
+
+    <string name="settingVersion">Version</string>
+    <string name="settingOpenSource">Open Source</string>
+    <string name="settingResetData">Reset Data</string>
+    <string name="dialogResetTitle">Reset Data</string>
+    <string name="dialogResetMessage">All settings and purchase records will be deleted.\nAre you sure?</string>
+    <string name="buttonReset2">Reset</string>
+
+    <string name="errorInvalidPurchaseTime">Current time is not valid for the selected day. Please change the time first.</string>
+    <string name="errorPurchaseTimeRestriction">Cannot purchase at this time.\nWeekday/Sun: 06:00~23:59, Sat: 06:00~19:59</string>
+    <string name="snackbarBatteryAlreadyExcluded">✅ Already excluded from battery optimization</string>
+    <string name="snackbarBatteryManualDisable">Please disable battery optimization in app settings</string>
+    <string name="errorBatterySettings">Cannot open battery settings: %1$s</string>
+
+    <string name="dayMon">Mon</string>
+    <string name="dayTue">Tue</string>
+    <string name="dayWed">Wed</string>
+    <string name="dayThu">Thu</string>
+    <string name="dayFri">Fri</string>
+    <string name="daySat">Sat</string>
+    <string name="daySun">Sun</string>
+    <string name="dayFormat">%1$s</string>
+    <string name="weeklySchedule">Every %1$s %2$s</string>
+
+    <string name="settingLanguage">Language</string>
+    <string name="languageSystem">System Default</string>
+    <string name="languageKo">한국어</string>
+    <string name="languageEn">English</string>
+    <string name="languageJa">日本語</string>
+    <string name="errorInvalidCredentials">Invalid username or password.</string>
+
+    <string name="balanceAlertTitle">Low Balance Alert</string>
+    <string name="balanceAlertDesc">Alert when below threshold</string>
+    <string name="balanceThreshold">Alert Threshold</string>
+    <string name="chargeNow">Charge Now</string>
+    <string name="balanceLowNotifTitle">Low Balance</string>
+    <string name="balanceLowNotifBody">Deposit balance is ₩%1$s. Please charge.</string>
+    <string name="thresholdCustom">Custom</string>
+    <string name="thresholdInputTitle">Enter Alert Threshold</string>
+    <string name="thresholdInputHint">Amount (KRW)</string>
+    <string name="buttonConfirm">OK</string>
+    <string name="sectionDonation">Support Developer</string>
+    <string name="donationTitle">Buy Me a Coffee</string>
+
+    <string name="snackbarLoginFailed">Login failed. Please try again.</string>
+    <string name="permissionNotification">Notification Permission</string>
+    <string name="permissionNotificationDesc">Required to receive purchase/result notifications</string>
+    <string name="permissionExactAlarm">Exact Alarm</string>
+    <string name="permissionExactAlarmDesc">Required for on-time auto purchase</string>
+    <string name="permissionGranted">Granted</string>
+    <string name="buttonGrant">Grant</string>
+
+    <!-- accessibility (contentDescription) -->
+    <string name="cdRefresh">Refresh</string>
+    <string name="cdRemoveGame">Remove game</string>
+
+    <!-- In-app update (sideload) -->
+    <string name="updateAvailableTitle">New version %1$s</string>
+    <string name="buttonUpdateNow">Update</string>
+    <string name="buttonUpdateLater">Later</string>
+    <string name="updateDownloading">Downloading…</string>
+</resources>

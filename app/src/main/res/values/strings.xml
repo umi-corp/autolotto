@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ko 템플릿 (원본 app_ko.arb 1:1 포트). {placeholder} → Android %1$s/%1$d 포지셔널. -->
+<resources>
+    <string name="app_name">AutoLotto</string>
+
+    <!-- 하단 네비 (기존 nav_* 유지 + arb bottomNav* 확장) -->
+    <string name="nav_home">홈</string>
+    <string name="nav_numbers">번호</string>
+    <string name="nav_history">내역</string>
+    <string name="nav_settings">설정</string>
+    <string name="bottomNavHome">홈</string>
+    <string name="bottomNavNumbers">번호설정</string>
+    <string name="bottomNavHistory">기록</string>
+    <string name="bottomNavSettings">설정</string>
+
+    <string name="appTitle">AutoLotto</string>
+
+    <!-- 홈 -->
+    <string name="autoPurchaseEnabled">자동 구매 활성화</string>
+    <string name="autoPurchaseDisabled">자동 구매 비활성화</string>
+    <string name="autoPurchaseSchedule">%1$s에 자동 구매됩니다</string>
+    <string name="enableInSettings">설정에서 활성화해주세요</string>
+    <string name="buttonSetupNumbers">🎯 번호 설정하기</string>
+
+    <string name="countdownTitle">제 %1$d회 추첨까지</string>
+    <string name="countdownDays">일</string>
+    <string name="countdownHours">시간</string>
+    <string name="countdownMinutes">분</string>
+    <string name="countdownSeconds">초</string>
+
+    <string name="winningNumbersWithRound">🏆 제 %1$d회 당첨번호</string>
+    <string name="winningNumbersPrevious">🏆 지난 당첨번호</string>
+    <string name="winningNumbersLoadError">당첨번호를 불러올 수 없습니다</string>
+
+    <string name="balanceTitle">예치금 잔액</string>
+
+    <!-- 번호 설정 -->
+    <string name="numberSetupTitle">번호 설정</string>
+    <string name="bannerEnableAutoPurchase">설정에서 자동 구매를 활성화해주세요</string>
+    <string name="numberSetupInstruction">매주 자동 구매할 번호를 설정하세요.\n수동 번호는 매주 고정, 자동은 매주 랜덤 생성됩니다.</string>
+    <string name="modeManual">✏️ 수동</string>
+    <string name="modeAuto">🎲 자동</string>
+    <string name="autoNumberTitle">자동 번호</string>
+    <string name="autoNumberSubtitle">매주 랜덤으로 생성됩니다</string>
+    <string name="buttonAllAuto">전부 자동</string>
+    <string name="buttonReset">초기화</string>
+    <string name="buttonConfirmGame">게임 %1$s 확정 ✓</string>
+    <string name="selectionCount">선택: %1$d/6</string>
+    <string name="gameSummaryTitle">📋 게임 설정</string>
+    <string name="gameSummarySelecting">지금 설정 중</string>
+    <string name="rollingAllAuto">행운을 굴리는 중</string>
+    <string name="gameSummaryNotSet">미설정</string>
+    <string name="gameSummaryAuto">🎲 자동 (매주 랜덤)</string>
+    <string name="buttonSaveDone">저장 완료!</string>
+    <string name="buttonSaveGames">%1$d게임 설정 저장</string>
+    <string name="snackbarSaveSuccess">✅ %1$d게임 설정 저장 완료! %2$s에 자동 구매됩니다.</string>
+
+    <!-- 기록 -->
+    <string name="historyTitle">구매 기록</string>
+    <string name="historyNoRecords">구매 기록이 없습니다</string>
+    <string name="historyLoginToLoad">로그인하면 구매 기록을 불러옵니다</string>
+    <string name="historyLoadError">조회 실패: %1$s</string>
+    <string name="statusPending">확인 대기</string>
+    <string name="statusNoWin">낙첨</string>
+    <string name="rankWithEmoji">%1$s 🎉</string>
+    <string name="roundLabel">제 %1$d회</string>
+    <string name="prizeLabel">당첨금: ₩%1$s</string>
+    <string name="rank1st">1등</string>
+    <string name="rank2nd">2등</string>
+    <string name="rank3rd">3등</string>
+    <string name="rank4th">4등</string>
+    <string name="rank5th">5등</string>
+
+    <!-- 설정 -->
+    <string name="settingsTitle">설정</string>
+    <string name="sectionAccount">👤 계정</string>
+    <string name="sectionAutoPurchase">⏰ 자동 구매</string>
+    <string name="sectionNotifications">🔔 알림</string>
+    <string name="sectionAppInfo">📱 앱 정보</string>
+
+    <string name="dhLotteryAccount">동행복권 계정</string>
+    <string name="statusLoggedIn">로그인됨</string>
+    <string name="statusLoginRequired">로그인 필요</string>
+    <string name="buttonLogout">로그아웃</string>
+    <string name="buttonLogin">로그인</string>
+
+    <string name="dialogLoginTitle">동행복권 로그인</string>
+    <string name="inputUserId">아이디</string>
+    <string name="inputPassword">비밀번호</string>
+    <string name="buttonCancel">취소</string>
+    <string name="buttonLoggingIn">로그인 중...</string>
+
+    <string name="snackbarLoginSuccess">✅ 로그인 성공!</string>
+    <string name="snackbarLogoutSuccess">로그아웃 완료</string>
+
+    <string name="settingEnableAutoPurchase">자동 구매 활성화</string>
+    <string name="hintLoginRequired">로그인 후 사용 가능</string>
+    <string name="gamesConfigured">%1$d게임 설정됨</string>
+    <string name="hintChangeInNumberTab">번호 설정 탭에서 변경</string>
+    <string name="hintSetupGamesInNumberTab">번호 설정 탭에서 게임을 설정해주세요</string>
+    <string name="settingPurchaseDay">구매 요일</string>
+    <string name="settingPurchaseTime">구매 시간</string>
+    <string name="settingBatteryOptimization">배터리 최적화 제외</string>
+    <string name="hintBatteryOptimization">정시 실행을 위해 권장</string>
+
+    <string name="settingPurchaseNoti">구매 완료 알림</string>
+    <string name="settingResultNoti">당첨 결과 알림</string>
+    <string name="notificationResultTime">매주 토요일 21:00</string>
+
+    <string name="settingVersion">버전</string>
+    <string name="settingOpenSource">오픈소스</string>
+    <string name="settingResetData">데이터 초기화</string>
+    <string name="dialogResetTitle">데이터 초기화</string>
+    <string name="dialogResetMessage">모든 설정과 구매 기록이 삭제됩니다.\n정말 초기화하시겠습니까?</string>
+    <string name="buttonReset2">초기화</string>
+
+    <string name="errorInvalidPurchaseTime">현재 설정된 시간이 해당 요일에 구매 불가합니다. 시간을 먼저 변경해주세요.</string>
+    <string name="errorPurchaseTimeRestriction">해당 시간에는 구매할 수 없습니다.\n평일/일: 06:00~23:59, 토: 06:00~19:59</string>
+    <string name="snackbarBatteryAlreadyExcluded">✅ 이미 배터리 최적화에서 제외되어 있습니다</string>
+    <string name="snackbarBatteryManualDisable">앱 설정에서 배터리 최적화를 직접 해제해주세요</string>
+    <string name="errorBatterySettings">배터리 최적화 설정을 열 수 없습니다: %1$s</string>
+
+    <string name="dayMon">월</string>
+    <string name="dayTue">화</string>
+    <string name="dayWed">수</string>
+    <string name="dayThu">목</string>
+    <string name="dayFri">금</string>
+    <string name="daySat">토</string>
+    <string name="daySun">일</string>
+    <string name="dayFormat">%1$s요일</string>
+    <string name="weeklySchedule">매주 %1$s요일 %2$s</string>
+
+    <string name="settingLanguage">언어</string>
+    <string name="languageSystem">시스템 기본</string>
+    <string name="languageKo">한국어</string>
+    <string name="languageEn">English</string>
+    <string name="languageJa">日本語</string>
+    <string name="errorInvalidCredentials">아이디 또는 비밀번호가 올바르지 않습니다.</string>
+
+    <string name="balanceAlertTitle">잔액 부족 알림</string>
+    <string name="balanceAlertDesc">설정 금액 이하일 때 알림</string>
+    <string name="balanceThreshold">알림 기준 금액</string>
+    <string name="chargeNow">충전하기</string>
+    <string name="balanceLowNotifTitle">잔액 부족</string>
+    <string name="balanceLowNotifBody">예치금 잔액이 %1$s원입니다. 충전이 필요합니다.</string>
+    <string name="thresholdCustom">직접입력</string>
+    <string name="thresholdInputTitle">알림 기준 금액 입력</string>
+    <string name="thresholdInputHint">금액 (원)</string>
+    <string name="buttonConfirm">확인</string>
+    <string name="sectionDonation">개발자 후원하기</string>
+    <string name="donationTitle">커피 한 잔 후원</string>
+
+    <!-- 설정: 로그인 실패 + 권한 상태(원본 외 추가 — 네이티브 백그라운드 신뢰성) -->
+    <string name="snackbarLoginFailed">로그인에 실패했습니다. 다시 시도해주세요.</string>
+    <string name="permissionNotification">알림 권한</string>
+    <string name="permissionNotificationDesc">구매·당첨 알림 수신에 필요</string>
+    <string name="permissionExactAlarm">정확한 알람</string>
+    <string name="permissionExactAlarmDesc">정시 자동 구매에 필요</string>
+    <string name="permissionGranted">허용됨</string>
+    <string name="buttonGrant">허용</string>
+
+    <!-- 접근성(contentDescription) -->
+    <string name="cdRefresh">새로고침</string>
+    <string name="cdRemoveGame">게임 삭제</string>
+
+    <!-- 인앱 업데이트(사이드로드) -->
+    <string name="updateAvailableTitle">새 버전 %1$s</string>
+    <string name="buttonUpdateNow">업데이트</string>
+    <string name="buttonUpdateLater">나중에</string>
+    <string name="updateDownloading">다운로드 중…</string>
+</resources>

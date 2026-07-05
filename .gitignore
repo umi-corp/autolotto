@@ -1,64 +1,16 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
-
-# IDE
 *.iml
-*.ipr
-*.iws
+.gradle/
+/local.properties
 .idea/
-.vscode/
-
-# Flutter/Dart
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-/coverage/
-**/doc/api/
-
-# Unused platforms (Android only)
-ios/
-macos/
-linux/
-windows/
-web/
-
-# Signing keys (NEVER commit)
-android/key.properties
-**/*.jks
-**/*.keystore
-
-# Android build artifacts
-/android/app/debug
-/android/app/profile
-/android/app/release
-android/local.properties
-android/.gradle/
-android/.kotlin/
-android/build/
-
-# Symbolication / Obfuscation
-app.*.symbols
-app.*.map.json
-
-# OMC (oh-my-claudecode)
+/build
+/captures
+.externalNativeBuild
+.cxx
+/app/build
+key.properties
+*.keystore
+*.jks
+.DS_Store
+.kotlin/
 .omc/
-
-# APK binaries
-*.apk
-
-# Flutter metadata
-.metadata
+scratchpad/

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 런치 테마: 프레임워크 NoActionBar(=MDC 의존 없음). 실제 M3 테마는 Compose에서 적용.
+         ponytail: 콜드스타트 흰 플래시가 신경 쓰이면 core-splashscreen 추가 -->
+    <style name="Theme.AutoLotto.Launch" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+</resources>
