@@ -255,11 +255,11 @@
       <div class="ball" style="background:#B0D840">41</div>
       <div class="ball bonus" style="background:#69C8F2">+16</div>
     </div>
-    <a href="https://github.com/umi-corp/autolotto/releases/download/v1.0.0/app-arm64-v8a-release.apk" class="download-btn" download>
+    <a href="https://github.com/umi-corp/autolotto/releases/download/v1.1.0/autolotto-1.1.0-universal.apk" class="download-btn" download>
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 13.5L12 19l-5.5-5.5L8 12l2.5 2.5V3h3v11.5L16 12l1.5 1.5zM5 21h14v-2H5v2z"/></svg>
       <span data-i18n="download"></span>
     </a>
-    <p class="version-info">v1.0.0 · Android 5.0+ · 28MB</p>
+    <p class="version-info">Android 12+</p>
   </section>
 
   <section class="features">
@@ -403,6 +403,18 @@
     const browserLang = navigator.language?.slice(0, 2);
     const initLang = saved || (['en','ja'].includes(browserLang) ? browserLang : 'ko');
     setLang(initLang);
+
+    // 다운로드 링크·버전 표기를 최신 릴리스로 자동 갱신 (실패 시 정적 폴백 유지)
+    fetch('https://api.github.com/repos/umi-corp/autolotto/releases/latest')
+      .then(r => r.json())
+      .then(rel => {
+        const apk = (rel.assets || []).find(a => a.name.endsWith('.apk'));
+        if (!apk) return;
+        document.querySelector('.download-btn').href = apk.browser_download_url;
+        document.querySelector('.version-info').textContent =
+          `${rel.tag_name} · Android 12+ · ${(apk.size / 1048576).toFixed(1)}MB`;
+      })
+      .catch(() => {});
   </script>
 
 </body>
