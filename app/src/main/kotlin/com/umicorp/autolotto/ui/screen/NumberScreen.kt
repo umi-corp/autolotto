@@ -121,10 +121,17 @@ fun NumberScreen(modifier: Modifier = Modifier) {
 
     // 저장된 5슬롯을 1회 하이드레이트(원본 initState._loadSavedGames). 실데이터 도착 시 잠근다.
     // ponytail: 전부 미설정이면 둘 다 all-null이라 구분 불가 → 그 경우만 반복 복사(무해, 이미 all-null).
+    // 슬롯 진입 시 저장 상태를 편집 상태로 동기화 — 토글(자동/수동)과 수동 볼 선택 표시까지 (사용자 피드백).
+    fun syncEditorToSlot() {
+        isAuto = games[currentSlot]?.isEmpty() == true
+        selected = games[currentSlot]?.toSet() ?: emptySet()
+    }
+
     LaunchedEffect(loaded) {
         if (!initialized) {
             for (i in 0 until 5) games[i] = loaded.getOrNull(i)
             currentSlot = (0 until 5).firstOrNull { games[it] == null } ?: 0
+            syncEditorToSlot()
             if (loaded.any { it != null }) initialized = true
         }
     }
@@ -151,12 +158,9 @@ fun NumberScreen(modifier: Modifier = Modifier) {
     fun confirmSlot() {
         if (!isAuto && selected.size != 6) return
         games[currentSlot] = if (isAuto) emptyList() else selected.sorted()
-        selected = emptySet()
         saved = false
-        if (currentSlot < 4) {
-            currentSlot++
-            isAuto = false
-        }
+        if (currentSlot < 4) currentSlot++
+        syncEditorToSlot()
     }
 
     Box(modifier) {
@@ -216,7 +220,8 @@ fun NumberScreen(modifier: Modifier = Modifier) {
             SlotTabs(
                 games = games,
                 currentSlot = currentSlot,
-                onSelect = { currentSlot = it; selected = emptySet(); isAuto = false },
+                // 같은 슬롯 재탭은 무시 — 재동기화로 편집 중 선택이 리셋되는 것 방지 (P6).
+                onSelect = { if (it != currentSlot) { currentSlot = it; syncEditorToSlot() } },
             )
             Spacer(Modifier.height(4.dp))
 
@@ -235,23 +240,21 @@ fun NumberScreen(modifier: Modifier = Modifier) {
             Spacer(Modifier.height(4.dp))
 
             // 수동/자동 토글 — bouncy 스프링 슬라이드 인디케이터.
+            // 토글은 보기 전환일 뿐 — 확정 전엔 선택을 파괴하지 않는다(자동↔수동 왕복 보존, P5).
             ModeToggle(
                 isAuto = isAuto,
-                onChange = { auto ->
-                    isAuto = auto
-                    if (auto) selected = emptySet()
-                },
+                onChange = { auto -> isAuto = auto },
             )
             Spacer(Modifier.height(16.dp))
 
             if (!isAuto) {
+                // 확정 전 선택은 저장 대상이 아니므로 saved는 건드리지 않는다(P4).
                 NumberGrid(selected = selected, onToggle = { n ->
                     selected = when {
                         n in selected -> selected - n
                         selected.size < 6 -> selected + n
                         else -> selected
                     }
-                    saved = false
                 })
                 Spacer(Modifier.height(12.dp))
                 SelectedNumbers(selected)
@@ -287,7 +290,12 @@ fun NumberScreen(modifier: Modifier = Modifier) {
             GameSummary(
                 games = games,
                 currentSlot = currentSlot,
-                onRemove = { i -> games[i] = null; saved = false },
+                onRemove = { i ->
+                    games[i] = null
+                    saved = false
+                    // 현재 슬롯을 지우면 편집기(토글·그리드)도 함께 비운다(P1).
+                    if (i == currentSlot) syncEditorToSlot()
+                },
             )
             Spacer(Modifier.height(16.dp))
 
@@ -300,16 +308,19 @@ fun NumberScreen(modifier: Modifier = Modifier) {
                 if (saved) MaterialTheme.colorScheme.onTertiary else MaterialTheme.colorScheme.onPrimary,
                 label = "saveContent",
             )
+            // 0게임(구매 안 함)도 유효한 저장 — 비활성화하면 전부 삭제가 저장소에 반영될 길이 없다(P2).
             Button(
                 onClick = {
                     val count = games.count { it != null }
                     vm.saveConfig(games.toList())
                     saved = true
                     scope.launch {
-                        snackbar.showSnackbar(context.getString(R.string.snackbarSaveSuccess, count, schedule))
+                        snackbar.showSnackbar(
+                            if (count == 0) context.getString(R.string.snackbarSaveEmpty)
+                            else context.getString(R.string.snackbarSaveSuccess, count, schedule),
+                        )
                     }
                 },
-                enabled = configuredCount > 0,
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = CircleShape,
                 colors = ButtonDefaults.buttonColors(
@@ -320,8 +331,11 @@ fun NumberScreen(modifier: Modifier = Modifier) {
                 Icon(if (saved) Icons.Rounded.CheckCircle else Icons.Rounded.Save, null, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    if (saved) stringResource(R.string.buttonSaveDone)
-                    else stringResource(R.string.buttonSaveGames, configuredCount),
+                    when {
+                        saved -> stringResource(R.string.buttonSaveDone)
+                        configuredCount == 0 -> stringResource(R.string.buttonSaveEmpty)
+                        else -> stringResource(R.string.buttonSaveGames, configuredCount)
+                    },
                     fontWeight = FontWeight.Bold,
                 )
             }
@@ -340,7 +354,12 @@ private fun DiceRollOverlay(visible: Boolean) {
         Box(
             Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.30f)),
+                .background(Color.Black.copy(alpha = 0.30f))
+                // 연출 중 아래 컨트롤로 터치가 통과하지 않도록 스크림이 입력을 소비(P3).
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                ) {},
             contentAlignment = Alignment.Center,
         ) {
             val rotation = remember { Animatable(-540f) }

@@ -53,7 +53,9 @@
     <string name="gameSummaryAuto">🎲 자동 (매주 랜덤)</string>
     <string name="buttonSaveDone">저장 완료!</string>
     <string name="buttonSaveGames">%1$d게임 설정 저장</string>
+    <string name="buttonSaveEmpty">게임 없이 저장</string>
     <string name="snackbarSaveSuccess">✅ %1$d게임 설정 저장 완료! %2$s에 자동 구매됩니다.</string>
+    <string name="snackbarSaveEmpty">✅ 저장 완료! 구매할 게임이 없어 자동 구매되지 않습니다.</string>
 
     <!-- 기록 -->
     <string name="historyTitle">구매 기록</string>

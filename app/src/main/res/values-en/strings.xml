@@ -48,7 +48,9 @@
     <string name="gameSummaryAuto">🎲 Auto (Weekly Random)</string>
     <string name="buttonSaveDone">Saved!</string>
     <string name="buttonSaveGames">Save %1$d Games</string>
+    <string name="buttonSaveEmpty">Save with No Games</string>
     <string name="snackbarSaveSuccess">✅ %1$d games saved! Auto purchase at %2$s.</string>
+    <string name="snackbarSaveEmpty">✅ Saved! No games set — nothing will be purchased.</string>
 
     <string name="historyTitle">Purchase History</string>
     <string name="historyNoRecords">No purchase records</string>

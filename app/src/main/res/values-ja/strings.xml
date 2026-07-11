@@ -48,7 +48,9 @@
     <string name="gameSummaryAuto">🎲 自動 (毎週ランダム)</string>
     <string name="buttonSaveDone">保存完了！</string>
     <string name="buttonSaveGames">%1$dゲーム設定を保存</string>
+    <string name="buttonSaveEmpty">ゲームなしで保存</string>
     <string name="snackbarSaveSuccess">✅ %1$dゲーム設定保存完了！ %2$sに自動購入されます。</string>
+    <string name="snackbarSaveEmpty">✅ 保存しました！ゲームがないため自動購入されません。</string>
 
     <string name="historyTitle">購入履歴</string>
     <string name="historyNoRecords">購入履歴がありません</string>
