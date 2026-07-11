@@ -10,6 +10,8 @@
 key.properties
 *.keystore
 *.jks
+.env
+.env.*
 .DS_Store
 .kotlin/
 .omc/
