@@ -14,6 +14,8 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -143,6 +145,9 @@ fun NumberScreen(modifier: Modifier = Modifier) {
     val scope = rememberCoroutineScope()
     val haptic = LocalHapticFeedback.current
 
+    // 확정 버튼 팝(눌림 0.92 → 오버슛 복귀) — 확정이 접수됐다는 즉각 피드백 (사용자 피드백).
+    val confirmPop = remember { Animatable(1f) }
+
     // 전부 자동: 주사위 텀블 연출(~0.95s) 후 실제 적용 — 즉시 적용은 밋밋(사용자 피드백).
     var rollingAllAuto by remember { mutableStateOf(false) }
     LaunchedEffect(rollingAllAuto) {
@@ -161,6 +166,8 @@ fun NumberScreen(modifier: Modifier = Modifier) {
         saved = false
         if (currentSlot < 4) currentSlot++
         syncEditorToSlot()
+        haptic.performHapticFeedback(HapticFeedbackType.Confirm)
+        scope.launch { confirmPop.snapTo(0.92f); confirmPop.animateTo(1f, MotionSpecs.bouncy()) }
     }
 
     Box(modifier) {
@@ -276,7 +283,10 @@ fun NumberScreen(modifier: Modifier = Modifier) {
                 CtaButton(
                     onClick = { confirmSlot() },
                     enabled = isAuto || selected.size == 6,
-                    modifier = Modifier.weight(2f),
+                    modifier = Modifier.weight(2f).graphicsLayer {
+                        scaleX = confirmPop.value
+                        scaleY = confirmPop.value
+                    },
                 ) {
                     Text(
                         stringResource(R.string.buttonConfirmGame, ('A' + currentSlot).toString()),
@@ -421,15 +431,22 @@ private fun SlotTabs(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (configured) {
-                    Icon(
-                        Icons.Rounded.Check,
-                        null,
-                        tint = if (isCurrent) MaterialTheme.colorScheme.onPrimaryContainer
-                        else MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(14.dp),
-                    )
-                    Spacer(Modifier.width(2.dp))
+                // 확정 시 체크가 바운스로 팝인 — 상단에서도 확정 접수가 보이게.
+                AnimatedVisibility(
+                    configured,
+                    enter = scaleIn(MotionSpecs.bouncy()) + fadeIn(),
+                    exit = scaleOut() + fadeOut(),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Rounded.Check,
+                            null,
+                            tint = if (isCurrent) MaterialTheme.colorScheme.onPrimaryContainer
+                            else MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(14.dp),
+                        )
+                        Spacer(Modifier.width(2.dp))
+                    }
                 }
                 Text(
                     ('A' + i).toString(),
