@@ -2,6 +2,7 @@ package com.umicorp.autolotto.update
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -84,12 +85,38 @@ object AppUpdater {
                             }
                         }
                     }
+                    // 설치 전 자체 검증 — 실패 시 파일 폐기 + null(호출부의 기존 다운로드 실패 처리로 수렴).
+                    if (!isValidUpdate(context, out)) {
+                        out.delete()
+                        return@use null
+                    }
                     out
                 }
             } catch (_: Exception) {
                 null
             }
         }
+
+    /**
+     * 다운로드한 APK가 이 앱의 정식 업데이트인지 검증 — 패키지명과 서명 인증서가 현재 설치본과
+     * 정확히 일치해야 한다. 서명 불일치 업데이트는 어차피 OS가 거부하지만, 다른 패키지명으로 위장한
+     * APK의 설치 유도를 다운로드 단계에서 차단한다. 판단 불가(파싱 실패 등)는 전부 거부(fail-closed).
+     */
+    private fun isValidUpdate(context: Context, apk: File): Boolean = try {
+        val pm = context.packageManager
+        @Suppress("DEPRECATION")
+        val archive = pm.getPackageArchiveInfo(apk.absolutePath, PackageManager.GET_SIGNING_CERTIFICATES)
+        @Suppress("DEPRECATION")
+        val own = pm.getPackageInfo(context.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+        val archiveSigners = archive?.signingInfo?.apkContentsSigners?.map { it.toCharsString() }?.toSet()
+        val ownSigners = own.signingInfo?.apkContentsSigners?.map { it.toCharsString() }?.toSet()
+        archive != null &&
+            archive.packageName == context.packageName &&
+            !archiveSigners.isNullOrEmpty() &&
+            archiveSigners == ownSigners
+    } catch (_: Exception) {
+        false
+    }
 
     /** 시스템 패키지 인스톨러 실행(FileProvider content:// URI). */
     fun install(context: Context, apk: File) {
