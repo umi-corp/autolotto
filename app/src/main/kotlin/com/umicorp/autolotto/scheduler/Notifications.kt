@@ -2,10 +2,13 @@ package com.umicorp.autolotto.scheduler
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.graphics.BitmapFactory
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.umicorp.autolotto.MainActivity
 import com.umicorp.autolotto.R
 import com.umicorp.autolotto.data.SecureStore
 import java.time.LocalDate
@@ -29,15 +32,31 @@ object Notifications {
     private const val CHANNEL_NAME = "AutoLotto 알림"
     private const val CHANNEL_DESC = "로또 구매/당첨 알림"
 
+    /** 알림 탭 시 이동할 탭 — MainActivity 인텐트 extra 계약. */
+    const val EXTRA_TAB = "navigate_tab"
+    const val TAB_HISTORY = "history"
+    const val TAB_SETTINGS = "settings"
+
     /**
      * 알림 표시. 본문이 여러 줄이므로 BigTextStyle로 전체 노출(원본 flutter_local_notifications가
      * 멀티라인 body를 그대로 보여준 동작과 동등).
      *
      * POST_NOTIFICATIONS(API33+) 미허용 시 시스템이 조용히 무시한다 — 권한 요청 UI는 다음 슬라이스(설정/홈).
      */
-    fun show(context: Context, title: String, body: String, id: Int) {
+    fun show(context: Context, title: String, body: String, id: Int, tab: String? = null) {
         ensureChannel(context)
+        // 탭 시 앱 실행(+지정 탭 이동). contentIntent가 없으면 알림을 눌러도 아무 일도 없다(사용자 피드백).
+        val contentIntent = PendingIntent.getActivity(
+            context,
+            id,
+            Intent(context, MainActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                tab?.let { putExtra(EXTRA_TAB, it) }
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setContentIntent(contentIntent)
             .setSmallIcon(R.mipmap.ic_launcher) // 원본도 @mipmap/ic_launcher를 알림 아이콘으로 사용
             .setColor(BRAND_TEAL) // 작은 아이콘/앱 이름 액센트에 브랜드 틸 적용
             .setColorized(false)
@@ -97,6 +116,7 @@ object BalanceAlert {
                 title = "💰 잔액 부족",
                 body = "예치금 잔액이 ${Notifications.formatThousands(balance.toLong())}원입니다. 충전이 필요합니다.",
                 id = NOTIF_ID,
+                tab = Notifications.TAB_SETTINGS, // 충전/임계값 UI가 설정 탭에 있음
             )
         } catch (_: Exception) {
             // 원본 debugPrint 후 무시와 동일 (백그라운드 알림 실패가 본 작업을 막지 않도록)

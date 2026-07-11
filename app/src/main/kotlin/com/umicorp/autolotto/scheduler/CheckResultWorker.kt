@@ -82,7 +82,7 @@ class CheckResultWorker(context: Context, params: WorkerParameters) : CoroutineW
                 body += "\n\n총 당첨금: ₩${Notifications.formatThousands(purchase.prize)}"
             }
 
-            Notifications.show(ctx, title, body, 2)
+            Notifications.show(ctx, title, body, 2, tab = Notifications.TAB_HISTORY)
         } catch (e: Exception) {
             // 로그인/이력 조회 실패 시 기존처럼 당첨번호만 알림
             Notifications.show(
@@ -90,6 +90,7 @@ class CheckResultWorker(context: Context, params: WorkerParameters) : CoroutineW
                 "🎱 제 ${winning.round}회 당첨번호",
                 "${winning.numbers.joinToString(", ")} + ${winning.bonus}",
                 2,
+                tab = Notifications.TAB_HISTORY,
             )
         }
     }

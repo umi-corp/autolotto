@@ -72,12 +72,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.umicorp.autolotto.R
 import com.umicorp.autolotto.appContainer
+import com.umicorp.autolotto.scheduler.Notifications
 import com.umicorp.autolotto.update.AppUpdater
 import com.umicorp.autolotto.update.UpdateInfo
 import com.umicorp.autolotto.ui.screen.HistoryScreen
 import com.umicorp.autolotto.ui.screen.HomeScreen
 import com.umicorp.autolotto.ui.screen.NumberScreen
 import com.umicorp.autolotto.ui.screen.SettingsScreen
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -86,13 +88,13 @@ import java.util.Locale
  * 언어는 [LocalizedApp]이 MainActivity에서 감싼다.
  */
 @Composable
-fun AppRoot() {
+fun AppRoot(pendingTab: MutableStateFlow<String?>? = null) {
     val container = LocalContext.current.appContainer
     var showSplash by rememberSaveable { mutableStateOf(true) }
     if (showSplash) {
         SplashScreen(container, onFinished = { showSplash = false })
     } else {
-        AppShell()
+        AppShell(pendingTab)
     }
 }
 
@@ -103,7 +105,7 @@ private data class TabItem(val labelRes: Int, val icon: ImageVector)
  * 알림 권한(POST_NOTIFICATIONS, API33+)은 셸 진입 시 요청(원본 home initState 타이밍).
  */
 @Composable
-fun AppShell() {
+fun AppShell(pendingTab: MutableStateFlow<String?>? = null) {
     RequestNotificationPermission()
 
     val tabs = listOf(
@@ -114,6 +116,21 @@ fun AppShell() {
     )
     val pagerState = rememberPagerState(pageCount = { tabs.size })
     val scope = rememberCoroutineScope()
+
+    // 알림 탭 진입: 지정 탭으로 즉시 이동 후 소비 — cold(스플래시 뒤)/warm(onNewIntent) 공용.
+    LaunchedEffect(pendingTab) {
+        pendingTab?.collect { tab ->
+            val page = when (tab) {
+                Notifications.TAB_HISTORY -> 2
+                Notifications.TAB_SETTINGS -> 3
+                else -> null
+            }
+            if (page != null) {
+                pagerState.scrollToPage(page)
+                pendingTab.value = null
+            }
+        }
+    }
 
     // 사이드로드 인앱 업데이트: 셸 진입 시 1회 확인 → 새 버전이면 다이얼로그.
     val container = LocalContext.current.appContainer

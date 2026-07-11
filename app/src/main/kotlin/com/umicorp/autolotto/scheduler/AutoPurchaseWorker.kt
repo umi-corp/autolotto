@@ -109,6 +109,7 @@ class AutoPurchaseWorker(context: Context, params: WorkerParameters) : Coroutine
                     "🎰 로또 자동 구매 완료!",
                     "제 ${result.round}회 · ${result.totalGames}게임\n$numbersText",
                     1,
+                    tab = Notifications.TAB_HISTORY,
                 )
             } catch (purchaseError: Exception) {
                 throw Exception(purchaseError.message ?: "$purchaseError")
