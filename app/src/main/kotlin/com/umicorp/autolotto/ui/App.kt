@@ -57,7 +57,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.umicorp.autolotto.ui.theme.MotionSpecs
 import androidx.compose.ui.platform.LocalConfiguration
@@ -172,7 +176,7 @@ private fun UpdateDialog(info: UpdateInfo) {
             Column {
                 if (info.notes.isNotBlank()) {
                     Text(
-                        info.notes,
+                        markdownLite(info.notes),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -212,6 +216,36 @@ private fun UpdateDialog(info: UpdateInfo) {
             }
         },
     )
+}
+
+/** [markdownLite]의 인라인 `**굵게**` 처리. 짝이 안 맞으면 원문 그대로. */
+private fun AnnotatedString.Builder.appendInlineBold(text: String) {
+    var rest = text
+    while (true) {
+        val s = rest.indexOf("**")
+        val e = if (s >= 0) rest.indexOf("**", s + 2) else -1
+        if (s < 0 || e < 0) { append(rest); return }
+        append(rest.substring(0, s))
+        withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(rest.substring(s + 2, e)) }
+        rest = rest.substring(e + 2)
+    }
+}
+
+/**
+ * 릴리스 노트용 초경량 마크다운 렌더링: `#` 제목(굵게), `- ` 목록(•), `**굵게**`만 지원.
+ * GitHub 릴리스 body가 이 부분집합을 벗어나면 해당 문법은 원문 그대로 보인다. (테스트 대상)
+ */
+internal fun markdownLite(src: String): AnnotatedString = buildAnnotatedString {
+    src.trim().lines().forEachIndexed { i, raw ->
+        if (i > 0) append('\n')
+        val line = raw.trimEnd()
+        when {
+            line.startsWith("#") ->
+                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(line.trimStart('#').trim()) }
+            line.startsWith("- ") -> { append("•  "); appendInlineBold(line.removePrefix("- ")) }
+            else -> appendInlineBold(line)
+        }
+    }
 }
 
 /**
