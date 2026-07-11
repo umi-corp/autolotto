@@ -79,11 +79,17 @@ class SecureStore(context: Context) {
      *
      * 안전장치: 플래그로 1회만 / 구 파일 없으면 skip(신규설치) / 읽기 실패(스킴 불일치·손상)는 try-catch로 무시
      * (크래시 없이 신규 상태로 진행). EncryptedSharedPreferences는 Keystore 의존 → 계측 테스트 영역(JVM 불가).
+     * 이관 시도 후에는 구 저장소 파일을 삭제한다(로그아웃 후 자격증명 잔존 방지) — 이미 이관된 기기도 잔존 파일이 있으면 정리.
      */
     private fun migrateFromFlutterIfNeeded() {
         // 프로세스 락: AppContainer와 백그라운드 Worker가 SecureStore를 동시 생성해도 1회만.
         synchronized(MIGRATION_LOCK) {
-            if (prefs.contains(MIGRATION_FLAG)) return
+            if (prefs.contains(MIGRATION_FLAG)) {
+                // 이미 이관 완료 — 잔존하는 구 파일만 정리(로그아웃·초기화가 지우지 못하는 자격증명 사본 제거).
+                // exists() 게이트 없이 항상 호출: 중단된 쓰기가 남긴 .bak까지 프레임워크가 지워준다(없으면 no-op).
+                deleteLegacyStore()
+                return
+            }
             runCatching {
                 val legacyFile = java.io.File(appContext.dataDir, "shared_prefs/$FLUTTER_PREFS_FILE.xml")
                 if (legacyFile.exists()) {
@@ -100,7 +106,15 @@ class SecureStore(context: Context) {
             }
             // 성공/실패/구파일없음 모두 플래그 set → 1회성 보장(재시도 루프·재덮어쓰기 방지).
             prefs.edit().putBoolean(MIGRATION_FLAG, true).commit()
+            // 이관 시도 후 구 저장소 삭제 — 플래그가 재읽기를 막으므로 남겨둘 가치가 없고,
+            // 남겨두면 로그아웃·전체초기화(clearAll)가 지우지 못하는 자격증명 사본이 된다.
+            deleteLegacyStore()
         }
+    }
+
+    /** 구 Flutter 보안저장소 삭제(파일+메모리 캐시). 실패는 무시 — 파일이 남으면 다음 앱 시작에서 재시도. */
+    private fun deleteLegacyStore() {
+        runCatching { appContext.deleteSharedPreferences(FLUTTER_PREFS_FILE) }
     }
 
     // === 계정 ===
