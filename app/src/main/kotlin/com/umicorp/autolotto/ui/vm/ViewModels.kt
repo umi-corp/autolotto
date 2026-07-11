@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 /**
  * 화면별 ViewModel (원본 Riverpod 화면 상태 포트).
@@ -83,32 +84,77 @@ class NumberViewModel(private val container: AppContainer) : ViewModel() {
     }
 }
 
-/** 기록: 로그인 상태면 dhlottery에서 최근 구매내역 라이브 조회(로컬 DB 없음). */
+/**
+ * 기록: 로그인 상태면 dhlottery에서 구매내역 라이브 조회(로컬 DB 없음).
+ *
+ * 조회는 3개월 창 단위(동행복권 1회 조회 한도) — 첫 로드는 최근 3개월, "더 보기"가 이전 3개월
+ * 창을 이어 붙여 최대 4창(서버 보관 한도 1년)까지 내려간다. 새로고침은 첫 창부터 리셋.
+ */
 class HistoryViewModel(private val container: AppContainer) : ViewModel() {
     val isLoggedIn = container.isLoggedIn  // 빈 화면 문구 분기용(원본 isLoggedInProvider watch)
     private val _purchases = MutableStateFlow<List<Purchase>>(emptyList())
     val purchases: StateFlow<List<Purchase>> = _purchases.asStateFlow()
     private val _loading = MutableStateFlow(false)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
+    private val _loadingMore = MutableStateFlow(false)
+    val loadingMore: StateFlow<Boolean> = _loadingMore.asStateFlow()
+    private val _canLoadMore = MutableStateFlow(false)
+    val canLoadMore: StateFlow<Boolean> = _canLoadMore.asStateFlow()
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
+    /** 다음 "더 보기" 창의 끝 날짜 다음 날(= 마지막으로 로드한 창의 시작일). */
+    private var oldestStart: LocalDate = LocalDate.now()
+    private var windowsLoaded = 0
+
     init { loadHistory() }
 
+    /** 첫 3개월 창 로드(새로고침 겸용 — 더 보기로 쌓인 이전 창은 버리고 리셋). */
     fun loadHistory() {
         if (!container.isLoggedIn.value) return
         viewModelScope.launch {
             _loading.value = true
             _error.value = null
             try {
-                _purchases.value = container.historyService.fetchRecentPurchases(5)
+                val end = LocalDate.now()
+                val start = end.minusMonths(WINDOW_MONTHS)
+                _purchases.value = container.historyService.fetchPurchases(start, end)
                     .sortedByDescending { it.round }
+                oldestStart = start
+                windowsLoaded = 1
+                _canLoadMore.value = true
             } catch (e: Exception) {
                 _error.value = e.message  // 5b가 historyLoadError 템플릿으로 로컬라이즈
+                _canLoadMore.value = false
             } finally {
                 _loading.value = false
             }
         }
+    }
+
+    /** 이전 3개월 창 추가 로드. 실패는 조용히 무시 — 버튼이 남아 재시도 가능. */
+    fun loadMore() {
+        if (_loading.value || _loadingMore.value || !_canLoadMore.value) return
+        viewModelScope.launch {
+            _loadingMore.value = true
+            try {
+                val end = oldestStart.minusDays(1)
+                val start = end.minusMonths(WINDOW_MONTHS)
+                val more = container.historyService.fetchPurchases(start, end)
+                _purchases.value = (_purchases.value + more).sortedByDescending { it.round }
+                oldestStart = start
+                windowsLoaded++
+                if (windowsLoaded >= MAX_WINDOWS) _canLoadMore.value = false
+            } catch (_: Exception) {
+            } finally {
+                _loadingMore.value = false
+            }
+        }
+    }
+
+    private companion object {
+        const val WINDOW_MONTHS = 3L  // 동행복권 1회 조회 한도
+        const val MAX_WINDOWS = 4     // 4×3개월 = 서버 보관 한도 1년
     }
 }
 

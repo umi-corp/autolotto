@@ -25,12 +25,18 @@ import java.time.format.DateTimeFormatter
  */
 class HistoryService(private val session: DhlotterySession) {
 
-    /** 최근 구매 내역 가져오기 (최대 [count]건). */
-    suspend fun fetchRecentPurchases(count: Int = 5): List<Purchase> = withContext(Dispatchers.IO) {
-        val now = LocalDateTime.now()
-        val thirtyDaysAgo = now.minusDays(30)
-        val todayStr = DATE_FMT.format(now)
-        val fromStr = DATE_FMT.format(thirtyDaysAgo)
+    /** 최근 구매 내역 (최근 30일, 최대 [count]건) — 결과확인 워커용. */
+    suspend fun fetchRecentPurchases(count: Int = 5): List<Purchase> =
+        fetchPurchases(LocalDate.now().minusDays(30), LocalDate.now(), count)
+
+    /**
+     * [from]~[to](포함) 기간의 구매 내역. 동행복권 조회창 한도(최대 3개월)는 호출자가 지킨다 —
+     * 내역 화면이 3개월 창 단위 "더 보기"로 최대 1년(서버 보관 한도)까지 거슬러 올라간다.
+     */
+    suspend fun fetchPurchases(from: LocalDate, to: LocalDate, count: Int = Int.MAX_VALUE): List<Purchase> = withContext(Dispatchers.IO) {
+        val now = LocalDateTime.now() // 날짜 파싱 실패 시 폴백(원본 동작)
+        val todayStr = DATE_FMT.format(to)
+        val fromStr = DATE_FMT.format(from)
 
         // 1. 마이페이지 원장 방문 (Referer용)
         session.get(session.base(ApiConstants.MYPAGE_LEDGER)).close()

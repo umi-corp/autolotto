@@ -153,6 +153,22 @@ class HistoryServiceTest {
     }
 
     @Test
+    fun `fetchPurchases queries the requested window`() = runBlocking {
+        val detail = """
+            {"data":{"success":true,"ticket":{"drawed":false,
+              "game_dtl":[{"num":[1,2,3,4,5,6],"type":0,"rank":0,"amt":0}]}}}
+        """.trimIndent()
+        val purchases = historyFor(ledgerOneLotto, detail)
+            .fetchPurchases(LocalDate.of(2026, 1, 5), LocalDate.of(2026, 4, 5))
+        assertEquals(1, purchases.size)
+
+        server.takeRequest() // 1) 마이페이지 원장 방문
+        val listPath = server.takeRequest().path.orEmpty() // 2) 목록 조회
+        assertTrue(listPath, listPath.contains("srchStrDt=20260105"))
+        assertTrue(listPath, listPath.contains("srchEndDt=20260405"))
+    }
+
+    @Test
     fun `fetchRecentPurchases parses compact yyyyMMdd dates (Dart tryParse parity)`() = runBlocking {
         val ledger = """
             {"data":{"list":[

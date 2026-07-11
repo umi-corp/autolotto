@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -33,6 +34,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -73,6 +75,8 @@ fun HistoryScreen(modifier: Modifier = Modifier) {
     val vm: HistoryViewModel = appViewModel()
     val purchases by vm.purchases.collectAsState()
     val loading by vm.loading.collectAsState()
+    val loadingMore by vm.loadingMore.collectAsState()
+    val canLoadMore by vm.canLoadMore.collectAsState()
     val error by vm.error.collectAsState()
     val isLoggedIn by vm.isLoggedIn.collectAsState()
 
@@ -109,7 +113,14 @@ fun HistoryScreen(modifier: Modifier = Modifier) {
                         CircularProgressIndicator()
                     }
 
-                    1 -> EmptyState(isLoggedIn = isLoggedIn, error = error)
+                    1 -> EmptyState(
+                        isLoggedIn = isLoggedIn,
+                        error = error,
+                        // 최근 3개월이 비어도 이전 창에 내역이 있을 수 있음 → 빈 화면에서도 더 보기
+                        canLoadMore = isLoggedIn && canLoadMore,
+                        loadingMore = loadingMore,
+                        onLoadMore = vm::loadMore,
+                    )
 
                     else -> PullToRefreshBox(
                         isRefreshing = loading,
@@ -121,6 +132,9 @@ fun HistoryScreen(modifier: Modifier = Modifier) {
                             verticalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
                             itemsIndexed(purchases) { i, item -> HistoryCard(item, index = i) }
+                            if (canLoadMore) {
+                                item { LoadMoreButton(loading = loadingMore, onClick = vm::loadMore) }
+                            }
                         }
                     }
                 }
@@ -130,7 +144,13 @@ fun HistoryScreen(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun EmptyState(isLoggedIn: Boolean, error: String?) {
+private fun EmptyState(
+    isLoggedIn: Boolean,
+    error: String?,
+    canLoadMore: Boolean = false,
+    loadingMore: Boolean = false,
+    onLoadMore: () -> Unit = {},
+) {
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -152,6 +172,31 @@ private fun EmptyState(isLoggedIn: Boolean, error: String?) {
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
             )
+        }
+        if (canLoadMore) {
+            Spacer(Modifier.height(8.dp))
+            LoadMoreButton(loading = loadingMore, onClick = onLoadMore)
+        }
+    }
+}
+
+/** 목록 하단/빈 화면 공용 "더 보기" — 로드 중엔 같은 자리에서 스피너로 교체. */
+@Composable
+private fun LoadMoreButton(loading: Boolean, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier.fillMaxWidth().height(48.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (loading) {
+            CircularProgressIndicator(Modifier.size(28.dp), strokeWidth = 3.dp)
+        } else {
+            TextButton(onClick = onClick) {
+                Text(
+                    stringResource(R.string.historyLoadMore),
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.ExtraBold,
+                )
+            }
         }
     }
 }
