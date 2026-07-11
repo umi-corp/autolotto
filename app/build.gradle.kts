@@ -21,8 +21,8 @@ android {
         applicationId = "com.umicorp.autolotto"
         minSdk = 31          // Android 12 — dynamic color / M3 Expressive 풀 적용, 폴백 불필요
         targetSdk = 36
-        versionCode = 2007  // Flutter판 최종 versionCode(2001)보다 높아야 기기에서 업그레이드 설치됨
-        versionName = "1.1.4"
+        versionCode = 2008  // Flutter판 최종 versionCode(2001)보다 높아야 기기에서 업그레이드 설치됨
+        versionName = "1.1.5"
     }
 
     if (keystorePropertiesFile.exists()) {
