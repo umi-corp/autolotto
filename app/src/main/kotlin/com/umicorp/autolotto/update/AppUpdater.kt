@@ -13,6 +13,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
 import java.io.File
+import java.io.IOException
 
 /** GitHub 릴리스에서 감지한 새 버전 정보. */
 data class UpdateInfo(val versionName: String, val downloadUrl: String, val notes: String)
@@ -62,25 +63,31 @@ object AppUpdater {
         }
     }
 
+    /** 업데이트 APK 크기 상한 — 릴리스 채널 침해 시 저장공간 고갈 방지(실제 APK ~4MB). */
+    private const val MAX_APK_BYTES = 50L * 1024 * 1024
+
     /** APK를 캐시로 스트리밍 다운로드. 진행률(0..1)은 [onProgress]. 성공 시 File, 실패 시 null. */
     suspend fun download(context: Context, url: String, onProgress: (Float) -> Unit): File? =
         withContext(Dispatchers.IO) {
+            val dir = File(context.cacheDir, "updates").apply { mkdirs() }
+            dir.listFiles()?.forEach { it.delete() }   // 이전 다운로드 정리
+            val out = File(dir, "autolotto-update.apk")
             try {
-                val dir = File(context.cacheDir, "updates").apply { mkdirs() }
-                dir.listFiles()?.forEach { it.delete() }   // 이전 다운로드 정리
-                val out = File(dir, "autolotto-update.apk")
                 client.newCall(Request.Builder().url(url).build()).execute().use { resp ->
                     if (!resp.isSuccessful) return@use null
                     val body = resp.body ?: return@use null
                     val total = body.contentLength()
+                    if (total > MAX_APK_BYTES) return@use null // 상한 초과 선언 시 시작하지 않음
                     body.byteStream().use { input ->
                         out.outputStream().use { output ->
                             val buf = ByteArray(8192)
                             var read = 0L
                             var n: Int
                             while (input.read(buf).also { n = it } != -1) {
-                                output.write(buf, 0, n)
                                 read += n
+                                // 길이 미신고·허위 신고 대비 — 상한 초과분은 쓰지 않고 즉시 중단(catch가 부분 파일 삭제)
+                                if (read > MAX_APK_BYTES) throw IOException("update apk exceeds size cap")
+                                output.write(buf, 0, n)
                                 if (total > 0) onProgress((read.toFloat() / total).coerceIn(0f, 1f))
                             }
                         }
@@ -93,6 +100,7 @@ object AppUpdater {
                     out
                 }
             } catch (_: Exception) {
+                runCatching { out.delete() }   // 부분 파일 즉시 정리(저장공간 잔류 방지)
                 null
             }
         }
