@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.umicorp.autolotto.ui.screen
 
@@ -8,9 +8,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -299,7 +298,11 @@ private fun HistoryCard(item: Purchase, index: Int) {
     }
 }
 
-/** 게임 1줄: 라벨 + 글로시 볼(당첨 강조/흐림/보너스 림) + 상태 필. FlowRow로 좁은 화면 줄바꿈. */
+/**
+ * 게임 1줄: 라벨 + 글로시 볼(당첨 강조/흐림/보너스 림) + 상태 필(우측 고정).
+ * 좁은 기기에선 FlowRow 줄바꿈으로 필이 아래줄 왼쪽에 떨어지던 문제 → 볼 크기를 가용 폭에 맞춰
+ * 축소해 항상 한 줄 유지 (갤럭시 유효 폭 384dp 사용자 리포트).
+ */
 @Composable
 private fun GameRow(
     letter: String,
@@ -311,42 +314,48 @@ private fun GameRow(
 ) {
     val hasResult = checked && winningNumbers != null
     val gameWinner = gameRank != null && gameRank != "nowin" && gameRank != "pending"
-    FlowRow(
+    Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.width(24.dp).height(32.dp), contentAlignment = Alignment.CenterStart) {
-            Text(
-                letter,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.ExtraBold,
-                style = MaterialTheme.typography.labelLarge,
-            )
-        }
-        nums.forEach { n ->
-            val isMatch = winningNumbers?.contains(n) == true
-            val isBonusMatch = bonusNumber != null && bonusNumber == n
-            LottoBall(
-                n = n,
-                size = 32.dp,
-                dimmed = hasResult && !(isMatch || isBonusMatch),
-                // 맞은 번호는 홈 보너스 볼과 동일한 강조 림 — dimmed 해제만으론 구분이 흐림(사용자 피드백)
-                bordered = hasResult && (isMatch || isBonusMatch),
-            )
+        Text(
+            letter,
+            modifier = Modifier.width(24.dp),
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.ExtraBold,
+            style = MaterialTheme.typography.labelLarge,
+        )
+        // 라벨·필이 자연 폭을 가져간 뒤 남는 폭을 볼들이 나눠 갖는다 (weight=나머지 전부).
+        BoxWithConstraints(Modifier.weight(1f)) {
+            // 하한 없음: 큰 글씨·긴 필로 폭이 더 좁아져도 필을 침범하는 대신 볼이 계속 줄어든다
+            val gaps = (nums.size - 1).coerceAtLeast(0)
+            val ball = ((maxWidth - 6.dp * gaps) / nums.size.coerceAtLeast(1))
+                .coerceIn(0.dp, 32.dp)
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                nums.forEach { n ->
+                    val isMatch = winningNumbers?.contains(n) == true
+                    val isBonusMatch = bonusNumber != null && bonusNumber == n
+                    LottoBall(
+                        n = n,
+                        size = ball,
+                        dimmed = hasResult && !(isMatch || isBonusMatch),
+                        // 맞은 번호는 홈 보너스 볼과 동일한 강조 림 — dimmed 해제만으론 구분이 흐림(사용자 피드백)
+                        bordered = hasResult && (isMatch || isBonusMatch),
+                    )
+                }
+            }
         }
         if (gameRank != null) {
-            Box(Modifier.height(32.dp), contentAlignment = Alignment.Center) {
-                StatusPill(
-                    text = if (gameWinner) stringResource(R.string.rankWithEmoji, localizedRank(gameRank))
-                    else localizedRank(gameRank),
-                    tone = when {
-                        gameWinner -> PillTone.Win
-                        gameRank == "pending" -> PillTone.Pending
-                        else -> PillTone.Lose
-                    },
-                )
-            }
+            StatusPill(
+                text = if (gameWinner) stringResource(R.string.rankWithEmoji, localizedRank(gameRank))
+                else localizedRank(gameRank),
+                tone = when {
+                    gameWinner -> PillTone.Win
+                    gameRank == "pending" -> PillTone.Pending
+                    else -> PillTone.Lose
+                },
+            )
         }
     }
 }

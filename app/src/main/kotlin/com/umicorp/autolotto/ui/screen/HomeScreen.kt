@@ -15,6 +15,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -258,20 +259,33 @@ private fun WinningNumbers(winning: com.umicorp.autolotto.data.WinningResult?, l
                             strokeWidth = 2.dp,
                         )
                         1 -> winning?.let { w ->
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            ) {
-                                w.numbers.forEachIndexed { i, n ->
-                                    PopIn(index = i, key = w.round) { LottoBall(n, size = 38.dp) }
-                                }
-                                Text(
-                                    "+",
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontWeight = FontWeight.Bold,
-                                )
-                                PopIn(index = w.numbers.size, key = w.round) {
-                                    LottoBall(w.bonus, size = 38.dp, bordered = true)
+                            // 좁은 기기(유효 폭 ≤400dp, 예: 갤럭시 기본 384dp)에서 38dp 고정 볼이
+                            // 카드 폭을 넘어 보너스 볼이 잘림 — 가용 폭에 맞춰 볼 크기 축소.
+                            // 하한 없음: 극단 폭(분할 화면 등)에서도 잘리는 대신 계속 줄어든다.
+                            BoxWithConstraints {
+                                val plusWidth = 20.dp
+                                val balls = w.numbers.size + 1 // 본번호 + 보너스
+                                val ball = ((maxWidth - plusWidth - 6.dp * balls) / balls)
+                                    .coerceIn(0.dp, 38.dp)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                ) {
+                                    w.numbers.forEachIndexed { i, n ->
+                                        PopIn(index = i, key = w.round) { LottoBall(n, size = ball) }
+                                    }
+                                    // 고정 폭 슬롯 — 폰트 스케일이 커져도 산식이 예약한 폭과 어긋나지 않게
+                                    Box(Modifier.width(plusWidth), contentAlignment = Alignment.Center) {
+                                        Text(
+                                            "+",
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            fontWeight = FontWeight.Bold,
+                                            maxLines = 1,
+                                        )
+                                    }
+                                    PopIn(index = w.numbers.size, key = w.round) {
+                                        LottoBall(w.bonus, size = ball, bordered = true)
+                                    }
                                 }
                             }
                         }
