@@ -23,28 +23,37 @@ class AutoPurchaseWorker(context: Context, params: WorkerParameters) : Coroutine
     private val store = SecureStore(ctx)
 
     override suspend fun doWork(): Result {
+        var result: Result = Result.success()
+
         // 1) 실제 자동구매 (원본 _onAutoPurchaseAlarm의 try/catch + 메시지 매핑)
         try {
             executeAutoPurchase()
         } catch (e: Exception) {
             val msg = e.message ?: ""
-            val body = when {
-                msg.contains("[login]") -> "로그인에 실패했습니다. 아이디/비밀번호를 확인해주세요."
-                // API 응답 메시지 그대로 전달 (주간구매금액 초과 등)
-                msg.contains("구매 실패:") -> msg.replace("[purchase] ", "")
-                else -> "자동 구매에 실패했습니다. 앱을 열어 상태를 확인해주세요."
+            // [purchase] 실패는 서버가 요청을 이미 처리했을 수 있어 재전송 금지(중복 결제 방지) → 즉시 알림.
+            // 그 이전 단계(자격증명·로그인 등)는 일시 오류일 수 있어 재시도하고, 마지막 시도에만 알린다.
+            val ambiguous = msg.startsWith("[purchase]") || msg.startsWith("[notify]")
+            if (!ambiguous && runAttemptCount < MAX_ATTEMPTS - 1) {
+                result = Result.retry()
+            } else {
+                val body = when {
+                    msg.contains("[login]") -> "로그인에 실패했습니다. 아이디/비밀번호를 확인해주세요."
+                    // API 응답 메시지 그대로 전달 (주간구매금액 초과 등)
+                    msg.contains("구매 실패:") -> msg.replace("[purchase] ", "")
+                    else -> "자동 구매에 실패했습니다. 앱을 열어 상태를 확인해주세요."
+                }
+                Notifications.show(ctx, "⚠️ AutoLotto 오류", body, 99)
             }
-            Notifications.show(ctx, "⚠️ AutoLotto 오류", body, 99)
         }
 
-        // 2) 다음 주 알람 재등록 (one-shot 체인) — 자동구매 활성 시에만
+        // 2) 다음 주 알람 재등록 (one-shot 체인) — 자동구매 활성 시에만. 멱등이라 재시도 회차에 또 호출돼도 안전.
         try {
             if (store.getAutoEnabled()) AlarmScheduler(ctx).scheduleAutoPurchase()
         } catch (e: Exception) {
             Notifications.show(ctx, "⚠️ AutoLotto 오류", "알람 재등록에 실패했습니다.", 98)
         }
 
-        return Result.success()
+        return result
     }
 
     /** 원본 `_executeAutoPurchase` 1:1. 실패 시 `[step] 메시지`로 감싸 던진다(doWork의 매핑이 사용). */
@@ -60,6 +69,11 @@ class AutoPurchaseWorker(context: Context, params: WorkerParameters) : Coroutine
 
             if (!autoEnabled || userId == null || password == null) return
             if (games == 0) return
+
+            // 회차 멱등 가드: Worker 재실행(프로세스 킬 후 WorkManager 재스케줄)·중복 알람에도 같은 회차 재구매 방지.
+            step = "round_guard"
+            val currentRound = PurchaseService.getCurrentRound()
+            if (store.getLastPurchasedRound() >= currentRound) return
 
             step = "parse_numbers"
             val manualJson = store.getManualNumbers()
@@ -93,6 +107,10 @@ class AutoPurchaseWorker(context: Context, params: WorkerParameters) : Coroutine
             try {
                 val result = purchaseService.purchase(autoGames = autoGames, manualNumbers = manualNumbers)
 
+                // 성공 즉시 회차 기록(commit) — 이후 재실행은 round_guard가 차단.
+                // ponytail: 서버 처리~기록 사이 찰나에 킬되는 창은 남음 — 완전 차단은 구매내역 대조 필요.
+                store.setLastPurchasedRound(result.round)
+
                 // 구매 후 잔액 체크 (실패 무시 — 원본 catch (_) {})
                 runCatching {
                     val postBalance = auth.getBalance()
@@ -117,5 +135,10 @@ class AutoPurchaseWorker(context: Context, params: WorkerParameters) : Coroutine
         } catch (e: Exception) {
             throw Exception("[$step] ${e.message ?: e}")
         }
+    }
+
+    private companion object {
+        /** 총 시도 횟수(최초 1 + 재시도 2). 간격은 SchedulerReceivers의 backoff(15분 선형). */
+        const val MAX_ATTEMPTS = 3
     }
 }

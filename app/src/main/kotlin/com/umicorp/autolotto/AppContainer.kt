@@ -158,6 +158,9 @@ class AppContainer(context: Context) {
     suspend fun logout() = withContext(Dispatchers.IO) {
         auth.logout()
         store.deleteCredentials()
+        // 자격증명 없는 자동구매는 매주 조용히 무동작(+다른 계정 재로그인 시 이전 설정으로 재개 위험)
+        // → 로그아웃과 함께 해제·알람 취소. 비로그인 상태에선 스위치가 잠겨 사용자가 끌 수도 없다.
+        if (_autoEnabled.value) setAutoEnabled(false)
         _isLoggedIn.value = false
         _balance.value = 0
         _loggedInUserId.value = null

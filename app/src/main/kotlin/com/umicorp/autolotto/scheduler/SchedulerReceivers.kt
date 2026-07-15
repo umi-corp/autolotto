@@ -3,9 +3,12 @@ package com.umicorp.autolotto.scheduler
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import androidx.work.BackoffPolicy
+import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
+import java.util.concurrent.TimeUnit
 
 /**
  * 알람/부팅 BroadcastReceiver들.
@@ -18,14 +21,14 @@ import androidx.work.WorkManager
 /** 자동구매 알람(1001) → AutoPurchaseWorker enqueue. */
 class AutoPurchaseReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        enqueueExpedited<AutoPurchaseWorker>(context)
+        enqueueExpedited<AutoPurchaseWorker>(context, "auto_purchase")
     }
 }
 
 /** 결과확인 알람(1002) → CheckResultWorker enqueue. */
 class CheckResultReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        enqueueExpedited<CheckResultWorker>(context)
+        enqueueExpedited<CheckResultWorker>(context, "check_result")
     }
 }
 
@@ -45,10 +48,14 @@ class BootReceiver : BroadcastReceiver() {
     }
 }
 
-private inline fun <reified W : androidx.work.ListenableWorker> enqueueExpedited(context: Context) {
+private inline fun <reified W : androidx.work.ListenableWorker> enqueueExpedited(context: Context, uniqueName: String) {
     val request = OneTimeWorkRequestBuilder<W>()
         // 할당량 소진 시 일반 작업으로 강등(예외 없이). minSdk 31이라 expedited는 포그라운드 알림 불필요.
         .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+        // Result.retry() 간격: 15분 선형(15/30/45…). 결과 미게시·일시 네트워크 오류 커버.
+        .setBackoffCriteria(BackoffPolicy.LINEAR, 15, TimeUnit.MINUTES)
         .build()
-    WorkManager.getInstance(context.applicationContext).enqueue(request)
+    // unique + KEEP: 알람 중복 전달·재부팅 경합 시 같은 작업이 병렬로 두 번 돌지 않게 (중복 결제 방지 1차 방어)
+    WorkManager.getInstance(context.applicationContext)
+        .enqueueUniqueWork(uniqueName, ExistingWorkPolicy.KEEP, request)
 }

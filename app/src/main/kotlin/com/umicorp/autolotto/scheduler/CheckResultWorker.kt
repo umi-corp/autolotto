@@ -7,6 +7,7 @@ import com.umicorp.autolotto.data.SecureStore
 import com.umicorp.autolotto.dhlottery.AuthService
 import com.umicorp.autolotto.dhlottery.DhlotterySession
 import com.umicorp.autolotto.dhlottery.HistoryService
+import com.umicorp.autolotto.dhlottery.PurchaseService
 import com.umicorp.autolotto.dhlottery.ResultService
 
 /**
@@ -21,28 +22,34 @@ class CheckResultWorker(context: Context, params: WorkerParameters) : CoroutineW
     private val store = SecureStore(ctx)
 
     override suspend fun doWork(): Result {
-        try {
-            executeCheckResult()
+        val lastAttempt = runAttemptCount >= MAX_ATTEMPTS - 1
+        // 결과 미게시·미추첨 반영 지연·일시 네트워크 오류는 재시도(backoff 15분 선형)로 흡수하고,
+        // 시도 소진 시에만 실패를 알린다 — 침묵 종료·낙첨 오보 방지.
+        val done = try {
+            executeCheckResult(lastAttempt)
         } catch (e: Exception) {
-            Notifications.show(ctx, "⚠️ AutoLotto 오류", "당첨 결과 확인에 실패했습니다.", 99)
+            if (lastAttempt) Notifications.show(ctx, "⚠️ AutoLotto 오류", "당첨 결과 확인에 실패했습니다.", 99)
+            lastAttempt
         }
 
-        // 다음 주 알람 재등록 — 자동구매 활성 시에만
+        // 다음 주 알람 재등록 — 자동구매 활성 시에만. 멱등이라 재시도 회차에 또 호출돼도 안전.
         try {
             if (store.getAutoEnabled()) AlarmScheduler(ctx).scheduleCheckResult()
         } catch (e: Exception) {
             Notifications.show(ctx, "⚠️ AutoLotto 오류", "결과확인 알람 재등록 실패: ${e.message ?: e}", 98)
         }
 
-        return Result.success()
+        return if (done) Result.success() else Result.retry()
     }
 
-    /** 원본 `_executeCheckResult` 1:1. */
-    private suspend fun executeCheckResult() {
-        if (!store.getAutoEnabled()) return
+    /** 원본 `_executeCheckResult` 기반. @return true=완결, false=미확정(재시도 필요). */
+    private suspend fun executeCheckResult(lastAttempt: Boolean): Boolean {
+        if (!store.getAutoEnabled()) return true
 
-        // 당첨번호 조회 (로그인 불필요 — 자체 세션). 실패 시 null → 종료.
-        val winning = ResultService().getWinningNumbers() ?: return
+        // 당첨번호 조회 (로그인 불필요 — 자체 세션). 실패/미게시 시 null → 재시도.
+        val winning = ResultService().getWinningNumbers() ?: return false
+        // 직전 추첨 회차(현재 판매 회차-1)보다 오래된 결과 = 아직 미게시 → 재시도. 지난 회차 재통지 방지.
+        if (winning.round < PurchaseService.getCurrentRound() - 1) return false
         val winningLine = "당첨번호: ${winning.numbers.joinToString(", ")} + ${winning.bonus}"
 
         // 로그인 → 구매이력 조회 → 매칭 결과 알림
@@ -60,6 +67,9 @@ class CheckResultWorker(context: Context, params: WorkerParameters) : CoroutineW
             val purchases = history.fetchRecentPurchases(count = 5)
             val purchase = purchases.firstOrNull { it.round == winning.round }
                 ?: throw Exception("no_matching_purchase")
+            // 추첨 결과가 티켓에 아직 반영되지 않았으면(drawed=false, gameRanks=pending)
+            // '낙첨'으로 오보하지 않고 재시도한다.
+            if (!purchase.checked) throw Exception("not_drawn_yet")
 
             // 게임별 결과 텍스트 생성
             val rankNames = mapOf(
@@ -83,8 +93,11 @@ class CheckResultWorker(context: Context, params: WorkerParameters) : CoroutineW
             }
 
             Notifications.show(ctx, title, body, 2, tab = Notifications.TAB_HISTORY)
+            return true
         } catch (e: Exception) {
-            // 로그인/이력 조회 실패 시 기존처럼 당첨번호만 알림
+            // 미구매(no_matching_purchase)는 재시도 무의미 → 즉시 당첨번호만 알리고 완결(기존 폴백).
+            // 그 외(미추첨·로그인·이력 조회 실패)는 재시도하고, 마지막 시도에만 같은 폴백을 보낸다.
+            if (e.message != "no_matching_purchase" && !lastAttempt) return false
             Notifications.show(
                 ctx,
                 "🎱 제 ${winning.round}회 당첨번호",
@@ -92,6 +105,12 @@ class CheckResultWorker(context: Context, params: WorkerParameters) : CoroutineW
                 2,
                 tab = Notifications.TAB_HISTORY,
             )
+            return true
         }
+    }
+
+    private companion object {
+        /** 총 시도 횟수(최초 1 + 재시도 3) — 토 21:00 기준 15분 선형 backoff로 ~22:30까지 커버. */
+        const val MAX_ATTEMPTS = 4
     }
 }

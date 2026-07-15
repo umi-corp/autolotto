@@ -23,6 +23,9 @@ object SecureKeys {
     const val BALANCE_ALERT_THRESHOLD = "balance_alert_threshold"
     const val BALANCE_ALERT_LAST_DATE = "balance_alert_last_date"
 
+    /** 네이티브 전용(Flutter에 없던 키) — 자동구매 중복 결제 방지용 마지막 구매 회차. ALL(이관 목록) 미포함. */
+    const val LAST_PURCHASED_ROUND = "last_purchased_round"
+
     /** 마이그레이션·일괄 처리용 전체 키 목록. */
     val ALL = listOf(
         USER_ID, PASSWORD, AUTO_ENABLED, AUTO_GAMES, MANUAL_NUMBERS,
@@ -196,6 +199,13 @@ class SecureStore(context: Context) {
     fun setBalanceAlertLastDate(date: String) = putString(SecureKeys.BALANCE_ALERT_LAST_DATE, date)
 
     fun getBalanceAlertLastDate(): String? = prefs.getString(SecureKeys.BALANCE_ALERT_LAST_DATE, null)
+
+    // === 자동구매 멱등 가드 ===
+
+    /** 구매 성공 직후 기록(commit) — Worker 재실행 시 같은 회차 중복 결제 방지. */
+    fun setLastPurchasedRound(round: Int) = putString(SecureKeys.LAST_PURCHASED_ROUND, round.toString())
+
+    fun getLastPurchasedRound(): Int = prefs.getString(SecureKeys.LAST_PURCHASED_ROUND, null)?.toIntOrNull() ?: 0
 
     // === 전체 초기화 ===
 
