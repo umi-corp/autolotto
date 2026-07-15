@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AutoLotto - 로또 자동 구매 앱</title>
   <meta name="description" content="매주 자동으로 로또를 구매하는 Android 앱. 번호 설정, 자동 구매, 당첨 확인까지.">
+  <meta property="og:title" content="AutoLotto - 로또 자동 구매 앱">
+  <meta property="og:description" content="매주 자동으로 로또를 구매하는 Android 앱. 번호 설정, 자동 구매, 당첨 확인까지.">
+  <meta property="og:image" content="https://autolotto.umicorp.kr/icon.png">
   <link rel="icon" type="image/png" href="icon.png">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -19,6 +22,8 @@
       --blue: #69C8F2;
       --red: #FF7272;
       --green: #B0D840;
+      --spring: cubic-bezier(.34, 1.56, .64, 1);
+      --emph: cubic-bezier(.2, 0, 0, 1);
     }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -86,12 +91,22 @@
       margin-bottom: 32px;
       box-shadow: 0 20px 60px rgba(45,91,255,0.3);
     }
+    /* 히어로 진입: 스태거 상승 (1회) */
+    .rise {
+      opacity: 0;
+      animation: rise .6s var(--emph) var(--rd, 0s) forwards;
+    }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: none; }
+    }
     h1 {
       font-size: 3rem;
       font-weight: 800;
       margin-bottom: 12px;
       background: linear-gradient(135deg, #fff 0%, var(--primary-light) 100%);
       -webkit-background-clip: text;
+      background-clip: text;
       -webkit-text-fill-color: transparent;
     }
     .tagline {
@@ -111,14 +126,38 @@
       border-radius: 16px;
       font-size: 1.1rem;
       font-weight: 700;
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: transform .35s var(--spring), box-shadow .3s;
       box-shadow: 0 8px 32px rgba(45,91,255,0.4);
+      position: relative;
+    }
+    /* 글로우 펄스는 pseudo-element opacity로 — 컴포지터 처리(상시 리페인트 회피) */
+    .download-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      box-shadow: 0 10px 44px rgba(107,140,255,0.65);
+      opacity: 0;
+      pointer-events: none;
+      animation: ctaPulse 4s ease-in-out 3s infinite;
     }
     .download-btn:hover {
       transform: translateY(-2px);
       box-shadow: 0 12px 40px rgba(45,91,255,0.5);
     }
+    .download-btn:active { transform: translateY(0) scale(.94); }
     .download-btn svg { width: 24px; height: 24px; }
+    .download-btn:hover svg { animation: dlBounce .6s var(--spring); }
+    @keyframes ctaPulse {
+      0%, 100% { opacity: 0; }
+      50% { opacity: 1; }
+    }
+    @keyframes dlBounce {
+      0% { transform: translateY(0); }
+      40% { transform: translateY(4px); }
+      70% { transform: translateY(-2px); }
+      100% { transform: translateY(0); }
+    }
     .version-info {
       margin-top: 16px;
       color: var(--text-dim);
@@ -140,18 +179,13 @@
       font-weight: 800;
       font-size: 1.1rem;
       color: white;
-      animation: float 3s ease-in-out infinite;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      background: var(--c);
       box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    }
-    .ball:nth-child(1) { animation-delay: 0s; }
-    .ball:nth-child(2) { animation-delay: 0.3s; }
-    .ball:nth-child(3) { animation-delay: 0.6s; }
-    .ball:nth-child(4) { animation-delay: 0.9s; }
-    .ball:nth-child(5) { animation-delay: 1.2s; }
-    .ball:nth-child(6) { animation-delay: 1.5s; }
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
+      will-change: transform;
+      transform-origin: 50% 90%;
     }
     .features {
       padding: 80px 20px;
@@ -173,9 +207,26 @@
       border-radius: 20px;
       padding: 32px;
       border: 1px solid rgba(255,255,255,0.05);
-      transition: transform 0.2s;
+      transition: transform .3s var(--spring);
     }
-    .feature-card:hover { transform: translateY(-4px); }
+    .feature-card:hover { transform: translateY(-6px) scale(1.02); }
+    /* 스크롤 등장 (IntersectionObserver가 .in 부여, 1회성) */
+    .reveal { opacity: 0; }
+    .reveal.in {
+      opacity: 1;
+      animation: riseIn .6s var(--spring) var(--rv, 0s) backwards;
+    }
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(28px) scale(.97); }
+    }
+    .feature-grid > :nth-child(2) { --rv: .07s; }
+    .feature-grid > :nth-child(3) { --rv: .14s; }
+    .feature-grid > :nth-child(4) { --rv: .21s; }
+    .feature-grid > :nth-child(5) { --rv: .28s; }
+    .feature-grid > :nth-child(6) { --rv: .35s; }
+    .steps > :nth-child(2) { --rv: .12s; }
+    .steps > :nth-child(3) { --rv: .24s; }
+    .steps > :nth-child(4) { --rv: .36s; }
     .feature-icon { font-size: 2.5rem; margin-bottom: 16px; }
     .feature-card h3 { font-size: 1.2rem; margin-bottom: 8px; }
     .feature-card p { color: var(--text-dim); font-size: 0.95rem; }
@@ -194,19 +245,47 @@
       gap: 24px;
       margin-bottom: 40px;
       align-items: flex-start;
+      position: relative;
     }
+    /* 단계 사이 연결선: 트랙(::before) + 스크롤 시 차오르는 채움(::after) */
+    .step:not(:last-child)::before,
+    .step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 23px;
+      top: 56px;
+      bottom: -32px;
+      width: 2px;
+    }
+    .step:not(:last-child)::before { background: rgba(255,255,255,0.08); }
+    .step:not(:last-child)::after {
+      background: linear-gradient(var(--primary), var(--primary-light));
+      transform: scaleY(0);
+      transform-origin: top;
+      transition: transform .7s var(--emph) .25s;
+    }
+    .step.in:not(:last-child)::after { transform: scaleY(1); }
     .step-num {
       width: 48px;
       height: 48px;
       min-width: 48px;
       border-radius: 14px;
-      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      background: var(--bg-card);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+      color: var(--text-dim);
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 800;
       font-size: 1.2rem;
     }
+    .step.in .step-num {
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      color: white;
+      box-shadow: 0 0 20px rgba(45,91,255,0.45);
+      animation: numPop .5s var(--spring) .1s backwards;
+    }
+    @keyframes numPop { from { transform: scale(.5); } }
     .step h3 { margin-bottom: 4px; }
     .step p { color: var(--text-dim); font-size: 0.95rem; }
     .notice {
@@ -228,104 +307,123 @@
       border-top: 1px solid rgba(255,255,255,0.05);
     }
     footer a { color: var(--primary-light); text-decoration: none; }
+    :focus-visible {
+      outline: 2px solid var(--primary-light);
+      outline-offset: 2px;
+    }
     @media (max-width: 600px) {
       h1 { font-size: 2rem; }
       .tagline { font-size: 1rem; }
       .feature-grid { grid-template-columns: 1fr; }
+      /* 볼 6개(고정폭)가 좁은 뷰포트에서 잘리지 않게 축소 */
+      .ball { width: 46px; height: 46px; font-size: 1rem; }
+      .balls { gap: 8px; }
+      /* 1열 레이아웃에선 스태거가 지연으로만 체감됨 */
+      .feature-grid > .feature-card, .steps > .step { --rv: 0s; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-delay: 0s !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+      .rise, .reveal { opacity: 1 !important; }
     }
   </style>
 </head>
 <body>
 
-  <div class="lang-switch">
-    <button class="lang-btn active" onclick="setLang('ko')">KR</button>
-    <button class="lang-btn" onclick="setLang('en')">EN</button>
-    <button class="lang-btn" onclick="setLang('ja')">JP</button>
+  <div class="lang-switch" role="group" aria-label="언어 선택">
+    <button class="lang-btn active" onclick="setLang('ko')" aria-label="한국어" aria-pressed="true">KR</button>
+    <button class="lang-btn" onclick="setLang('en')" aria-label="English" aria-pressed="false">EN</button>
+    <button class="lang-btn" onclick="setLang('ja')" aria-label="日本語" aria-pressed="false">JP</button>
   </div>
 
   <section class="hero">
-    <img src="icon.png" alt="AutoLotto" class="app-icon">
-    <h1>AutoLotto</h1>
-    <p class="tagline" data-i18n="tagline"></p>
-    <div class="balls">
-      <div class="ball" style="background:#FBC400">7</div>
-      <div class="ball" style="background:#69C8F2">14</div>
-      <div class="ball" style="background:#FF7272">22</div>
-      <div class="ball" style="background:#AAAAAA">37</div>
-      <div class="ball" style="background:#B0D840">41</div>
-      <div class="ball bonus" style="background:#69C8F2">+16</div>
+    <img src="icon.png" alt="AutoLotto" class="app-icon rise">
+    <h1 class="rise" style="--rd:.08s">AutoLotto</h1>
+    <p class="tagline rise" style="--rd:.16s" data-i18n="tagline">매주 자동으로 로또를 구매하는 가장 간편한 방법.<br>설정 한 번이면 끝.</p>
+    <div class="balls" aria-hidden="true">
+      <div class="ball" style="--c:#FBC400">7</div>
+      <div class="ball" style="--c:#69C8F2">14</div>
+      <div class="ball" style="--c:#FF7272">22</div>
+      <div class="ball" style="--c:#AAAAAA">37</div>
+      <div class="ball" style="--c:#B0D840">41</div>
+      <div class="ball bonus" style="--c:#69C8F2">+16</div>
     </div>
-    <a href="https://github.com/umi-corp/autolotto/releases/download/v1.1.0/autolotto-1.1.0-universal.apk" class="download-btn" download>
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 13.5L12 19l-5.5-5.5L8 12l2.5 2.5V3h3v11.5L16 12l1.5 1.5zM5 21h14v-2H5v2z"/></svg>
-      <span data-i18n="download"></span>
+    <!-- 정적 폴백은 특정 버전 에셋 대신 latest 릴리스 페이지 — API 실패·에셋 정리에도 죽지 않는 링크 -->
+    <a href="https://github.com/umi-corp/autolotto/releases/latest" class="download-btn rise" style="--rd:.6s">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 13.5L12 19l-5.5-5.5L8 12l2.5 2.5V3h3v11.5L16 12l1.5 1.5zM5 21h14v-2H5v2z"/></svg>
+      <span data-i18n="download">APK 다운로드</span>
     </a>
-    <p class="version-info">Android 12+</p>
+    <p class="version-info rise" style="--rd:.75s">Android 12+</p>
   </section>
 
   <section class="features">
-    <h2 data-i18n="features_title"></h2>
+    <h2 data-i18n="features_title" class="reveal">✨ 주요 기능</h2>
     <div class="feature-grid">
-      <div class="feature-card">
-        <div class="feature-icon">🎯</div>
-        <h3 data-i18n="f1_title"></h3>
-        <p data-i18n="f1_desc"></p>
+      <div class="feature-card reveal">
+        <div class="feature-icon" aria-hidden="true">🎯</div>
+        <h3 data-i18n="f1_title">번호 설정</h3>
+        <p data-i18n="f1_desc">수동 번호와 자동 번호를 게임별로 자유롭게 조합. 최대 5게임까지 설정.</p>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">⏰</div>
-        <h3 data-i18n="f2_title"></h3>
-        <p data-i18n="f2_desc"></p>
+      <div class="feature-card reveal">
+        <div class="feature-icon" aria-hidden="true">⏰</div>
+        <h3 data-i18n="f2_title">자동 구매</h3>
+        <p data-i18n="f2_desc">매주 일요일 오전 9시, 설정한 번호대로 자동 구매. 앱을 켜지 않아도 동작.</p>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">🔔</div>
-        <h3 data-i18n="f3_title"></h3>
-        <p data-i18n="f3_desc"></p>
+      <div class="feature-card reveal">
+        <div class="feature-icon" aria-hidden="true">🔔</div>
+        <h3 data-i18n="f3_title">알림</h3>
+        <p data-i18n="f3_desc">구매 완료, 당첨 결과를 푸시 알림으로 받아보세요. 서버 없이 로컬에서 동작.</p>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">📋</div>
-        <h3 data-i18n="f4_title"></h3>
-        <p data-i18n="f4_desc"></p>
+      <div class="feature-card reveal">
+        <div class="feature-icon" aria-hidden="true">📋</div>
+        <h3 data-i18n="f4_title">구매 기록</h3>
+        <p data-i18n="f4_desc">동행복권에서 최근 구매 내역을 자동 조회. 번호와 당첨 여부를 한눈에.</p>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">🔒</div>
-        <h3 data-i18n="f5_title"></h3>
-        <p data-i18n="f5_desc"></p>
+      <div class="feature-card reveal">
+        <div class="feature-icon" aria-hidden="true">🔒</div>
+        <h3 data-i18n="f5_title">보안</h3>
+        <p data-i18n="f5_desc">계정 정보는 Android Keystore로 암호화 저장. 서버 전송 없음.</p>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">💸</div>
-        <h3 data-i18n="f6_title"></h3>
-        <p data-i18n="f6_desc"></p>
+      <div class="feature-card reveal">
+        <div class="feature-icon" aria-hidden="true">💸</div>
+        <h3 data-i18n="f6_title">완전 무료</h3>
+        <p data-i18n="f6_desc">광고 없음. 구독 없음. 서버 비용 없음. 오픈소스.</p>
       </div>
     </div>
   </section>
 
   <section class="how-it-works">
-    <h2 data-i18n="how_title"></h2>
+    <h2 data-i18n="how_title" class="reveal">📱 사용 방법</h2>
     <div class="steps">
-      <div class="step">
+      <div class="step reveal">
         <div class="step-num">1</div>
-        <div><h3 data-i18n="s1_title"></h3><p data-i18n="s1_desc"></p></div>
+        <div><h3 data-i18n="s1_title">APK 설치</h3><p data-i18n="s1_desc">위 버튼으로 APK를 다운로드하고 설치하세요.</p></div>
       </div>
-      <div class="step">
+      <div class="step reveal">
         <div class="step-num">2</div>
-        <div><h3 data-i18n="s2_title"></h3><p data-i18n="s2_desc"></p></div>
+        <div><h3 data-i18n="s2_title">동행복권 로그인</h3><p data-i18n="s2_desc">설정 탭에서 동행복권 계정으로 로그인합니다.</p></div>
       </div>
-      <div class="step">
+      <div class="step reveal">
         <div class="step-num">3</div>
-        <div><h3 data-i18n="s3_title"></h3><p data-i18n="s3_desc"></p></div>
+        <div><h3 data-i18n="s3_title">번호 설정</h3><p data-i18n="s3_desc">게임별로 수동/자동 번호를 설정하고 저장합니다.</p></div>
       </div>
-      <div class="step">
+      <div class="step reveal">
         <div class="step-num">4</div>
-        <div><h3 data-i18n="s4_title"></h3><p data-i18n="s4_desc"></p></div>
+        <div><h3 data-i18n="s4_title">자동 구매 ON</h3><p data-i18n="s4_desc">설정에서 자동 구매를 켜면 끝! 매주 알아서 구매합니다.</p></div>
       </div>
     </div>
   </section>
 
-  <div class="notice" data-i18n="notice"></div>
+  <div class="notice" data-i18n="notice">⚠️ 이 앱은 동행복권(dhlottery.co.kr) 계정이 필요합니다.<br>예치금이 충분해야 자동 구매가 진행됩니다.</div>
 
   <footer>
     <p>© 2026 <a href="https://umicorp.kr">UMI Corp</a> · 
     <a href="https://github.com/umi-corp/autolotto">GitHub</a></p>
-    <p style="margin-top:8px" data-i18n="disclaimer"></p>
+    <p style="margin-top:8px" data-i18n="disclaimer">본 앱은 동행복권의 공식 앱이 아닙니다.</p>
   </footer>
 
   <script>
@@ -386,35 +484,124 @@
       }
     };
 
+    const LANGS = ['ko', 'en', 'ja'];
     function setLang(lang) {
-      document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-      document.querySelector(`.lang-btn[onclick="setLang('${lang}')"]`).classList.add('active');
+      if (!LANGS.includes(lang)) lang = 'ko'; // 손상된 저장값/외부 호출 방어
+      document.querySelectorAll('.lang-btn').forEach(b => {
+        const active = b.getAttribute('onclick') === `setLang('${lang}')`;
+        b.classList.toggle('active', active);
+        b.setAttribute('aria-pressed', active);
+      });
       document.documentElement.lang = lang;
       document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        const text = i18n[lang]?.[key] || i18n.ko[key] || '';
+        const text = (i18n[lang] && i18n[lang][key]) || i18n.ko[key] || '';
         el.innerHTML = text.replace(/\n/g, '<br>');
       });
-      localStorage.setItem('lang', lang);
+      try { localStorage.setItem('lang', lang); } catch (e) {} // 저장 실패해도 페이지는 동작
     }
 
-    // 초기 언어 (저장된 값 → 브라우저 언어 → 한국어)
-    const saved = localStorage.getItem('lang');
-    const browserLang = navigator.language?.slice(0, 2);
-    const initLang = saved || (['en','ja'].includes(browserLang) ? browserLang : 'ko');
-    setLang(initLang);
+    // 초기 언어 (저장된 값 → 브라우저 언어 → 한국어) — 스토리지 차단 환경에서도 죽지 않게
+    let saved = null;
+    try { saved = localStorage.getItem('lang'); } catch (e) {}
+    const browserLang = (navigator.language || '').slice(0, 2);
+    setLang(LANGS.includes(saved) ? saved : (['en', 'ja'].includes(browserLang) ? browserLang : 'ko'));
 
     // 다운로드 링크·버전 표기를 최신 릴리스로 자동 갱신 (실패 시 정적 폴백 유지)
     fetch('https://api.github.com/repos/umi-corp/autolotto/releases/latest')
-      .then(r => r.json())
+      .then(r => r.ok ? r.json() : Promise.reject())
       .then(rel => {
-        const apk = (rel.assets || []).find(a => a.name.endsWith('.apk'));
+        const apks = (rel.assets || []).filter(a => a.name.endsWith('.apk'));
+        const apk = apks.find(a => a.name.includes('universal')) || apks[0]; // 다중 APK 시 universal 우선
         if (!apk) return;
         document.querySelector('.download-btn').href = apk.browser_download_url;
         document.querySelector('.version-info').textContent =
           `${rel.tag_name} · Android 12+ · ${(apk.size / 1048576).toFixed(1)}MB`;
       })
       .catch(() => {});
+
+    // 스크롤 등장 (1회성) — 물리 시뮬레이션보다 먼저 등록해 후속 오류와 격리, IO 미지원 시 즉시 표시
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            e.target.classList.add('in');
+            io.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0, rootMargin: '10000px 0px 0px 0px' }); // 위쪽 마진: 점프 스크롤로 지나친 요소도 표시
+      document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+    } else {
+      document.querySelectorAll('.reveal').forEach(el => el.classList.add('in'));
+    }
+
+    // 진입 애니메이션 종료 후 .rise 제거 — forwards fill이 hover/active transform을 가리는 것 방지
+    document.querySelectorAll('.rise').forEach(el =>
+      el.addEventListener('animationend', e => {
+        if (e.animationName === 'rise') el.classList.remove('rise');
+      }));
+
+    // 볼 물리 시뮬레이션: 중력 낙하 → 반발 바운스 → 부유, 탭 시 위로 임펄스 (rAF 연속 구동이라 스냅 없음)
+    (() => {
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const G = 2400;
+      const states = [...document.querySelectorAll('.ball')].map((el, i) => {
+        // 뷰포트 최상단 바깥에서 낙하 시작 (스크롤된 상태로 로드되면 최소 높이 보장)
+        const START = Math.min(-(el.getBoundingClientRect().bottom + 8), -160);
+        el.addEventListener('click', () => {
+          const s = states[i];
+          if (s.t < 0) return; // 낙하 시작 전 클릭 무시
+          s.settled = false;
+          s.v = -480 - Math.random() * 100; // 현재 위치에서 위로 임펄스 (~50-70px 상승)
+        });
+        el.style.opacity = 0;
+        return {
+          el, y: START, v: 0, squash: 0, settled: false, bobT: 0,
+          t: -(0.35 + i * 0.1 + Math.random() * 0.05),  // 음수 = 낙하 대기
+          rest: 0.42 + Math.random() * 0.1,             // 볼마다 반발계수 다르게
+          bobPhase: Math.random() * 6.28,
+        };
+      });
+      let running = false, last = 0;
+      function frame(now) {
+        if (!running) return;
+        const dt = Math.min((now - last) / 1000, 0.033);
+        last = now;
+        for (const s of states) {
+          s.t += dt;
+          if (s.t < 0) continue;
+          s.el.style.opacity = Math.min(s.t / 0.15, 1);
+          if (s.settled) {
+            s.bobT += dt; // 정착 후 잔잔한 부유 (진폭 램프업으로 이음새 없음)
+            const ramp = Math.min(s.bobT / 1.5, 1);
+            s.y = (Math.sin(s.bobT * 2.1 + s.bobPhase) - 1) * 5 * ramp;
+          } else {
+            s.v += G * dt;
+            s.y += s.v * dt;
+            if (s.y >= 0) { // 바닥 충돌
+              s.y = 0;
+              if (Math.abs(s.v) < 150) { s.settled = true; s.bobT = 0; s.v = 0; }
+              else { s.squash = Math.min(Math.abs(s.v) / 3200, 0.3); s.v = -s.v * s.rest; }
+            }
+          }
+          s.squash = Math.max(s.squash - dt * 2.2, 0); // 착지 스쿼시 감쇠
+          const st = s.settled ? 0 : Math.min(Math.abs(s.v) / 5000, 0.1); // 공중 스트레치
+          s.el.style.transform =
+            `translateY(${s.y.toFixed(2)}px) scale(${(1 + s.squash - st).toFixed(3)}, ${(1 - s.squash + st).toFixed(3)})`;
+        }
+        requestAnimationFrame(frame);
+      }
+      const run = on => {
+        if (on && !running) { running = true; last = performance.now(); requestAnimationFrame(frame); }
+        else if (!on) running = false;
+      };
+      // 히어로가 화면 밖이면 루프 정지 — 스크롤해 내려간 동안 배터리/CPU 소모 없음
+      if ('IntersectionObserver' in window) {
+        new IntersectionObserver(es => run(es[0].isIntersecting)).observe(document.querySelector('.balls'));
+      } else {
+        run(true);
+      }
+    })();
   </script>
 
 </body>
