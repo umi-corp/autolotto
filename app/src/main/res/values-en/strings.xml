@@ -157,6 +157,8 @@
     <!-- accessibility (contentDescription) -->
     <string name="cdRefresh">Refresh</string>
     <string name="cdRemoveGame">Remove game</string>
+    <string name="cdShowPassword">Show password</string>
+    <string name="cdHidePassword">Hide password</string>
 
     <!-- In-app update (sideload) -->
     <string name="updateAvailableTitle">New version %1$s</string>

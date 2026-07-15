@@ -157,6 +157,8 @@
     <!-- アクセシビリティ(contentDescription) -->
     <string name="cdRefresh">更新</string>
     <string name="cdRemoveGame">ゲーム削除</string>
+    <string name="cdShowPassword">パスワードを表示</string>
+    <string name="cdHidePassword">パスワードを非表示</string>
 
     <!-- アプリ内アップデート(サイドロード) -->
     <string name="updateAvailableTitle">新バージョン %1$s</string>

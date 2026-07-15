@@ -165,6 +165,8 @@
     <!-- 접근성(contentDescription) -->
     <string name="cdRefresh">새로고침</string>
     <string name="cdRemoveGame">게임 삭제</string>
+    <string name="cdShowPassword">비밀번호 표시</string>
+    <string name="cdHidePassword">비밀번호 숨기기</string>
 
     <!-- 인앱 업데이트(사이드로드) -->
     <string name="updateAvailableTitle">새 버전 %1$s</string>
