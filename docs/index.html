@@ -541,6 +541,22 @@
         if (e.animationName === 'rise') el.classList.remove('rise');
       }));
 
+    // 매 방문 랜덤 번호 발행 (JS 꺼짐 시 마크업 번호 고정) — 볼 6개(메인 5 + 보너스)는 의도된 디자인:
+    // 1~45에서 상이한 6개 추출, 메인 5개 오름차순 + 보너스 1개, 공 색은 동행복권 번호대 관례
+    (() => {
+      const picked = new Set();
+      while (picked.size < 6) picked.add(1 + Math.floor(Math.random() * 45));
+      const nums = [...picked];
+      const mains = nums.slice(0, 5).sort((a, b) => a - b);
+      const color = n => n <= 10 ? '#FBC400' : n <= 20 ? '#69C8F2' : n <= 30 ? '#FF7272' : n <= 40 ? '#AAAAAA' : '#B0D840';
+      document.querySelectorAll('.ball').forEach((el, i) => {
+        const bonus = el.classList.contains('bonus');
+        const n = bonus ? nums[5] : mains[i];
+        el.textContent = (bonus ? '+' : '') + n;
+        el.style.setProperty('--c', color(n));
+      });
+    })();
+
     // 볼 물리 시뮬레이션: 중력 낙하 → 반발 바운스 → 부유, 탭 시 위로 임펄스 (rAF 연속 구동이라 스냅 없음)
     (() => {
       if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
