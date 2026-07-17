@@ -194,7 +194,7 @@ class AppContainer(context: Context) {
         BalanceAlert.checkAndNotify(appContext, b, _balanceAlertEnabled.value, _balanceAlertThreshold.value)
     }
 
-    /** 워커가 백그라운드에서 회차를 갱신했을 수 있어 홈 새로고침 때 재읽기. */
+    /** 워커가 백그라운드에서 회차를 갱신했을 수 있어 즉시 구매 CTA 탭 때 재읽기. */
     suspend fun refreshLastPurchasedRound() = withContext(Dispatchers.IO) {
         _lastPurchasedRound.value = store.getLastPurchasedRound()
     }

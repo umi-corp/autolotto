@@ -376,7 +376,8 @@ fun NumberScreen(modifier: Modifier = Modifier) {
                 purchasedThisRound = lastRound >= vm.currentRound,
                 saleOpen = vm.isSaleOpenNow(),
                 onTap = {
-                    if (!saved) {
+                    // 저장 상태 요구는 첫 구매만 — 추가 구매(자동 N게임)는 저장 슬롯을 쓰지 않는다.
+                    if (!saved && lastRound < vm.currentRound) {
                         scope.launch { snackbar.showSnackbar(context.getString(R.string.instantNeedsSetup)) }
                     } else {
                         vm.onInstantTap()
