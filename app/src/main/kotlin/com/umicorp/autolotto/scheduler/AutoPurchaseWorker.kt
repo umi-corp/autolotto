@@ -12,14 +12,6 @@ import kotlinx.coroutines.sync.withLock
 import org.json.JSONArray
 
 /**
- * 자동구매 백그라운드 작업 (원본 `_onAutoPurchaseAlarm` + `_executeAutoPurchase` 포트).
- *
- * SecureStore에서 자격증명·설정·수동번호를 직접 읽고(원본 백그라운드 isolate 직접읽기 패턴 유지),
- * 로그인 → 구매 → 성공/실패 알림(원본 문구 그대로) → 끝에서 다음 주 알람 자가재등록.
- *
- * 네트워크는 Worker(코루틴, ~10분 한도)에서 수행 — onReceive 10초 제한 회피.
- */
-/**
  * 구매 직렬화 락 — 예약 워커와 즉시 구매(AppContainer)가 같은 앱 프로세스에서 공유.
  * "자격증명 읽기~구매 실행~회차 기록"이 임계구역: 기록 전에 풀면 상대가 이전 회차 값을 읽는다.
  * 잔액 조회·알림은 락 밖.
@@ -28,6 +20,14 @@ object PurchaseLock {
     val mutex = Mutex()
 }
 
+/**
+ * 자동구매 백그라운드 작업 (원본 `_onAutoPurchaseAlarm` + `_executeAutoPurchase` 포트).
+ *
+ * SecureStore에서 자격증명·설정·수동번호를 직접 읽고(원본 백그라운드 isolate 직접읽기 패턴 유지),
+ * 로그인 → 구매 → 성공/실패 알림(원본 문구 그대로) → 끝에서 다음 주 알람 자가재등록.
+ *
+ * 네트워크는 Worker(코루틴, ~10분 한도)에서 수행 — onReceive 10초 제한 회피.
+ */
 class AutoPurchaseWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
 
     private val ctx = applicationContext

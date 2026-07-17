@@ -158,10 +158,11 @@ fun NumberScreen(modifier: Modifier = Modifier) {
     val confirmPop = remember { Animatable(1f) }
 
     // 즉시 구매: 저장된 게임 0개면 설정·저장 안내(이미 이 화면이므로 이동 없이 스낵바).
+    // 스낵바는 scope로 분리 — dismiss가 상태를 바꿔 이 이펙트가 재시작(=취소)돼도 표시가 살아남는다.
     LaunchedEffect(instantState) {
         if (instantState is InstantState.NeedsSetup) {
+            scope.launch { snackbar.showSnackbar(context.getString(R.string.instantNeedsSetup)) }
             vm.dismissInstant()
-            snackbar.showSnackbar(context.getString(R.string.instantNeedsSetup))
         }
     }
     InstantPurchaseDialogs(instantState, vm)
