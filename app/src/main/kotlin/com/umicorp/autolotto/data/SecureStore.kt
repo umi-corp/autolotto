@@ -26,6 +26,9 @@ object SecureKeys {
     /** 네이티브 전용(Flutter에 없던 키) — 자동구매 중복 결제 방지용 마지막 구매 회차. ALL(이관 목록) 미포함. */
     const val LAST_PURCHASED_ROUND = "last_purchased_round"
 
+    /** 네이티브 전용 — 회차 가드의 계정 스코프(구매한 계정 ID). ALL(이관 목록) 미포함. */
+    const val LAST_PURCHASE_OWNER = "last_purchase_owner"
+
     /** 마이그레이션·일괄 처리용 전체 키 목록. */
     val ALL = listOf(
         USER_ID, PASSWORD, AUTO_ENABLED, AUTO_GAMES, MANUAL_NUMBERS,
@@ -206,6 +209,11 @@ class SecureStore(context: Context) {
     fun setLastPurchasedRound(round: Int) = putString(SecureKeys.LAST_PURCHASED_ROUND, round.toString())
 
     fun getLastPurchasedRound(): Int = prefs.getString(SecureKeys.LAST_PURCHASED_ROUND, null)?.toIntOrNull() ?: 0
+
+    /** 구매 성공 시 회차와 함께 기록 — 다른 계정 로그인 시 가드 리셋 판정에 사용. */
+    fun setLastPurchaseOwner(userId: String) = putString(SecureKeys.LAST_PURCHASE_OWNER, userId)
+
+    fun getLastPurchaseOwner(): String? = prefs.getString(SecureKeys.LAST_PURCHASE_OWNER, null)
 
     // === 전체 초기화 ===
 
