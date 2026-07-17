@@ -50,10 +50,13 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material.icons.rounded.WarningAmber
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -68,6 +71,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -91,8 +95,10 @@ import com.umicorp.autolotto.ui.appViewModel
 import com.umicorp.autolotto.ui.theme.LgAmber
 import com.umicorp.autolotto.ui.theme.LgTeal
 import com.umicorp.autolotto.ui.theme.MotionSpecs
+import com.umicorp.autolotto.ui.util.formatNumber
 import com.umicorp.autolotto.ui.util.formatPurchaseSchedule
 import com.umicorp.autolotto.ui.vm.NumberViewModel
+import com.umicorp.autolotto.ui.vm.NumberViewModel.InstantState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -112,6 +118,9 @@ fun NumberScreen(modifier: Modifier = Modifier) {
     val day by vm.autoPurchaseDay.collectAsState()
     val hour by vm.autoPurchaseHour.collectAsState()
     val minute by vm.autoPurchaseMinute.collectAsState()
+    val isLoggedIn by vm.isLoggedIn.collectAsState()
+    val lastRound by vm.lastPurchasedRound.collectAsState()
+    val instantState by vm.instantState.collectAsState()
 
     // 편집용 로컬 상태(원본 _NumberScreenState).
     val games = remember { mutableStateListOf<List<Int>?>(null, null, null, null, null) }
@@ -147,6 +156,15 @@ fun NumberScreen(modifier: Modifier = Modifier) {
 
     // 확정 버튼 팝(눌림 0.92 → 오버슛 복귀) — 확정이 접수됐다는 즉각 피드백 (사용자 피드백).
     val confirmPop = remember { Animatable(1f) }
+
+    // 즉시 구매: 저장된 게임 0개면 설정·저장 안내(이미 이 화면이므로 이동 없이 스낵바).
+    LaunchedEffect(instantState) {
+        if (instantState is InstantState.NeedsSetup) {
+            vm.dismissInstant()
+            snackbar.showSnackbar(context.getString(R.string.instantNeedsSetup))
+        }
+    }
+    InstantPurchaseDialogs(instantState, vm)
 
     // 전부 자동: 주사위 텀블 연출(~0.95s) 후 실제 적용 — 즉시 적용은 밋밋(사용자 피드백).
     var rollingAllAuto by remember { mutableStateOf(false) }
@@ -349,6 +367,21 @@ fun NumberScreen(modifier: Modifier = Modifier) {
                     fontWeight = FontWeight.Bold,
                 )
             }
+            Spacer(Modifier.height(12.dp))
+
+            // 즉시 구매 — 저장된 슬롯으로 지금 결제(설정 → 저장 → 구매 흐름). 미저장 변경은 저장 유도.
+            InstantPurchaseCta(
+                isLoggedIn = isLoggedIn,
+                purchasedThisRound = lastRound >= vm.currentRound,
+                saleOpen = vm.isSaleOpenNow(),
+                onTap = {
+                    if (!saved) {
+                        scope.launch { snackbar.showSnackbar(context.getString(R.string.instantNeedsSetup)) }
+                    } else {
+                        vm.onInstantTap()
+                    }
+                },
+            )
             Spacer(Modifier.height(24.dp))
         }
     }
@@ -689,5 +722,157 @@ private fun GameSummary(
                 }
             }
         }
+    }
+}
+
+/** 즉시 구매 프라이머리 CTA. 비활성 사유(로그인 > 판매시간)를 라벨로 표시, 구매완료 회차엔 "추가 구매". */
+@Composable
+private fun InstantPurchaseCta(
+    isLoggedIn: Boolean,
+    purchasedThisRound: Boolean,
+    saleOpen: Boolean,
+    onTap: () -> Unit,
+) {
+    val disabledLabel = when {
+        !isLoggedIn -> stringResource(R.string.hintLoginRequired)
+        !saleOpen -> stringResource(R.string.instantNotSaleTime)
+        else -> null
+    }
+    CtaButton(onClick = onTap, enabled = disabledLabel == null) {
+        Text(
+            disabledLabel ?: stringResource(
+                if (purchasedThisRound) R.string.buttonExtraPurchase else R.string.buttonInstantPurchase,
+            ),
+            color = Color.White,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+        )
+    }
+}
+
+/** 즉시 구매 다이얼로그 — InstantState별 확인/게임수선택/진행/결과/에러. */
+@Composable
+private fun InstantPurchaseDialogs(state: InstantState, vm: NumberViewModel) {
+    when (state) {
+        is InstantState.ConfirmingFirst -> AlertDialog(
+            onDismissRequest = { vm.dismissInstant() },
+            title = { Text(stringResource(R.string.instantConfirmTitle)) },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.instantConfirmBody,
+                        state.round, state.games, formatNumber(state.games * 1000),
+                    ),
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { vm.confirmFirst() }) { Text(stringResource(R.string.buttonConfirm)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { vm.dismissInstant() }) { Text(stringResource(R.string.buttonCancel)) }
+            },
+        )
+        is InstantState.PickingExtra -> {
+            var games by remember { mutableIntStateOf(1) }
+            AlertDialog(
+                onDismissRequest = { vm.dismissInstant() },
+                title = { Text(stringResource(R.string.extraPickTitle)) },
+                text = {
+                    Column {
+                        Text(stringResource(R.string.extraPickBody), style = MaterialTheme.typography.bodySmall)
+                        Spacer(Modifier.height(12.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            (1..5).forEach { n ->
+                                FilterChip(selected = games == n, onClick = { games = n }, label = { Text("$n") })
+                            }
+                        }
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            stringResource(
+                                R.string.instantConfirmBody,
+                                state.round, games, formatNumber(games * 1000),
+                            ),
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { vm.confirmExtra(games) }) { Text(stringResource(R.string.buttonConfirm)) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { vm.dismissInstant() }) { Text(stringResource(R.string.buttonCancel)) }
+                },
+            )
+        }
+        is InstantState.InProgress -> AlertDialog(
+            onDismissRequest = {},                                  // 진행 중 닫기 금지
+            title = { Text(stringResource(R.string.instantConfirmTitle)) },
+            text = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.width(12.dp))
+                    Text(stringResource(R.string.instantInProgress))
+                }
+            },
+            confirmButton = {},
+        )
+        is InstantState.Success -> AlertDialog(
+            onDismissRequest = { vm.dismissInstant() },
+            title = { Text(stringResource(R.string.instantSuccessTitle)) },
+            text = {
+                Column {
+                    Text(stringResource(R.string.instantSuccessBody, state.result.round, state.result.totalGames))
+                    Spacer(Modifier.height(12.dp))
+                    state.result.numbers.forEach { game ->
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier.padding(vertical = 2.dp),
+                        ) {
+                            game.forEach { n -> LottoBall(n, size = 28.dp) }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { vm.dismissInstant() }) { Text(stringResource(R.string.buttonConfirm)) }
+            },
+        )
+        is InstantState.AlreadyPurchased -> AlertDialog(
+            onDismissRequest = { vm.dismissInstant() },
+            title = { Text(stringResource(R.string.instantConfirmTitle)) },
+            text = { Text(stringResource(R.string.instantAlreadyPurchased)) },
+            confirmButton = {
+                TextButton(onClick = { vm.dismissInstant() }) { Text(stringResource(R.string.buttonConfirm)) }
+            },
+        )
+        is InstantState.SaleClosed -> AlertDialog(
+            onDismissRequest = { vm.dismissInstant() },
+            title = { Text(stringResource(R.string.instantConfirmTitle)) },
+            text = { Text(stringResource(R.string.instantNotSaleTime)) },
+            confirmButton = {
+                TextButton(onClick = { vm.dismissInstant() }) { Text(stringResource(R.string.buttonConfirm)) }
+            },
+        )
+        is InstantState.RoundChanged -> AlertDialog(
+            onDismissRequest = { vm.dismissInstant() },
+            title = { Text(stringResource(R.string.instantConfirmTitle)) },
+            text = { Text(stringResource(R.string.instantRoundChanged)) },
+            confirmButton = {
+                TextButton(onClick = { vm.dismissInstant() }) { Text(stringResource(R.string.buttonConfirm)) }
+            },
+        )
+        is InstantState.Error -> AlertDialog(
+            onDismissRequest = { vm.dismissInstant() },
+            title = { Text(stringResource(R.string.instantErrorTitle)) },
+            text = {
+                Text(
+                    if (state.unknown) stringResource(R.string.instantUnknownResult)
+                    else state.message ?: stringResource(R.string.instantErrorFallback),
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { vm.dismissInstant() }) { Text(stringResource(R.string.buttonConfirm)) }
+            },
+        )
+        InstantState.Idle, InstantState.NeedsSetup -> Unit
     }
 }

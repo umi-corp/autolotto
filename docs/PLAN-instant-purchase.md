@@ -3,6 +3,12 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:test-driven-development로 태스크
 > 단위 실행(사용자 파이프라인 지정). 스텝은 체크박스(`- [ ]`)로 추적한다.
 
+> **변경 이력 (2026-07-17, 구현 후 오너 피드백):** CTA 위치가 홈 → **번호 탭 저장 버튼
+> 아래**로 변경됨. Task 6의 HomeViewModel은 **NumberViewModel**로, Task 7의 HomeScreen은
+> **NumberScreen**으로 대체 구현됐다(HomeScreen/HomeViewModel은 pre-feature 상태로 원복).
+> NeedsSetup은 화면 이동 대신 스낵바(`instantNeedsSetup`), 미저장 변경도 같은 스낵바로
+> 저장 유도. 나머지(컨테이너·워커·게이트·문자열·다이얼로그 구조)는 계획 그대로.
+
 **Goal:** 홈 화면에서 저장된 슬롯으로 현재 회차를 즉시 구매(첫 구매)하고, 이미 구매한
 회차에는 자동 N게임 추가 구매를 제공한다. 스펙: `docs/DESIGN-instant-purchase.md`.
 

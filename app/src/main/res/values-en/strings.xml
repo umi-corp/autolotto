@@ -182,4 +182,5 @@
     <string name="instantAlreadyPurchased">This round was just purchased. Use Buy More instead.</string>
     <string name="instantRoundChanged">The round has changed, so the purchase was cancelled. Please review again.</string>
     <string name="instantErrorFallback">Purchase failed. Please try again.</string>
+    <string name="instantNeedsSetup">Set up and save your games before buying.</string>
 </resources>

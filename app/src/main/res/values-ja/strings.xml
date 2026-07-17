@@ -182,4 +182,5 @@
     <string name="instantAlreadyPurchased">この回はたった今購入されました。追加購入をご利用ください。</string>
     <string name="instantRoundChanged">回が変わったため購入をキャンセルしました。もう一度ご確認ください。</string>
     <string name="instantErrorFallback">購入に失敗しました。もう一度お試しください。</string>
+    <string name="instantNeedsSetup">先に購入するゲームを設定して保存してください。</string>
 </resources>

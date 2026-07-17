@@ -57,7 +57,43 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
+    /** 당겨서 새로고침: 당첨번호 + 잔액. */
+    fun refreshAll() {
+        fetchWinningNumbers()
+        viewModelScope.launch { container.refreshBalance() }
+    }
+}
+
+/** 번호 설정: 5슬롯(null=미설정 / emptyList=자동 / [nums]=수동) 읽기·쓰기. */
+class NumberViewModel(private val container: AppContainer) : ViewModel() {
+    val autoEnabled = container.autoEnabled
+    // 저장 완료 스낵바의 스케줄 문구용(원본 number_screen이 autoPurchaseDay/Hour/Minute 프로바이더를 읽음).
+    val autoPurchaseDay = container.autoPurchaseDay
+    val autoPurchaseHour = container.autoPurchaseHour
+    val autoPurchaseMinute = container.autoPurchaseMinute
+
+    private val _games = MutableStateFlow<List<List<Int>?>>(List(5) { null })
+    val games: StateFlow<List<List<Int>?>> = _games.asStateFlow()
+
+    init { loadSavedGames() }
+
+    fun loadSavedGames() {
+        viewModelScope.launch { _games.value = container.loadManualGames() }
+    }
+
+    /** 게임 수는 설정된 슬롯 수로 자동 반영(원본 `_saveConfig`). */
+    fun saveConfig(games: List<List<Int>?>) {
+        _games.value = games
+        viewModelScope.launch { container.saveManualGames(games) }
+    }
+
+    // === 즉시 구매 (번호 탭 저장 버튼 아래 CTA — 스펙 docs/DESIGN-instant-purchase.md) ===
+
+    val isLoggedIn = container.isLoggedIn
     val lastPurchasedRound = container.lastPurchasedRound
+
+    /** 현재 판매 중인 회차(KST). CTA 모드(첫/추가) 분기용. */
+    val currentRound: Int get() = PurchaseService.getCurrentRound()
 
     /**
      * 즉시 구매 다이얼로그 상태머신.
@@ -68,7 +104,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
      */
     sealed interface InstantState {
         data object Idle : InstantState
-        data object NeedsSetup : InstantState
+        data object NeedsSetup : InstantState         // 저장된 게임 0개 — 설정·저장 안내(스낵바)
         data class ConfirmingFirst(
             val round: Int,
             val autoGames: Int,
@@ -94,7 +130,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         return SettingsViewModel.isValidPurchaseTime(now.dayOfWeek.value, now.hour)
     }
 
-    /** CTA 탭: 게이트 재검증 후 모드 분기(첫 구매/추가/설정 유도). */
+    /** CTA 탭: 게이트 재검증 후 모드 분기(첫 구매/추가/설정 유도). 저장된 슬롯 기준. */
     fun onInstantTap() {
         if (_instantState.value != InstantState.Idle) return
         viewModelScope.launch {
@@ -164,39 +200,8 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
-    /** 당겨서 새로고침: 당첨번호 + 잔액 + 구매 회차(워커가 백그라운드에서 갱신했을 수 있음). */
-    fun refreshAll() {
-        fetchWinningNumbers()
-        viewModelScope.launch { container.refreshBalance() }
-        viewModelScope.launch { runCatching { container.refreshLastPurchasedRound() } }
-    }
-
     private companion object {
         val KST: ZoneId = ZoneId.of("Asia/Seoul")
-    }
-}
-
-/** 번호 설정: 5슬롯(null=미설정 / emptyList=자동 / [nums]=수동) 읽기·쓰기. */
-class NumberViewModel(private val container: AppContainer) : ViewModel() {
-    val autoEnabled = container.autoEnabled
-    // 저장 완료 스낵바의 스케줄 문구용(원본 number_screen이 autoPurchaseDay/Hour/Minute 프로바이더를 읽음).
-    val autoPurchaseDay = container.autoPurchaseDay
-    val autoPurchaseHour = container.autoPurchaseHour
-    val autoPurchaseMinute = container.autoPurchaseMinute
-
-    private val _games = MutableStateFlow<List<List<Int>?>>(List(5) { null })
-    val games: StateFlow<List<List<Int>?>> = _games.asStateFlow()
-
-    init { loadSavedGames() }
-
-    fun loadSavedGames() {
-        viewModelScope.launch { _games.value = container.loadManualGames() }
-    }
-
-    /** 게임 수는 설정된 슬롯 수로 자동 반영(원본 `_saveConfig`). */
-    fun saveConfig(games: List<List<Int>?>) {
-        _games.value = games
-        viewModelScope.launch { container.saveManualGames(games) }
     }
 }
 
