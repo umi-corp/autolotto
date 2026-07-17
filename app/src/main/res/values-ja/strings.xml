@@ -165,4 +165,21 @@
     <string name="buttonUpdateNow">アップデート</string>
     <string name="buttonUpdateLater">後で</string>
     <string name="updateDownloading">ダウンロード中…</string>
+
+    <!-- 即時購入 -->
+    <string name="buttonInstantPurchase">⚡ 今すぐ購入</string>
+    <string name="buttonExtraPurchase">➕ 追加購入</string>
+    <string name="instantNotSaleTime">現在は販売時間外です</string>
+    <string name="instantConfirmTitle">即時購入</string>
+    <string name="instantConfirmBody">第%1$d回 · %2$dゲーム · ₩%3$s\n今すぐ購入しますか?</string>
+    <string name="extraPickTitle">追加購入 (自動)</string>
+    <string name="extraPickBody">自動ゲーム数を選択してください。週間上限(5ゲーム)を超えるとサーバーで拒否されます。</string>
+    <string name="instantInProgress">購入中…</string>
+    <string name="instantSuccessTitle">🎰 購入完了!</string>
+    <string name="instantSuccessBody">第%1$d回 · %2$dゲーム</string>
+    <string name="instantErrorTitle">購入失敗</string>
+    <string name="instantUnknownResult">購入が受け付けられた可能性があります。\n履歴タブで確認してから再試行してください。</string>
+    <string name="instantAlreadyPurchased">この回はたった今購入されました。追加購入をご利用ください。</string>
+    <string name="instantRoundChanged">回が変わったため購入をキャンセルしました。もう一度ご確認ください。</string>
+    <string name="instantErrorFallback">購入に失敗しました。もう一度お試しください。</string>
 </resources>
