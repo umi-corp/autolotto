@@ -7,11 +7,15 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.umicorp.autolotto.data.SecureStore
 import com.umicorp.autolotto.dhlottery.AuthService
+import com.umicorp.autolotto.dhlottery.DhlotteryException
 import com.umicorp.autolotto.dhlottery.DhlotterySession
 import com.umicorp.autolotto.dhlottery.HistoryService
+import com.umicorp.autolotto.dhlottery.PurchaseResult
+import com.umicorp.autolotto.dhlottery.PurchaseService
 import com.umicorp.autolotto.dhlottery.ResultService
 import com.umicorp.autolotto.scheduler.AlarmScheduler
 import com.umicorp.autolotto.scheduler.BalanceAlert
+import com.umicorp.autolotto.scheduler.PurchaseLock
 import com.umicorp.autolotto.update.AppUpdater
 import com.umicorp.autolotto.update.UpdateInfo
 import java.io.File
@@ -23,9 +27,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 /**
  * 앱 스코프 컴포지션 루트 (원본 Riverpod `ProviderScope` + 전역 프로바이더 대응).
@@ -86,6 +93,10 @@ class AppContainer(context: Context) {
     private val _loggedInUserId = MutableStateFlow<String?>(null)
     val loggedInUserId: StateFlow<String?> = _loggedInUserId.asStateFlow()
 
+    /** 마지막 구매 회차(멱등 가드) — 즉시 구매 CTA 모드(첫/추가) 분기의 단일 출처. */
+    private val _lastPurchasedRound = MutableStateFlow(0)
+    val lastPurchasedRound: StateFlow<Int> = _lastPurchasedRound.asStateFlow()
+
     // === 인앱 업데이트 (사이드로드 배포) ===
     private val _updateInfo = MutableStateFlow<UpdateInfo?>(null)
     val updateInfo: StateFlow<UpdateInfo?> = _updateInfo.asStateFlow()
@@ -106,6 +117,7 @@ class AppContainer(context: Context) {
         _balanceAlertThreshold.value = store.getBalanceAlertThreshold()
         _language.value = store.getLanguage()
         _loggedInUserId.value = store.getCredentials().userId
+        _lastPurchasedRound.value = store.getLastPurchasedRound()
         // 앱 실행마다 알람 재무장(자동구매 활성 시). 업데이트·강제종료·OEM 정리로 소실된 알람 복구 — 멱등.
         scheduler.rescheduleAll()
     }
@@ -149,7 +161,16 @@ class AppContainer(context: Context) {
     /** 수동 로그인(설정 화면). 실패 시 throw(INVALID_CREDENTIALS 등) — 호출자가 매핑. 잔액알림은 안 함(원본과 동일). */
     suspend fun login(id: String, pw: String) {
         auth.login(id, pw)
-        store.saveCredentials(id, pw)
+        // 로컬 계정 전환 커밋은 구매 임계구역과 직렬화(PurchaseLock) — 워커 구매와 경합 방지.
+        // 회차 가드는 계정의 기록 — 다른 계정 로그인 시 무효화(같은 계정 재로그인은 보존).
+        PurchaseLock.mutex.withLock {
+            store.saveCredentials(id, pw)
+            val owner = store.getLastPurchaseOwner()
+            if (owner != null && owner != id) {
+                store.setLastPurchasedRound(0)
+                _lastPurchasedRound.value = 0
+            }
+        }
         _isLoggedIn.value = true
         _loggedInUserId.value = id
         _balance.value = auth.getBalance()
@@ -171,6 +192,75 @@ class AppContainer(context: Context) {
         val b = auth.getBalance()
         _balance.value = b
         BalanceAlert.checkAndNotify(appContext, b, _balanceAlertEnabled.value, _balanceAlertThreshold.value)
+    }
+
+    /** 워커가 백그라운드에서 회차를 갱신했을 수 있어 홈 새로고침 때 재읽기. */
+    suspend fun refreshLastPurchasedRound() = withContext(Dispatchers.IO) {
+        _lastPurchasedRound.value = store.getLastPurchasedRound()
+    }
+
+    // === 즉시 구매 (홈 CTA — 스펙 docs/DESIGN-instant-purchase.md) ===
+
+    /** 구매 요청 후 결과를 확인 못 한 실패(네트워크·타임아웃) — 재시도 유도 금지 신호. */
+    class PurchaseResultUnknownException(cause: Throwable) : Exception(cause)
+
+    /** 확정 다이얼로그가 표시한 회차와 실제 회차가 달라 구매 없이 중단한 경우. */
+    class RoundChangedException : Exception()
+
+    /** Mutex 획득 시점에 판매시간이 종료되어 구매 없이 중단한 경우(락 대기 중 경계 통과). */
+    class SaleClosedException : Exception()
+
+    /**
+     * 즉시 구매. [expectedRound]는 확정 다이얼로그가 표시한 회차 — Mutex 안에서 현재 회차와
+     * 대조해 다르면 [RoundChangedException](구매 요청 없음, 표시≠결제 방지). [extra]=false
+     * (첫 구매: 저장 슬롯)는 회차 가드 재판정 후 이미 구매된 회차면 null(= "방금 구매됨"),
+     * [extra]=true(추가: 자동 N게임)는 가드로 막지 않는다(서버 주간한도가 방어선). 세션 만료
+     * 대비 매번 재로그인(워커 패턴). 성공 응답 관측 즉시 성공 확정 — 회차+계정 기록 실패가
+     * 성공 결과를 가리면 재시도를 오유도하므로 runCatching. 잔액 갱신은 락 밖(실패 무시).
+     */
+    suspend fun instantPurchase(
+        extra: Boolean,
+        expectedRound: Int,
+        autoGames: Int,
+        manualNumbers: List<List<Int>>,
+    ): PurchaseResult? {
+        val result = PurchaseLock.mutex.withLock {
+            // 락 대기 중 판매 마감·회차 경계를 넘었을 수 있어 게이트 전부를 락 안에서 재평가.
+            val now = ZonedDateTime.now(ZoneId.of("Asia/Seoul"))
+            val saleOpen = SettingsViewModel.isValidPurchaseTime(now.dayOfWeek.value, now.hour)
+            val round = PurchaseService.getCurrentRound()
+            val recorded = store.getLastPurchasedRound()
+            _lastPurchasedRound.value = recorded
+            when (purchaseGate(extra, recorded, round, expectedRound, saleOpen)) {
+                PurchaseGate.SALE_CLOSED -> throw SaleClosedException()
+                PurchaseGate.ROUND_CHANGED -> throw RoundChangedException()
+                PurchaseGate.ALREADY_PURCHASED -> return@withLock null  // 워커 선점 — 이미 구매됨
+                PurchaseGate.PROCEED -> Unit
+            }
+
+            val cred = store.getCredentials()
+            val id = requireNotNull(cred.userId) { "로그인이 필요합니다." }
+            val pw = requireNotNull(cred.password) { "로그인이 필요합니다." }
+            auth.login(id, pw)
+            _isLoggedIn.value = true
+
+            val r = try {
+                PurchaseService(auth, session).purchase(autoGames = autoGames, manualNumbers = manualNumbers)
+            } catch (e: DhlotteryException) {
+                throw e                                             // 서버 확정 거절 — 메시지 그대로
+            } catch (e: Exception) {
+                throw PurchaseResultUnknownException(e)             // 요청 후 결과 불명
+            }
+            // 성공 확정 — 로컬 기록 실패가 성공 결과를 가리면 안 됨(재시도 오유도 방지).
+            runCatching {
+                store.setLastPurchasedRound(r.round)
+                store.setLastPurchaseOwner(id)
+            }
+            _lastPurchasedRound.value = r.round
+            r
+        } ?: return null
+        runCatching { refreshBalance() }                            // 락 밖 — 실패해도 성공 표시 유지
+        return result
     }
 
     // === 자동구매 설정 (write-through: 플로우 + SecureStore + 알람) ===
