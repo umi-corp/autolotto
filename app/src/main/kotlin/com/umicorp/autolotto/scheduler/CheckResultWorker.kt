@@ -67,6 +67,8 @@ class CheckResultWorker(context: Context, params: WorkerParameters) : CoroutineW
             val history = HistoryService(session)
             // 회차당 주문이 여러 건일 수 있음(예약 + 즉시/추가 구매) — 첫 주문만 보면 나머지
             // 게임의 당첨이 누락돼 낙첨 오보가 난다. 병합해 회차 전체 게임으로 판정.
+            // count=10 근거: 온라인 주간 한도 5게임 → 회차당 주문 최대 5건(주문당 ≥1게임),
+            // 결과확인은 판매정지 창(토 21:00~) 내 실행이라 대상 회차 주문이 항상 최신이다.
             val purchases = mergePurchasesByRound(history.fetchRecentPurchases(count = 10))
             val purchase = purchases.firstOrNull { it.round == winning.round }
                 ?: throw Exception("no_matching_purchase")

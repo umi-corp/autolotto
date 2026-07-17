@@ -9,6 +9,7 @@ import com.umicorp.autolotto.data.mergePurchasesByRound
 import com.umicorp.autolotto.dhlottery.PurchaseResult
 import com.umicorp.autolotto.dhlottery.PurchaseService
 import com.umicorp.autolotto.splitSlots
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -131,10 +132,13 @@ class NumberViewModel(private val container: AppContainer) : ViewModel() {
         return SettingsViewModel.isValidPurchaseTime(now.dayOfWeek.value, now.hour)
     }
 
+    /** 탭 판정 코루틴 핸들 — 이중 탭으로 판정 코루틴이 둘 뜨는 것 자체를 차단. */
+    private var tapJob: Job? = null
+
     /** CTA 탭: 게이트 재검증 후 모드 분기(첫 구매/추가/설정 유도). 저장된 슬롯 기준. */
     fun onInstantTap() {
-        if (_instantState.value != InstantState.Idle) return
-        viewModelScope.launch {
+        if (_instantState.value != InstantState.Idle || tapJob?.isActive == true) return
+        tapJob = viewModelScope.launch {
             if (!isSaleOpenNow()) {                                 // 표시가 stale했던 경우 — 사유 표시
                 advanceFromIdle(InstantState.SaleClosed)
                 return@launch
