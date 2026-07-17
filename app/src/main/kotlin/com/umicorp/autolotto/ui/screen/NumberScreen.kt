@@ -838,43 +838,40 @@ private fun InstantPurchaseDialogs(state: InstantState, vm: NumberViewModel) {
                 TextButton(onClick = { vm.dismissInstant() }) { Text(stringResource(R.string.buttonConfirm)) }
             },
         )
-        is InstantState.AlreadyPurchased -> AlertDialog(
-            onDismissRequest = { vm.dismissInstant() },
-            title = { Text(stringResource(R.string.instantConfirmTitle)) },
-            text = { Text(stringResource(R.string.instantAlreadyPurchased)) },
-            confirmButton = {
-                TextButton(onClick = { vm.dismissInstant() }) { Text(stringResource(R.string.buttonConfirm)) }
-            },
+        is InstantState.AlreadyPurchased -> InstantNoticeDialog(
+            title = stringResource(R.string.instantConfirmTitle),
+            text = stringResource(R.string.instantAlreadyPurchased),
+            onDismiss = { vm.dismissInstant() },
         )
-        is InstantState.SaleClosed -> AlertDialog(
-            onDismissRequest = { vm.dismissInstant() },
-            title = { Text(stringResource(R.string.instantConfirmTitle)) },
-            text = { Text(stringResource(R.string.instantNotSaleTime)) },
-            confirmButton = {
-                TextButton(onClick = { vm.dismissInstant() }) { Text(stringResource(R.string.buttonConfirm)) }
-            },
+        is InstantState.SaleClosed -> InstantNoticeDialog(
+            title = stringResource(R.string.instantConfirmTitle),
+            text = stringResource(R.string.instantNotSaleTime),
+            onDismiss = { vm.dismissInstant() },
         )
-        is InstantState.RoundChanged -> AlertDialog(
-            onDismissRequest = { vm.dismissInstant() },
-            title = { Text(stringResource(R.string.instantConfirmTitle)) },
-            text = { Text(stringResource(R.string.instantRoundChanged)) },
-            confirmButton = {
-                TextButton(onClick = { vm.dismissInstant() }) { Text(stringResource(R.string.buttonConfirm)) }
-            },
+        is InstantState.RoundChanged -> InstantNoticeDialog(
+            title = stringResource(R.string.instantConfirmTitle),
+            text = stringResource(R.string.instantRoundChanged),
+            onDismiss = { vm.dismissInstant() },
         )
-        is InstantState.Error -> AlertDialog(
-            onDismissRequest = { vm.dismissInstant() },
-            title = { Text(stringResource(R.string.instantErrorTitle)) },
-            text = {
-                Text(
-                    if (state.unknown) stringResource(R.string.instantUnknownResult)
-                    else state.message ?: stringResource(R.string.instantErrorFallback),
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = { vm.dismissInstant() }) { Text(stringResource(R.string.buttonConfirm)) }
-            },
+        is InstantState.Error -> InstantNoticeDialog(
+            title = stringResource(R.string.instantErrorTitle),
+            text = if (state.unknown) stringResource(R.string.instantUnknownResult)
+            else state.message ?: stringResource(R.string.instantErrorFallback),
+            onDismiss = { vm.dismissInstant() },
         )
         InstantState.Idle, InstantState.NeedsSetup -> Unit
     }
+}
+
+/** 공지성 다이얼로그 공통 스켈레톤(제목·본문·확인 버튼) — 상태별 문구만 다르다. */
+@Composable
+private fun InstantNoticeDialog(title: String, text: String, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = { Text(text) },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.buttonConfirm)) }
+        },
+    )
 }
