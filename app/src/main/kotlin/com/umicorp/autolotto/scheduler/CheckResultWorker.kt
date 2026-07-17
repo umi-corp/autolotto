@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.umicorp.autolotto.data.SecureStore
+import com.umicorp.autolotto.data.mergePurchasesByRound
 import com.umicorp.autolotto.dhlottery.AuthService
 import com.umicorp.autolotto.dhlottery.DhlotterySession
 import com.umicorp.autolotto.dhlottery.HistoryService
@@ -64,7 +65,9 @@ class CheckResultWorker(context: Context, params: WorkerParameters) : CoroutineW
             auth.login(userId, password)
 
             val history = HistoryService(session)
-            val purchases = history.fetchRecentPurchases(count = 5)
+            // 회차당 주문이 여러 건일 수 있음(예약 + 즉시/추가 구매) — 첫 주문만 보면 나머지
+            // 게임의 당첨이 누락돼 낙첨 오보가 난다. 병합해 회차 전체 게임으로 판정.
+            val purchases = mergePurchasesByRound(history.fetchRecentPurchases(count = 10))
             val purchase = purchases.firstOrNull { it.round == winning.round }
                 ?: throw Exception("no_matching_purchase")
             // 추첨 결과가 티켓에 아직 반영되지 않았으면(drawed=false, gameRanks=pending)

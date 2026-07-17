@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.umicorp.autolotto.AppContainer
 import com.umicorp.autolotto.data.Purchase
 import com.umicorp.autolotto.data.WinningResult
+import com.umicorp.autolotto.data.mergePurchasesByRound
 import com.umicorp.autolotto.dhlottery.PurchaseResult
 import com.umicorp.autolotto.dhlottery.PurchaseService
 import com.umicorp.autolotto.splitSlots
@@ -250,7 +251,8 @@ class HistoryViewModel(private val container: AppContainer) : ViewModel() {
             try {
                 val end = LocalDate.now()
                 val start = end.minusMonths(WINDOW_MONTHS)
-                _purchases.value = container.historyService.fetchPurchases(start, end)
+                // 회차당 주문이 여러 건일 수 있음(예약 + 즉시/추가 구매) — 카드 1장으로 병합.
+                _purchases.value = mergePurchasesByRound(container.historyService.fetchPurchases(start, end))
                     .sortedByDescending { it.round }
                 oldestStart = start
                 windowsLoaded = 1
@@ -273,7 +275,8 @@ class HistoryViewModel(private val container: AppContainer) : ViewModel() {
                 val end = oldestStart.minusDays(1)
                 val start = end.minusMonths(WINDOW_MONTHS)
                 val more = container.historyService.fetchPurchases(start, end)
-                _purchases.value = (_purchases.value + more).sortedByDescending { it.round }
+                // 창 경계에 걸린 회차도 병합되도록 이어 붙인 전체를 다시 병합.
+                _purchases.value = mergePurchasesByRound(_purchases.value + more).sortedByDescending { it.round }
                 oldestStart = start
                 windowsLoaded++
                 if (windowsLoaded >= MAX_WINDOWS) _canLoadMore.value = false
