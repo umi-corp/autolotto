@@ -5,12 +5,16 @@ import androidx.lifecycle.viewModelScope
 import com.umicorp.autolotto.AppContainer
 import com.umicorp.autolotto.data.Purchase
 import com.umicorp.autolotto.data.WinningResult
+import com.umicorp.autolotto.dhlottery.PurchaseResult
 import com.umicorp.autolotto.dhlottery.PurchaseService
+import com.umicorp.autolotto.splitSlots
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 /**
  * 화면별 ViewModel (원본 Riverpod 화면 상태 포트).
@@ -53,10 +57,122 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
-    /** 당겨서 새로고침: 당첨번호 + 잔액. */
+    val lastPurchasedRound = container.lastPurchasedRound
+
+    /**
+     * 즉시 구매 다이얼로그 상태머신.
+     * Idle → (탭) ConfirmingFirst | PickingExtra | NeedsSetup | SaleClosed
+     *      → (확정) InProgress → Success | AlreadyPurchased | SaleClosed | RoundChanged | Error
+     *      → (닫기) Idle
+     * ConfirmingFirst는 탭 시점 슬롯 스냅샷을 담아 확인창 표시 내용 = 실제 구매 내용을 보장.
+     */
+    sealed interface InstantState {
+        data object Idle : InstantState
+        data object NeedsSetup : InstantState
+        data class ConfirmingFirst(
+            val round: Int,
+            val autoGames: Int,
+            val manualNumbers: List<List<Int>>,
+        ) : InstantState {
+            val games: Int get() = autoGames + manualNumbers.size
+        }
+        data class PickingExtra(val round: Int) : InstantState
+        data object InProgress : InstantState
+        data object AlreadyPurchased : InstantState   // 첫 구매 확정 직전 워커 선점
+        data object SaleClosed : InstantState         // 탭·확정 시점 판매시간 재검증 실패
+        data object RoundChanged : InstantState       // 확정 회차 ≠ 실제 회차 — 구매 없이 취소
+        data class Success(val result: PurchaseResult) : InstantState
+        data class Error(val message: String?, val unknown: Boolean) : InstantState
+    }
+
+    private val _instantState = MutableStateFlow<InstantState>(InstantState.Idle)
+    val instantState: StateFlow<InstantState> = _instantState.asStateFlow()
+
+    /** 지금(KST)이 판매시간인지 — CTA 표시용. 확정 시점에도 재검증한다. */
+    fun isSaleOpenNow(): Boolean {
+        val now = ZonedDateTime.now(KST)
+        return SettingsViewModel.isValidPurchaseTime(now.dayOfWeek.value, now.hour)
+    }
+
+    /** CTA 탭: 게이트 재검증 후 모드 분기(첫 구매/추가/설정 유도). */
+    fun onInstantTap() {
+        if (_instantState.value != InstantState.Idle) return
+        viewModelScope.launch {
+            if (!isSaleOpenNow()) {                                 // 표시가 stale했던 경우 — 사유 표시
+                _instantState.value = InstantState.SaleClosed
+                return@launch
+            }
+            runCatching { container.refreshLastPurchasedRound() }
+            val round = PurchaseService.getCurrentRound()
+            if (container.lastPurchasedRound.value >= round) {
+                _instantState.value = InstantState.PickingExtra(round)
+                return@launch
+            }
+            val (auto, manual) = splitSlots(container.loadManualGames())
+            _instantState.value = if (auto + manual.size == 0) InstantState.NeedsSetup
+            else InstantState.ConfirmingFirst(round, auto, manual)
+        }
+    }
+
+    /** 첫 구매 확정 — 탭 시점 스냅샷 그대로 실행. 최종 회차·가드 재판정은 컨테이너 Mutex 안. */
+    fun confirmFirst() {
+        val s = _instantState.value as? InstantState.ConfirmingFirst ?: return
+        launchPurchase {
+            container.instantPurchase(
+                extra = false, expectedRound = s.round,
+                autoGames = s.autoGames, manualNumbers = s.manualNumbers,
+            )
+        }
+    }
+
+    /** 추가 구매 확정 — 자동 [games]게임. 가드로 막지 않음(서버 한도 위임), 회차만 대조. */
+    fun confirmExtra(games: Int) {
+        val s = _instantState.value as? InstantState.PickingExtra ?: return
+        launchPurchase {
+            container.instantPurchase(
+                extra = true, expectedRound = s.round,
+                autoGames = games, manualNumbers = emptyList(),
+            )
+        }
+    }
+
+    fun dismissInstant() {
+        if (_instantState.value == InstantState.InProgress) return  // 진행 중 닫기 금지
+        _instantState.value = InstantState.Idle
+    }
+
+    private fun launchPurchase(block: suspend () -> PurchaseResult?) {
+        if (_instantState.value == InstantState.InProgress) return  // 중복 확정 no-op
+        if (!isSaleOpenNow()) {                                     // 확정 시점 판매시간 재검증
+            _instantState.value = InstantState.SaleClosed
+            return
+        }
+        _instantState.value = InstantState.InProgress
+        viewModelScope.launch {
+            _instantState.value = try {
+                val r = block()
+                if (r == null) InstantState.AlreadyPurchased else InstantState.Success(r)
+            } catch (e: AppContainer.SaleClosedException) {
+                InstantState.SaleClosed                              // 락 대기 중 판매 종료
+            } catch (e: AppContainer.RoundChangedException) {
+                InstantState.RoundChanged                            // 구매 요청 없이 취소됨
+            } catch (e: AppContainer.PurchaseResultUnknownException) {
+                InstantState.Error(message = null, unknown = true)
+            } catch (e: Exception) {
+                InstantState.Error(message = e.message, unknown = false)
+            }
+        }
+    }
+
+    /** 당겨서 새로고침: 당첨번호 + 잔액 + 구매 회차(워커가 백그라운드에서 갱신했을 수 있음). */
     fun refreshAll() {
         fetchWinningNumbers()
         viewModelScope.launch { container.refreshBalance() }
+        viewModelScope.launch { runCatching { container.refreshLastPurchasedRound() } }
+    }
+
+    private companion object {
+        val KST: ZoneId = ZoneId.of("Asia/Seoul")
     }
 }
 
