@@ -199,7 +199,7 @@ class AppContainer(context: Context) {
         _lastPurchasedRound.value = store.getLastPurchasedRound()
     }
 
-    // === 즉시 구매 (홈 CTA — 스펙 docs/DESIGN-instant-purchase.md) ===
+    // === 즉시 구매 (번호 탭 CTA — 스펙 docs/DESIGN-instant-purchase.md) ===
 
     /** 구매 요청 후 결과를 확인 못 한 실패(네트워크·타임아웃) — 재시도 유도 금지 신호. */
     class PurchaseResultUnknownException(cause: Throwable) : Exception(cause)

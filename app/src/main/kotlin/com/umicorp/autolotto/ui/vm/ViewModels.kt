@@ -135,19 +135,30 @@ class NumberViewModel(private val container: AppContainer) : ViewModel() {
         if (_instantState.value != InstantState.Idle) return
         viewModelScope.launch {
             if (!isSaleOpenNow()) {                                 // 표시가 stale했던 경우 — 사유 표시
-                _instantState.value = InstantState.SaleClosed
+                advanceFromIdle(InstantState.SaleClosed)
                 return@launch
             }
             runCatching { container.refreshLastPurchasedRound() }
             val round = PurchaseService.getCurrentRound()
             if (container.lastPurchasedRound.value >= round) {
-                _instantState.value = InstantState.PickingExtra(round)
+                advanceFromIdle(InstantState.PickingExtra(round))
                 return@launch
             }
             val (auto, manual) = splitSlots(container.loadManualGames())
-            _instantState.value = if (auto + manual.size == 0) InstantState.NeedsSetup
-            else InstantState.ConfirmingFirst(round, auto, manual)
+            advanceFromIdle(
+                if (auto + manual.size == 0) InstantState.NeedsSetup
+                else InstantState.ConfirmingFirst(round, auto, manual),
+            )
         }
+    }
+
+    /**
+     * Idle일 때만 상태 전이. 빠른 이중 탭으로 코루틴이 둘 뜨면 늦게 복귀한 쪽이 진행 중
+     * 상태(InProgress 등)를 다이얼로그 단계로 되돌려 재확정(=이중 결제) 여지를 만들 수 있어,
+     * 상태 기록 직전에 선점 여부를 재확인한다(viewModelScope=Main 단일 스레드라 원자적).
+     */
+    private fun advanceFromIdle(next: InstantState) {
+        if (_instantState.value == InstantState.Idle) _instantState.value = next
     }
 
     /** 첫 구매 확정 — 탭 시점 스냅샷 그대로 실행. 최종 회차·가드 재판정은 컨테이너 Mutex 안. */
