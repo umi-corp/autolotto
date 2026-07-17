@@ -41,8 +41,8 @@ EncryptedSharedPreferences(SecureStore), JUnit4(기존 테스트 스타일).
 - Produces: `R.string.buttonInstantPurchase`, `buttonExtraPurchase`, `instantNotSaleTime`,
   `instantConfirmTitle`, `instantConfirmBody(%1$d,%2$d,%3$s)`, `extraPickTitle`,
   `extraPickBody`, `instantInProgress`, `instantSuccessTitle`, `instantSuccessBody(%1$d,%2$d)`,
-  `instantErrorTitle`, `instantUnknownResult`, `instantAlreadyPurchased`, `instantErrorFallback`
-  — Task 7이 사용. 기존 키 재사용: `hintLoginRequired`, `buttonConfirm`, `buttonCancel`,
+  `instantErrorTitle`, `instantUnknownResult`, `instantAlreadyPurchased`, `instantRoundChanged`,
+  `instantErrorFallback` — Task 7이 사용. 기존 키 재사용: `hintLoginRequired`, `buttonConfirm`, `buttonCancel`,
   `buttonSetupNumbers`.
 
 - [ ] **Step 1: ko 추가** — `values/strings.xml`의 `</resources>` 직전에:
@@ -62,6 +62,7 @@ EncryptedSharedPreferences(SecureStore), JUnit4(기존 테스트 스타일).
     <string name="instantErrorTitle">구매 실패</string>
     <string name="instantUnknownResult">구매가 접수됐을 수 있습니다.\n내역 탭에서 확인 후 다시 시도해주세요.</string>
     <string name="instantAlreadyPurchased">방금 이 회차가 구매되었습니다. 추가 구매로 이용해주세요.</string>
+    <string name="instantRoundChanged">회차가 변경되어 구매를 취소했습니다. 다시 확인해주세요.</string>
     <string name="instantErrorFallback">구매에 실패했습니다. 다시 시도해주세요.</string>
 ```
 
@@ -82,6 +83,7 @@ EncryptedSharedPreferences(SecureStore), JUnit4(기존 테스트 스타일).
     <string name="instantErrorTitle">Purchase Failed</string>
     <string name="instantUnknownResult">Your purchase may have gone through.\nCheck the History tab before trying again.</string>
     <string name="instantAlreadyPurchased">This round was just purchased. Use Buy More instead.</string>
+    <string name="instantRoundChanged">The round has changed, so the purchase was cancelled. Please review again.</string>
     <string name="instantErrorFallback">Purchase failed. Please try again.</string>
 ```
 
@@ -102,6 +104,7 @@ EncryptedSharedPreferences(SecureStore), JUnit4(기존 테스트 스타일).
     <string name="instantErrorTitle">購入失敗</string>
     <string name="instantUnknownResult">購入が受け付けられた可能性があります。\n履歴タブで確認してから再試行してください。</string>
     <string name="instantAlreadyPurchased">この回はたった今購入されました。追加購入をご利用ください。</string>
+    <string name="instantRoundChanged">回が変わったため購入をキャンセルしました。もう一度ご確認ください。</string>
     <string name="instantErrorFallback">購入に失敗しました。もう一度お試しください。</string>
 ```
 
@@ -159,7 +162,7 @@ git commit -m "feat(data): 회차 가드 계정 스코프 키 last_purchase_owne
 
 ---
 
-### Task 3: splitSlots 순수 함수 + 게이트 경계 단위테스트 (TDD)
+### Task 3: splitSlots·purchaseGate 순수 함수 + 단위테스트 (TDD)
 
 **Files:**
 - Modify: `app/src/main/kotlin/com/umicorp/autolotto/AppContainer.kt` (최상위 함수 추가)
@@ -167,8 +170,13 @@ git commit -m "feat(data): 회차 가드 계정 스코프 키 last_purchase_owne
 
 **Interfaces:**
 - Consumes: `SettingsViewModel.isValidPurchaseTime(day, hour)` (기존, ViewModels.kt:235).
-- Produces: 최상위 `splitSlots(slots: List<List<Int>?>): Pair<Int, List<List<Int>>>`
-  (first=자동 게임 수, second=수동 번호 목록) — Task 5의 VM 스냅샷 변환이 사용.
+- Produces (모두 최상위, 루트 패키지):
+  - `splitSlots(slots: List<List<Int>?>): Pair<Int, List<List<Int>>>`
+    (first=자동 게임 수, second=수동 번호 목록) — Task 6의 VM 스냅샷 변환이 사용.
+  - `enum class PurchaseGate { PROCEED, ALREADY_PURCHASED, ROUND_CHANGED, SALE_CLOSED }` 와
+    `purchaseGate(extra: Boolean, recordedRound: Int, currentRound: Int, expectedRound: Int, saleOpen: Boolean): PurchaseGate`
+    — Task 5의 Mutex 내 모드별 재판정이 사용(결제 안전 분기를 JUnit으로 고정).
+    판매 종료(`!saleOpen`)·회차 변경은 모드 공통 중단, 회차 가드는 첫 구매에만.
 
 - [ ] **Step 1: 실패하는 테스트 작성** — `InstantPurchaseLogicTest.kt` 생성:
 
@@ -217,6 +225,46 @@ class InstantPurchaseLogicTest {
         assertTrue(SettingsViewModel.isValidPurchaseTime(day = 3, hour = 6))
         assertTrue(SettingsViewModel.isValidPurchaseTime(day = 7, hour = 23)) // 일요일 밤 판매
     }
+
+    @Test
+    fun `purchaseGate - 회차 불일치는 모드 무관 중단`() {
+        assertEquals(
+            PurchaseGate.ROUND_CHANGED,
+            purchaseGate(extra = false, recordedRound = 0, currentRound = 1200, expectedRound = 1199, saleOpen = true),
+        )
+        assertEquals(
+            PurchaseGate.ROUND_CHANGED,
+            purchaseGate(extra = true, recordedRound = 1200, currentRound = 1201, expectedRound = 1200, saleOpen = true),
+        )
+    }
+
+    @Test
+    fun `purchaseGate - 첫 구매만 회차 가드, 추가 구매는 통과`() {
+        assertEquals(
+            PurchaseGate.ALREADY_PURCHASED,
+            purchaseGate(extra = false, recordedRound = 1200, currentRound = 1200, expectedRound = 1200, saleOpen = true),
+        )
+        assertEquals(
+            PurchaseGate.PROCEED,
+            purchaseGate(extra = true, recordedRound = 1200, currentRound = 1200, expectedRound = 1200, saleOpen = true),
+        )
+        assertEquals(
+            PurchaseGate.PROCEED,
+            purchaseGate(extra = false, recordedRound = 1199, currentRound = 1200, expectedRound = 1200, saleOpen = true),
+        )
+    }
+
+    @Test
+    fun `purchaseGate - 락 대기 중 판매 종료면 모드 무관 중단`() {
+        assertEquals(
+            PurchaseGate.SALE_CLOSED,
+            purchaseGate(extra = true, recordedRound = 1200, currentRound = 1200, expectedRound = 1200, saleOpen = false),
+        )
+        assertEquals(
+            PurchaseGate.SALE_CLOSED,
+            purchaseGate(extra = false, recordedRound = 0, currentRound = 1200, expectedRound = 1200, saleOpen = false),
+        )
+    }
 }
 ```
 
@@ -231,18 +279,28 @@ Expected: FAIL — `Unresolved reference: splitSlots` (컴파일 에러 = red)
 /** 5슬롯(null=미설정 / 빈=자동 / 6수=수동) → (자동 게임 수, 수동 번호 목록). 첫 구매 변환. */
 fun splitSlots(slots: List<List<Int>?>): Pair<Int, List<List<Int>>> =
     slots.count { it?.isEmpty() == true } to slots.filterNotNull().filter { it.isNotEmpty() }
+
+/** Mutex 내 구매 게이트(순수) — 판매 종료·회차 변경은 모드 공통 중단, 회차 가드는 첫 구매에만. */
+enum class PurchaseGate { PROCEED, ALREADY_PURCHASED, ROUND_CHANGED, SALE_CLOSED }
+
+fun purchaseGate(extra: Boolean, recordedRound: Int, currentRound: Int, expectedRound: Int, saleOpen: Boolean): PurchaseGate = when {
+    !saleOpen -> PurchaseGate.SALE_CLOSED
+    currentRound != expectedRound -> PurchaseGate.ROUND_CHANGED
+    !extra && recordedRound >= currentRound -> PurchaseGate.ALREADY_PURCHASED
+    else -> PurchaseGate.PROCEED
+}
 ```
 
 - [ ] **Step 4: 통과 확인**
 
 Run: `JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew testDebugUnitTest --tests "com.umicorp.autolotto.InstantPurchaseLogicTest"`
-Expected: PASS (4 tests)
+Expected: PASS (7 tests)
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add app/src/main/kotlin/com/umicorp/autolotto/AppContainer.kt app/src/test/kotlin/com/umicorp/autolotto/InstantPurchaseLogicTest.kt
-git commit -m "feat(core): splitSlots 슬롯 분해 + 판매시간 게이트 경계 테스트"
+git commit -m "feat(core): splitSlots·purchaseGate 순수 로직 + 경계 테스트"
 ```
 
 ---
@@ -255,8 +313,9 @@ git commit -m "feat(core): splitSlots 슬롯 분해 + 판매시간 게이트 경
 **Interfaces:**
 - Produces: `object PurchaseLock { val mutex: Mutex }` (scheduler 패키지 최상위) — Task 5가 사용.
 - 워커 동작 계약 불변: 가드 스킵/성공 알림/재시도 매핑/알람 재등록 모두 기존과 동일.
-  달라지는 것은 ① 가드 판정~회차 기록이 `PurchaseLock.mutex` 임계구역이 된 것,
-  ② 성공 시 `setLastPurchaseOwner(userId)` 1줄 추가.
+  달라지는 것은 ① 자격증명 읽기~회차 기록이 `PurchaseLock.mutex` 임계구역이 된 것
+  (수동 로그인의 계정 전환 커밋과도 직렬화 — Task 5 Step 4), ② 성공 시
+  `setLastPurchaseOwner(userId)` 1줄 추가.
 
 - [ ] **Step 1: import + PurchaseLock 추가** — 파일 상단 import에
   `kotlinx.coroutines.sync.Mutex`, `kotlinx.coroutines.sync.withLock` 추가 후,
@@ -281,23 +340,24 @@ object PurchaseLock {
     private suspend fun executeAutoPurchase() {
         var step = "init"
         try {
-            step = "read_credentials"
-            val cred = store.getCredentials()
-            val userId = cred.userId
-            val password = cred.password
-            val autoEnabled = store.getAutoEnabled()
-            val games = store.getAutoGames()
-
-            if (!autoEnabled || userId == null || password == null) return
-            if (games == 0) return
-
             val session = DhlotterySession()
             val auth = AuthService(session)
 
-            // 회차 멱등 가드~회차 기록 = 즉시 구매와 공유하는 임계구역(PurchaseLock).
-            // Worker 재실행·중복 알람·홈 즉시 구매가 겹쳐도 같은 회차를 두 번 사지 않는다.
-            step = "round_guard"
+            // 자격증명 읽기~회차 기록 = 즉시 구매·수동 로그인(계정 전환 커밋)과 공유하는
+            // 임계구역(PurchaseLock). Worker 재실행·중복 알람·홈 즉시 구매·로그인 경합에도
+            // 같은 회차를 두 번 사거나 기록이 다른 계정으로 어긋나지 않는다.
+            step = "read_credentials"
             val result = PurchaseLock.mutex.withLock {
+                val cred = store.getCredentials()
+                val userId = cred.userId
+                val password = cred.password
+                val autoEnabled = store.getAutoEnabled()
+                val games = store.getAutoGames()
+
+                if (!autoEnabled || userId == null || password == null) return
+                if (games == 0) return
+
+                step = "round_guard"
                 val currentRound = PurchaseService.getCurrentRound()
                 if (store.getLastPurchasedRound() >= currentRound) return
 
@@ -385,14 +445,18 @@ git commit -m "feat(scheduler): 구매 직렬화 PurchaseLock — 워커 가드~
 - Modify: `app/src/main/kotlin/com/umicorp/autolotto/AppContainer.kt`
 
 **Interfaces:**
-- Consumes: `PurchaseLock.mutex`(Task 4), `store.setLastPurchaseOwner/getLastPurchaseOwner`(Task 2).
+- Consumes: `PurchaseLock.mutex`(Task 4), `store.setLastPurchaseOwner/getLastPurchaseOwner`(Task 2),
+  `purchaseGate`/`PurchaseGate`(Task 3).
 - Produces (Task 6이 사용):
   - `val lastPurchasedRound: StateFlow<Int>`
   - `suspend fun refreshLastPurchasedRound()`
-  - `suspend fun instantPurchase(extra: Boolean, autoGames: Int, manualNumbers: List<List<Int>>): PurchaseResult?`
-    — null = 첫 구매 모드인데 이미 구매된 회차(워커 선점). 서버 확정 거절은
-    `DhlotteryException` 그대로, 구매 요청 후 그 외 예외는 `PurchaseResultUnknownException`.
-  - `class PurchaseResultUnknownException(cause: Throwable)`
+  - `suspend fun instantPurchase(extra: Boolean, expectedRound: Int, autoGames: Int, manualNumbers: List<List<Int>>): PurchaseResult?`
+    — null = 첫 구매 모드인데 이미 구매된 회차(워커 선점). 확정 회차 ≠ 현재 회차면
+    `RoundChangedException`(구매 요청 없음). 서버 확정 거절은 `DhlotteryException` 그대로,
+    구매 요청 후 그 외 예외는 `PurchaseResultUnknownException`. 성공 응답 관측 = 성공 확정
+    (로컬 기록 실패는 결과에 영향 없음).
+  - `class PurchaseResultUnknownException(cause: Throwable)` / `class RoundChangedException`
+    / `class SaleClosedException`(락 획득 시점 판매 종료 — 구매 요청 없음)
 
 - [ ] **Step 1: import 추가**
 
@@ -402,7 +466,11 @@ import com.umicorp.autolotto.dhlottery.PurchaseResult
 import com.umicorp.autolotto.dhlottery.PurchaseService
 import com.umicorp.autolotto.scheduler.PurchaseLock
 import kotlinx.coroutines.sync.withLock
+import java.time.ZoneId
+import java.time.ZonedDateTime
 ```
+
+(`SettingsViewModel`은 viewModelFactory용으로 이미 import되어 있음 — 판매시간 재검증에 재사용)
 
 - [ ] **Step 2: StateFlow 추가** — `_loggedInUserId` 선언 아래에:
 
@@ -422,14 +490,20 @@ import kotlinx.coroutines.sync.withLock
     }
 ```
 
-- [ ] **Step 4: 로그인 시 계정 스코프 리셋** — `login()`의 `store.saveCredentials(id, pw)` 아래에:
+- [ ] **Step 4: 로그인 시 계정 스코프 리셋 (구매 임계구역과 직렬화)** — `login()`의
+  `store.saveCredentials(id, pw)` 줄을 다음 블록으로 교체(원격 `auth.login`은 락 밖 유지,
+  로컬 커밋만 락 안 — 워커가 구매 중일 때 계정 전환 기록이 어긋나는 경합 방지):
 
 ```kotlin
+        // 로컬 계정 전환 커밋은 구매 임계구역과 직렬화(PurchaseLock) — 워커 구매와 경합 방지.
         // 회차 가드는 계정의 기록 — 다른 계정 로그인 시 무효화(같은 계정 재로그인은 보존).
-        val owner = store.getLastPurchaseOwner()
-        if (owner != null && owner != id) {
-            store.setLastPurchasedRound(0)
-            _lastPurchasedRound.value = 0
+        PurchaseLock.mutex.withLock {
+            store.saveCredentials(id, pw)
+            val owner = store.getLastPurchaseOwner()
+            if (owner != null && owner != id) {
+                store.setLastPurchasedRound(0)
+                _lastPurchasedRound.value = 0
+            }
         }
 ```
 
@@ -441,22 +515,39 @@ import kotlinx.coroutines.sync.withLock
     /** 구매 요청 후 결과를 확인 못 한 실패(네트워크·타임아웃) — 재시도 유도 금지 신호. */
     class PurchaseResultUnknownException(cause: Throwable) : Exception(cause)
 
+    /** 확정 다이얼로그가 표시한 회차와 실제 회차가 달라 구매 없이 중단한 경우. */
+    class RoundChangedException : Exception()
+
+    /** Mutex 획득 시점에 판매시간이 종료되어 구매 없이 중단한 경우(락 대기 중 경계 통과). */
+    class SaleClosedException : Exception()
+
     /**
-     * 즉시 구매. [extra]=false(첫 구매: 저장 슬롯)는 Mutex 안에서 회차 가드를 재판정해 이미
-     * 구매된 회차면 null 반환(= "방금 구매됨"). [extra]=true(추가: 자동 N게임)는 가드로 막지
-     * 않는다(구매 완료가 정상 전제, 방어선은 서버 주간한도). 세션 만료 대비 매번 재로그인
-     * (워커 패턴). 성공 즉시 회차+계정 기록까지가 임계구역, 잔액 갱신은 락 밖(실패 무시).
+     * 즉시 구매. [expectedRound]는 확정 다이얼로그가 표시한 회차 — Mutex 안에서 현재 회차와
+     * 대조해 다르면 [RoundChangedException](구매 요청 없음, 표시≠결제 방지). [extra]=false
+     * (첫 구매: 저장 슬롯)는 회차 가드 재판정 후 이미 구매된 회차면 null(= "방금 구매됨"),
+     * [extra]=true(추가: 자동 N게임)는 가드로 막지 않는다(서버 주간한도가 방어선). 세션 만료
+     * 대비 매번 재로그인(워커 패턴). 성공 응답 관측 즉시 성공 확정 — 회차+계정 기록 실패가
+     * 성공 결과를 가리면 재시도를 오유도하므로 runCatching. 잔액 갱신은 락 밖(실패 무시).
      */
     suspend fun instantPurchase(
         extra: Boolean,
+        expectedRound: Int,
         autoGames: Int,
         manualNumbers: List<List<Int>>,
     ): PurchaseResult? {
         val result = PurchaseLock.mutex.withLock {
+            // 락 대기 중 판매 마감·회차 경계를 넘었을 수 있어 게이트 전부를 락 안에서 재평가.
+            val now = ZonedDateTime.now(ZoneId.of("Asia/Seoul"))
+            val saleOpen = SettingsViewModel.isValidPurchaseTime(now.dayOfWeek.value, now.hour)
             val round = PurchaseService.getCurrentRound()
             val recorded = store.getLastPurchasedRound()
             _lastPurchasedRound.value = recorded
-            if (!extra && recorded >= round) return@withLock null   // 워커 선점 — 이미 구매됨
+            when (purchaseGate(extra, recorded, round, expectedRound, saleOpen)) {
+                PurchaseGate.SALE_CLOSED -> throw SaleClosedException()
+                PurchaseGate.ROUND_CHANGED -> throw RoundChangedException()
+                PurchaseGate.ALREADY_PURCHASED -> return@withLock null  // 워커 선점 — 이미 구매됨
+                PurchaseGate.PROCEED -> Unit
+            }
 
             val cred = store.getCredentials()
             val id = requireNotNull(cred.userId) { "로그인이 필요합니다." }
@@ -471,8 +562,11 @@ import kotlinx.coroutines.sync.withLock
             } catch (e: Exception) {
                 throw PurchaseResultUnknownException(e)             // 요청 후 결과 불명
             }
-            store.setLastPurchasedRound(r.round)
-            store.setLastPurchaseOwner(id)
+            // 성공 확정 — 로컬 기록 실패가 성공 결과를 가리면 안 됨(재시도 오유도 방지).
+            runCatching {
+                store.setLastPurchasedRound(r.round)
+                store.setLastPurchaseOwner(id)
+            }
             _lastPurchasedRound.value = r.round
             r
         } ?: return null
@@ -501,11 +595,11 @@ git commit -m "feat(core): instantPurchase — Mutex 임계구역·모드 분기
 - Modify: `app/src/main/kotlin/com/umicorp/autolotto/ui/vm/ViewModels.kt` (HomeViewModel)
 
 **Interfaces:**
-- Consumes: `container.instantPurchase(extra, autoGames, manualNumbers): PurchaseResult?`,
+- Consumes: `container.instantPurchase(extra, expectedRound, autoGames, manualNumbers): PurchaseResult?`,
   `container.lastPurchasedRound`, `container.refreshLastPurchasedRound()`,
   `container.loadManualGames()`, `splitSlots(...)`(Task 3),
-  `AppContainer.PurchaseResultUnknownException`(Task 5),
-  `SettingsViewModel.isValidPurchaseTime`(기존).
+  `AppContainer.PurchaseResultUnknownException`·`AppContainer.RoundChangedException`·
+  `AppContainer.SaleClosedException`(Task 5), `SettingsViewModel.isValidPurchaseTime`(기존).
 - Produces (Task 7이 사용): `HomeViewModel.InstantState`(아래 정의 그대로),
   `val instantState: StateFlow<InstantState>`, `val lastPurchasedRound: StateFlow<Int>`,
   `fun isSaleOpenNow(): Boolean`, `fun onInstantTap()`, `fun confirmFirst()`,
@@ -529,8 +623,9 @@ import java.time.ZonedDateTime
 
     /**
      * 즉시 구매 다이얼로그 상태머신.
-     * Idle → (탭) ConfirmingFirst | PickingExtra | NeedsSetup
-     *      → (확정) InProgress → Success | AlreadyPurchased | SaleClosed | Error → (닫기) Idle
+     * Idle → (탭) ConfirmingFirst | PickingExtra | NeedsSetup | SaleClosed
+     *      → (확정) InProgress → Success | AlreadyPurchased | SaleClosed | RoundChanged | Error
+     *      → (닫기) Idle
      * ConfirmingFirst는 탭 시점 슬롯 스냅샷을 담아 확인창 표시 내용 = 실제 구매 내용을 보장.
      */
     sealed interface InstantState {
@@ -546,7 +641,8 @@ import java.time.ZonedDateTime
         data class PickingExtra(val round: Int) : InstantState
         data object InProgress : InstantState
         data object AlreadyPurchased : InstantState   // 첫 구매 확정 직전 워커 선점
-        data object SaleClosed : InstantState         // 확정 시점 판매시간 재검증 실패
+        data object SaleClosed : InstantState         // 탭·확정 시점 판매시간 재검증 실패
+        data object RoundChanged : InstantState       // 확정 회차 ≠ 실제 회차 — 구매 없이 취소
         data class Success(val result: PurchaseResult) : InstantState
         data class Error(val message: String?, val unknown: Boolean) : InstantState
     }
@@ -564,7 +660,10 @@ import java.time.ZonedDateTime
     fun onInstantTap() {
         if (_instantState.value != InstantState.Idle) return
         viewModelScope.launch {
-            if (!isSaleOpenNow()) return@launch                     // 표시가 stale했던 경우 — 무동작
+            if (!isSaleOpenNow()) {                                 // 표시가 stale했던 경우 — 사유 표시
+                _instantState.value = InstantState.SaleClosed
+                return@launch
+            }
             runCatching { container.refreshLastPurchasedRound() }
             val round = PurchaseService.getCurrentRound()
             if (container.lastPurchasedRound.value >= round) {
@@ -577,16 +676,26 @@ import java.time.ZonedDateTime
         }
     }
 
-    /** 첫 구매 확정 — 탭 시점 스냅샷 그대로 실행. 최종 가드 재판정은 컨테이너 Mutex 안. */
+    /** 첫 구매 확정 — 탭 시점 스냅샷 그대로 실행. 최종 회차·가드 재판정은 컨테이너 Mutex 안. */
     fun confirmFirst() {
         val s = _instantState.value as? InstantState.ConfirmingFirst ?: return
-        launchPurchase { container.instantPurchase(extra = false, autoGames = s.autoGames, manualNumbers = s.manualNumbers) }
+        launchPurchase {
+            container.instantPurchase(
+                extra = false, expectedRound = s.round,
+                autoGames = s.autoGames, manualNumbers = s.manualNumbers,
+            )
+        }
     }
 
-    /** 추가 구매 확정 — 자동 [games]게임. 가드로 막지 않음(서버 한도 위임). */
+    /** 추가 구매 확정 — 자동 [games]게임. 가드로 막지 않음(서버 한도 위임), 회차만 대조. */
     fun confirmExtra(games: Int) {
-        if (_instantState.value !is InstantState.PickingExtra) return
-        launchPurchase { container.instantPurchase(extra = true, autoGames = games, manualNumbers = emptyList()) }
+        val s = _instantState.value as? InstantState.PickingExtra ?: return
+        launchPurchase {
+            container.instantPurchase(
+                extra = true, expectedRound = s.round,
+                autoGames = games, manualNumbers = emptyList(),
+            )
+        }
     }
 
     fun dismissInstant() {
@@ -605,6 +714,10 @@ import java.time.ZonedDateTime
             _instantState.value = try {
                 val r = block()
                 if (r == null) InstantState.AlreadyPurchased else InstantState.Success(r)
+            } catch (e: AppContainer.SaleClosedException) {
+                InstantState.SaleClosed                              // 락 대기 중 판매 종료
+            } catch (e: AppContainer.RoundChangedException) {
+                InstantState.RoundChanged                            // 구매 요청 없이 취소됨
             } catch (e: AppContainer.PurchaseResultUnknownException) {
                 InstantState.Error(message = null, unknown = true)
             } catch (e: Exception) {
@@ -821,6 +934,14 @@ private fun InstantPurchaseDialogs(state: HomeViewModel.InstantState, vm: HomeVi
                 TextButton(onClick = { vm.dismissInstant() }) { Text(stringResource(R.string.buttonConfirm)) }
             },
         )
+        is InstantState.RoundChanged -> AlertDialog(
+            onDismissRequest = { vm.dismissInstant() },
+            title = { Text(stringResource(R.string.instantConfirmTitle)) },
+            text = { Text(stringResource(R.string.instantRoundChanged)) },
+            confirmButton = {
+                TextButton(onClick = { vm.dismissInstant() }) { Text(stringResource(R.string.buttonConfirm)) }
+            },
+        )
         is InstantState.Error -> AlertDialog(
             onDismissRequest = { vm.dismissInstant() },
             title = { Text(stringResource(R.string.instantErrorTitle)) },
@@ -873,6 +994,10 @@ Expected: Installed on 1 device
   - 로그인 + 슬롯 설정: CTA "⚡ 지금 바로 구매" → 탭 → 확인 다이얼로그(회차·게임·금액) → 취소
   - `adb shell su`가 불가하므로 판매시간 외 상태는 기기 시간 변조(설정 > 날짜/시간 수동,
     새벽 3시)로 확인: CTA 비활성 + "지금은 판매시간이 아닙니다" — 확인 후 원복
+  - 확정 시점 재검증: 판매시간 내에서 확인 다이얼로그를 연 채 기기 시간을 새벽 3시로 변조
+    → [확인] 탭 → 구매 요청 없이 "지금은 판매시간이 아닙니다" 표시 확인 — 원복.
+    (회차 변경 재검증은 시간 변조로 `getCurrentRound()`가 바뀌는 토 20:45 경계를 이용해
+    동일 요령으로 확인 가능하면 수행, 아니면 purchaseGate 단위테스트로 갈음)
   - 구매완료 상태 전환: 실결제 없이 확인하려면 에뮬레이터에서 로그인 후
     `lastPurchasedRound`를 만들 수 없으므로, 이 항목은 실계정 E2E(아래)와 묶어 확인
   - 프로세스 재생성: 확인 다이얼로그 연 채 개발자옵션 "액티비티 유지 안함" 또는
