@@ -293,3 +293,17 @@ class AutoLottoApplication : Application() {
 /** Compose/Activity에서 앱 스코프 컨테이너 접근. */
 val Context.appContainer: AppContainer
     get() = (applicationContext as AutoLottoApplication).container
+
+/** 5슬롯(null=미설정 / 빈=자동 / 6수=수동) → (자동 게임 수, 수동 번호 목록). 첫 구매 변환. */
+fun splitSlots(slots: List<List<Int>?>): Pair<Int, List<List<Int>>> =
+    slots.count { it?.isEmpty() == true } to slots.filterNotNull().filter { it.isNotEmpty() }
+
+/** Mutex 내 구매 게이트(순수) — 판매 종료·회차 변경은 모드 공통 중단, 회차 가드는 첫 구매에만. */
+enum class PurchaseGate { PROCEED, ALREADY_PURCHASED, ROUND_CHANGED, SALE_CLOSED }
+
+fun purchaseGate(extra: Boolean, recordedRound: Int, currentRound: Int, expectedRound: Int, saleOpen: Boolean): PurchaseGate = when {
+    !saleOpen -> PurchaseGate.SALE_CLOSED
+    currentRound != expectedRound -> PurchaseGate.ROUND_CHANGED
+    !extra && recordedRound >= currentRound -> PurchaseGate.ALREADY_PURCHASED
+    else -> PurchaseGate.PROCEED
+}
