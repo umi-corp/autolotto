@@ -7,6 +7,8 @@ import com.umicorp.autolotto.data.SecureStore
 import com.umicorp.autolotto.dhlottery.AuthService
 import com.umicorp.autolotto.dhlottery.DhlotterySession
 import com.umicorp.autolotto.dhlottery.PurchaseService
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.json.JSONArray
 
 /**
@@ -17,6 +19,15 @@ import org.json.JSONArray
  *
  * 네트워크는 Worker(코루틴, ~10분 한도)에서 수행 — onReceive 10초 제한 회피.
  */
+/**
+ * 구매 직렬화 락 — 예약 워커와 즉시 구매(AppContainer)가 같은 앱 프로세스에서 공유.
+ * "자격증명 읽기~구매 실행~회차 기록"이 임계구역: 기록 전에 풀면 상대가 이전 회차 값을 읽는다.
+ * 잔액 조회·알림은 락 밖.
+ */
+object PurchaseLock {
+    val mutex = Mutex()
+}
+
 class AutoPurchaseWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
 
     private val ctx = applicationContext
@@ -60,78 +71,85 @@ class AutoPurchaseWorker(context: Context, params: WorkerParameters) : Coroutine
     private suspend fun executeAutoPurchase() {
         var step = "init"
         try {
-            step = "read_credentials"
-            val cred = store.getCredentials()
-            val userId = cred.userId
-            val password = cred.password
-            val autoEnabled = store.getAutoEnabled()
-            val games = store.getAutoGames()
-
-            if (!autoEnabled || userId == null || password == null) return
-            if (games == 0) return
-
-            // 회차 멱등 가드: Worker 재실행(프로세스 킬 후 WorkManager 재스케줄)·중복 알람에도 같은 회차 재구매 방지.
-            step = "round_guard"
-            val currentRound = PurchaseService.getCurrentRound()
-            if (store.getLastPurchasedRound() >= currentRound) return
-
-            step = "parse_numbers"
-            val manualJson = store.getManualNumbers()
-            val manualNumbers = mutableListOf<List<Int>>()
-            var autoGames = 0
-            try {
-                val parsed = JSONArray(manualJson)
-                for (i in 0 until parsed.length()) {
-                    if (parsed.isNull(i)) continue                 // 미설정 슬롯 — 스킵
-                    val g = parsed.optJSONArray(i) ?: continue
-                    if (g.length() > 0) {                          // 수동 게임
-                        manualNumbers.add((0 until g.length()).map { g.getInt(it) })
-                    } else {                                       // 빈 배열 = 자동 게임
-                        autoGames++
-                    }
-                }
-            } catch (e: Exception) {
-                manualNumbers.clear()
-                autoGames = games                                  // 파싱 실패 시 전부 자동(원본 폴백)
-            }
-
-            if (autoGames == 0 && manualNumbers.isEmpty()) return
-
-            step = "login"
             val session = DhlotterySession()
             val auth = AuthService(session)
-            auth.login(userId, password)
 
-            step = "purchase"
-            val purchaseService = PurchaseService(auth, session)
-            try {
-                val result = purchaseService.purchase(autoGames = autoGames, manualNumbers = manualNumbers)
+            // 자격증명 읽기~회차 기록 = 즉시 구매·수동 로그인(계정 전환 커밋)과 공유하는
+            // 임계구역(PurchaseLock). Worker 재실행·중복 알람·홈 즉시 구매·로그인 경합에도
+            // 같은 회차를 두 번 사거나 기록이 다른 계정으로 어긋나지 않는다.
+            step = "read_credentials"
+            val result = PurchaseLock.mutex.withLock {
+                val cred = store.getCredentials()
+                val userId = cred.userId
+                val password = cred.password
+                val autoEnabled = store.getAutoEnabled()
+                val games = store.getAutoGames()
 
-                // 성공 즉시 회차 기록(commit) — 이후 재실행은 round_guard가 차단.
-                // ponytail: 서버 처리~기록 사이 찰나에 킬되는 창은 남음 — 완전 차단은 구매내역 대조 필요.
-                store.setLastPurchasedRound(result.round)
+                if (!autoEnabled || userId == null || password == null) return
+                if (games == 0) return
 
-                // 구매 후 잔액 체크 (실패 무시 — 원본 catch (_) {})
-                runCatching {
-                    val postBalance = auth.getBalance()
-                    BalanceAlert.checkAndNotify(ctx, postBalance)
+                step = "round_guard"
+                val currentRound = PurchaseService.getCurrentRound()
+                if (store.getLastPurchasedRound() >= currentRound) return
+
+                step = "parse_numbers"
+                val manualJson = store.getManualNumbers()
+                val manualNumbers = mutableListOf<List<Int>>()
+                var autoGames = 0
+                try {
+                    val parsed = JSONArray(manualJson)
+                    for (i in 0 until parsed.length()) {
+                        if (parsed.isNull(i)) continue                 // 미설정 슬롯 — 스킵
+                        val g = parsed.optJSONArray(i) ?: continue
+                        if (g.length() > 0) {                          // 수동 게임
+                            manualNumbers.add((0 until g.length()).map { g.getInt(it) })
+                        } else {                                       // 빈 배열 = 자동 게임
+                            autoGames++
+                        }
+                    }
+                } catch (e: Exception) {
+                    manualNumbers.clear()
+                    autoGames = games                                  // 파싱 실패 시 전부 자동(원본 폴백)
                 }
 
-                step = "notify"
-                val numbersText = result.numbers.mapIndexed { idx, nums ->
-                    "${'A' + idx}: ${nums.joinToString(",")}"
-                }.joinToString("\n")
+                if (autoGames == 0 && manualNumbers.isEmpty()) return
 
-                Notifications.show(
-                    ctx,
-                    "🎰 로또 자동 구매 완료!",
-                    "제 ${result.round}회 · ${result.totalGames}게임\n$numbersText",
-                    1,
-                    tab = Notifications.TAB_HISTORY,
-                )
-            } catch (purchaseError: Exception) {
-                throw Exception(purchaseError.message ?: "$purchaseError")
+                step = "login"
+                auth.login(userId, password)
+
+                step = "purchase"
+                val purchaseService = PurchaseService(auth, session)
+                val r = try {
+                    purchaseService.purchase(autoGames = autoGames, manualNumbers = manualNumbers)
+                } catch (purchaseError: Exception) {
+                    throw Exception(purchaseError.message ?: "$purchaseError")
+                }
+
+                // 성공 즉시 회차+계정 기록(commit) — 이후 재실행은 round_guard가 차단.
+                // ponytail: 서버 처리~기록 사이 찰나에 킬되는 창은 남음 — 완전 차단은 구매내역 대조 필요.
+                store.setLastPurchasedRound(r.round)
+                store.setLastPurchaseOwner(userId)
+                r
             }
+
+            // 구매 후 잔액 체크 (락 밖, 실패 무시 — 원본 catch (_) {})
+            runCatching {
+                val postBalance = auth.getBalance()
+                BalanceAlert.checkAndNotify(ctx, postBalance)
+            }
+
+            step = "notify"
+            val numbersText = result.numbers.mapIndexed { idx, nums ->
+                "${'A' + idx}: ${nums.joinToString(",")}"
+            }.joinToString("\n")
+
+            Notifications.show(
+                ctx,
+                "🎰 로또 자동 구매 완료!",
+                "제 ${result.round}회 · ${result.totalGames}게임\n$numbersText",
+                1,
+                tab = Notifications.TAB_HISTORY,
+            )
         } catch (e: Exception) {
             throw Exception("[$step] ${e.message ?: e}")
         }
