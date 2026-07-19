@@ -31,7 +31,9 @@ object PurchaseLock {
 class AutoPurchaseWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
 
     private val ctx = applicationContext
-    private val store = SecureStore(ctx)
+
+    // lazy: 생성(Keystore 접근) 실패가 doWork try 안에서 잡혀 재시도로 흡수되게 (crosscheck R2).
+    private val store by lazy { SecureStore(ctx) }
 
     override suspend fun doWork(): Result {
         var result: Result = Result.success()

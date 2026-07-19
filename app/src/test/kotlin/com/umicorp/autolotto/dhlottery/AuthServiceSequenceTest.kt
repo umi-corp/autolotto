@@ -41,10 +41,13 @@ class AuthServiceSequenceTest {
     @After
     fun tearDown() = server.shutdown()
 
+    private lateinit var lastSession: DhlotterySession
+
     private fun authFor(dispatcher: Dispatcher): AuthService {
         server.dispatcher = dispatcher
         val baseUrl = server.url("/").toString().trimEnd('/')
-        return AuthService(DhlotterySession(baseUrl = baseUrl, olottoUrl = baseUrl))
+        lastSession = DhlotterySession(baseUrl = baseUrl, olottoUrl = baseUrl)
+        return AuthService(lastSession)
     }
 
     private fun ok(body: String) = MockResponse().setResponseCode(200).setBody(body)
@@ -118,19 +121,45 @@ class AuthServiceSequenceTest {
         assertEquals(50000, auth.getBalance())
     }
 
+    /**
+     * 비파괴 로그인(crosscheck): 재로그인 실패는 직전 유효 세션을 보존해야 한다.
+     * 구 `failed re-login resets isLoggedIn (no zombie session)` 테스트를 의도적으로 교체 —
+     * 복원되는 세션은 직전까지 verify된 세션이라 좀비가 아니고, 서버측 만료는 기존 소비자
+     * (getBalance HTML 센티넬, 구매 재로그인)가 흡수한다.
+     */
     @Test
-    fun `failed re-login resets isLoggedIn (no zombie session)`() = runBlocking {
+    fun `failed re-login preserves previous session (non-destructive)`() = runBlocking {
         val auth = authFor(successDispatcher())
         auth.login("u", "p")
         assertTrue(auth.isLoggedIn)
+        assertTrue(lastSession.cookies.hasCookie("JSESSIONID"))
 
-        // RSA 깨지는 디스패처로 교체 후 재로그인 실패 → isLoggedIn=false 여야 함
+        // RSA 깨지는 디스패처로 교체 후 재로그인 실패 → 세션·isLoggedIn 보존
         server.dispatcher = object : Dispatcher() {
             override fun dispatch(request: RecordedRequest): MockResponse =
                 if (request.path?.substringBefore('?') == ApiConstants.RSA_MODULUS) ok("{\"data\":null}") else ok("")
         }
         try { auth.login("u", "p") } catch (_: Exception) {}
-        assertFalse(auth.isLoggedIn)
+        assertTrue(auth.isLoggedIn)
+        assertTrue(lastSession.cookies.hasCookie("JSESSIONID"))
+    }
+
+    /** verify 단계 서버 장애(5xx)는 일시 오류로 전파 — INVALID_CREDENTIALS(재시도 무의미)와 구분(crosscheck R2). */
+    @Test
+    fun `verify server error is transient error not INVALID_CREDENTIALS`() {
+        val auth = authFor(object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse =
+                when (request.path?.substringBefore('?')) {
+                    ApiConstants.RSA_MODULUS -> rsaOk()
+                    ApiConstants.LOGIN -> ok("").addHeader("Set-Cookie", "JSESSIONID=x; Domain=.dhlottery.co.kr; Path=/")
+                    ApiConstants.GAME645 -> ok("").addHeader("Set-Cookie", "JSESSIONID=ol; Path=/")
+                    ApiConstants.BALANCE -> MockResponse().setResponseCode(503) // 추첨 직후 피크 서버 장애
+                    else -> ok("")
+                }
+        })
+        val ex = try { runBlocking { auth.login("u", "p") }; null } catch (e: Exception) { e }
+        assertTrue("ex=$ex", ex != null && ex !is DhlotteryException)
+        assertFalse(auth.isLoggedIn) // 첫 로그인 — 복원할 이전 세션 없음
     }
 
     private fun decrypt(hex: String): String {

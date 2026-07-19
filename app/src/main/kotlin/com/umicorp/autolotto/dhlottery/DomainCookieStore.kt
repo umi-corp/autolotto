@@ -59,6 +59,17 @@ class DomainCookieStore {
     @Synchronized
     fun hasCookie(name: String): Boolean = domainCookies.values.any { it.containsKey(name) }
 
+    /** 로그인 실패 복원용 스냅샷 — 중첩 맵까지 깊은 복사(이후 store/clear에 오염되지 않게). */
+    @Synchronized
+    fun snapshot(): Map<String, Map<String, String>> = domainCookies.mapValues { LinkedHashMap(it.value) }
+
+    /** 스냅샷으로 전체 교체 복원 — 실패한 로그인 시도 중 유입된 쿠키를 남기지 않는다. */
+    @Synchronized
+    fun restore(snapshot: Map<String, Map<String, String>>) {
+        domainCookies.clear()
+        for ((domain, cookies) in snapshot) domainCookies[domain] = LinkedHashMap(cookies)
+    }
+
     @Synchronized
     fun keysForDomain(domain: String): List<String> =
         domainCookies[domain]?.keys?.toList() ?: emptyList()

@@ -23,10 +23,13 @@ import com.umicorp.autolotto.ui.vm.HistoryViewModel
 import com.umicorp.autolotto.ui.vm.HomeViewModel
 import com.umicorp.autolotto.ui.vm.NumberViewModel
 import com.umicorp.autolotto.ui.vm.SettingsViewModel
+import com.umicorp.autolotto.util.OnceGate
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -104,22 +107,52 @@ class AppContainer(context: Context) {
     private val _updateProgress = MutableStateFlow<Float?>(null)  // null=대기, 0..1=다운로드 중
     val updateProgress: StateFlow<Float?> = _updateProgress.asStateFlow()
 
-    // === 스플래시 하이드레이션 (원본 splash_screen `_initialize` 1:1) ===
+    // === 프로세스 스코프 하이드레이션 (crosscheck: rememberSaveable 복원으로 스플래시가
+    //     스킵돼도 AppRoot가 재호출 — 성공 1회, 실패는 재시도 가능해야 한다) ===
 
-    /** SecureStore → 플로우. 네트워크 없음. */
-    suspend fun loadSettings() = withContext(Dispatchers.IO) {
-        _autoEnabled.value = store.getAutoEnabled()
-        _autoGames.value = store.getAutoGames()
-        _autoPurchaseDay.value = store.getAutoPurchaseDay()
-        _autoPurchaseHour.value = store.getAutoPurchaseHour()
-        _autoPurchaseMinute.value = store.getAutoPurchaseMinute()
-        _balanceAlertEnabled.value = store.getBalanceAlertEnabled()
-        _balanceAlertThreshold.value = store.getBalanceAlertThreshold()
-        _language.value = store.getLanguage()
-        _loggedInUserId.value = store.getCredentials().userId
-        _lastPurchasedRound.value = store.getLastPurchasedRound()
+    private val hydrationGate = OnceGate()
+
+    private val _hydrationFailed = MutableStateFlow(false)
+    val hydrationFailed: StateFlow<Boolean> = _hydrationFailed.asStateFlow()
+
+    /** 설정 하이드레이션 1회 보장. 실패는 [hydrationFailed]로 노출(다음 호출이 재시도). 던지지 않는다. */
+    suspend fun ensureHydrated() {
+        try {
+            hydrationGate.run { loadSettings() }
+            _hydrationFailed.value = false
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            _hydrationFailed.value = true
+        }
+    }
+
+    /** SecureStore → 플로우. 네트워크 없음. 전 키를 먼저 읽고 일괄 반영(부분 하이드레이션 방지). */
+    private suspend fun loadSettings() = withContext(Dispatchers.IO) {
+        val autoEnabled = store.getAutoEnabled()
+        val autoGames = store.getAutoGames()
+        val day = store.getAutoPurchaseDay()
+        val hour = store.getAutoPurchaseHour()
+        val minute = store.getAutoPurchaseMinute()
+        val alertEnabled = store.getBalanceAlertEnabled()
+        val alertThreshold = store.getBalanceAlertThreshold()
+        val language = store.getLanguage()
+        val userId = store.getCredentials().userId
+        val lastRound = store.getLastPurchasedRound()
+
+        _autoEnabled.value = autoEnabled
+        _autoGames.value = autoGames
+        _autoPurchaseDay.value = day
+        _autoPurchaseHour.value = hour
+        _autoPurchaseMinute.value = minute
+        _balanceAlertEnabled.value = alertEnabled
+        _balanceAlertThreshold.value = alertThreshold
+        _language.value = language
+        _loggedInUserId.value = userId
+        _lastPurchasedRound.value = lastRound
         // 앱 실행마다 알람 재무장(자동구매 활성 시). 업데이트·강제종료·OEM 정리로 소실된 알람 복구 — 멱등.
-        scheduler.rescheduleAll()
+        // 별도 runCatching: 알람 재무장 실패가 설정 하이드레이션 실패로 위장하지 않게.
+        runCatching { scheduler.rescheduleAll() }
     }
 
     /** GitHub 릴리스에서 새 버전 확인 → updateInfo 세팅(없으면 null). AppShell 진입 시 호출. */
@@ -138,21 +171,64 @@ class AppContainer(context: Context) {
         return file
     }
 
-    /** 저장된 자격증명으로 자동 로그인 + 잔액 + 잔액부족 체크. 실패는 조용히 무시(원본). */
-    suspend fun autoLogin() {
-        if (!store.hasCredentials()) return
-        val cred = store.getCredentials()
-        val id = cred.userId ?: return
-        val pw = cred.password ?: return
+    // === 자동 로그인 (crosscheck: 공유 세션의 모든 auth.login/logout은 loginMutex로 직렬화.
+    //     락 순서 규칙: PurchaseLock 안에서 loginMutex 획득은 허용, 역방향 중첩 금지.
+    //     loginMutex는 로그인/로그아웃만 직렬화 — 세션 IO 전체가 아님) ===
+
+    private val loginMutex = Mutex()
+
+    private val _autoLoginFailed = MutableStateFlow(false)
+    val autoLoginFailed: StateFlow<Boolean> = _autoLoginFailed.asStateFlow()
+
+    /** 자동 재시도 가능 여부 — 자격증명 거절(INVALID_CREDENTIALS)은 재시도해도 소용없다. */
+    @Volatile
+    var autoLoginRetryable = false
+        private set
+
+    /**
+     * 저장된 자격증명으로 자동 로그인 + 잔액 + 잔액부족 체크. single-flight(tryLock) —
+     * 진행 중이면 no-op. 실패는 [autoLoginFailed]로 노출(과거의 조용한 무시 대체). 던지지 않는다.
+     * @return true = 이 호출이 실제 수행됨(락 획득). false = 다른 로그인이 진행 중이라 스킵 —
+     *         호출자가 자기 호출의 실패 여부로 재시도를 판단할 때 선점 상태를 오독하지 않게 한다.
+     */
+    suspend fun autoLogin(): Boolean = withContext(Dispatchers.IO) {
+        if (!loginMutex.tryLock()) return@withContext false   // 이미 로그인 진행 중
         try {
-            auth.login(id, pw)
-            _isLoggedIn.value = true
-            _loggedInUserId.value = id
-            val b = auth.getBalance()
-            _balance.value = b
-            BalanceAlert.checkAndNotify(appContext, b, _balanceAlertEnabled.value, _balanceAlertThreshold.value)
-        } catch (_: Exception) {
-            // 원본 debugPrint('자동 로그인 실패') 후 무시.
+            if (auth.isLoggedIn) {
+                // 로그인은 성공했는데 publish 코루틴이 취소된 분기(회전 등) — UI 상태만 동기화.
+                if (!_isLoggedIn.value) {
+                    _isLoggedIn.value = true
+                    runCatching { _loggedInUserId.value = store.getCredentials().userId }
+                }
+                _autoLoginFailed.value = false
+                return@withContext true
+            }
+            val cred = try {
+                store.getCredentials()
+            } catch (e: Exception) {
+                _autoLoginFailed.value = true
+                autoLoginRetryable = true
+                return@withContext true
+            }
+            val id = cred.userId ?: return@withContext true   // 자격증명 없음 — 실패 아님
+            val pw = cred.password ?: return@withContext true
+            try {
+                auth.login(id, pw)
+                _isLoggedIn.value = true
+                _loggedInUserId.value = id
+                _autoLoginFailed.value = false
+                val b = auth.getBalance()
+                _balance.value = b
+                BalanceAlert.checkAndNotify(appContext, b, _balanceAlertEnabled.value, _balanceAlertThreshold.value)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _autoLoginFailed.value = true
+                autoLoginRetryable = (e as? DhlotteryException)?.message != "INVALID_CREDENTIALS"
+            }
+            true
+        } finally {
+            loginMutex.unlock()
         }
     }
 
@@ -160,7 +236,7 @@ class AppContainer(context: Context) {
 
     /** 수동 로그인(설정 화면). 실패 시 throw(INVALID_CREDENTIALS 등) — 호출자가 매핑. 잔액알림은 안 함(원본과 동일). */
     suspend fun login(id: String, pw: String) {
-        auth.login(id, pw)
+        loginMutex.withLock { auth.login(id, pw) }  // 락 해제 후 PurchaseLock — 중첩 금지(락 순서 규칙)
         // 로컬 계정 전환 커밋은 구매 임계구역과 직렬화(PurchaseLock) — 워커 구매와 경합 방지.
         // 회차 가드는 계정의 기록 — 다른 계정 로그인 시 무효화(같은 계정 재로그인은 보존).
         PurchaseLock.mutex.withLock {
@@ -173,11 +249,13 @@ class AppContainer(context: Context) {
         }
         _isLoggedIn.value = true
         _loggedInUserId.value = id
+        _autoLoginFailed.value = false
         _balance.value = auth.getBalance()
     }
 
     suspend fun logout() = withContext(Dispatchers.IO) {
-        auth.logout()
+        // 진행 중 autoLogin과 직렬화 — 로그아웃 직후 백그라운드 재로그인으로 상태가 되살아나는 것 방지.
+        loginMutex.withLock { auth.logout() }
         store.deleteCredentials()
         // 자격증명 없는 자동구매는 매주 조용히 무동작(+다른 계정 재로그인 시 이전 설정으로 재개 위험)
         // → 로그아웃과 함께 해제·알람 취소. 비로그인 상태에선 스위치가 잠겨 사용자가 끌 수도 없다.
@@ -185,6 +263,7 @@ class AppContainer(context: Context) {
         _isLoggedIn.value = false
         _balance.value = 0
         _loggedInUserId.value = null
+        _autoLoginFailed.value = false  // 자격증명 없음 = 실패 상태 아님(amber 해제)
     }
 
     /** 잔액 재조회 + 잔액부족 체크(원본 home/_refreshBalance). */
@@ -241,7 +320,7 @@ class AppContainer(context: Context) {
             val cred = store.getCredentials()
             val id = requireNotNull(cred.userId) { "로그인이 필요합니다." }
             val pw = requireNotNull(cred.password) { "로그인이 필요합니다." }
-            auth.login(id, pw)
+            loginMutex.withLock { auth.login(id, pw) }  // PurchaseLock ⊃ loginMutex — 허용 방향
             _isLoggedIn.value = true
 
             val r = try {
@@ -312,23 +391,19 @@ class AppContainer(context: Context) {
 
     // === 수동 번호 (manual_numbers: 5슬롯 JSON, 백그라운드 구매 잡과 공유 포맷) ===
 
-    /** SecureStore의 manual_numbers → 5슬롯 리스트(null=미설정 / emptyList=자동 / [nums]=수동). */
-    suspend fun loadManualGames(): List<List<Int>?> = withContext(Dispatchers.IO) {
-        val out = MutableList<List<Int>?>(5) { null }
-        runCatching {
-            val arr = JSONArray(store.getManualNumbers())
-            for (i in 0 until minOf(arr.length(), 5)) {
-                if (arr.isNull(i)) continue
-                val g = arr.optJSONArray(i) ?: continue
-                out[i] = if (g.length() == 0) emptyList() else (0 until g.length()).map { g.getInt(it) }
-            }
-        }
-        out
+    /**
+     * SecureStore의 manual_numbers → 5슬롯 리스트(null=미설정 / emptyList=자동 / [nums]=수동).
+     * 저장소 읽기·파싱 실패는 **null 반환** — 빈 5슬롯과 구분해 UI가 "초기화된 것처럼" 위장하지
+     * 않게 한다(crosscheck: 조용한 빈 값이 번호 초기화 오인·덮어쓰기 유실의 원인).
+     */
+    suspend fun loadManualGames(): List<List<Int>?>? = withContext(Dispatchers.IO) {
+        runCatching { parseManualGames(store.getManualNumbers()) }.getOrNull()
     }
 
-    /** 5슬롯 → JSON 저장 + 게임 수(=설정된 슬롯 수) 반영. 백그라운드 구매 잡이 같은 포맷으로 읽는다. */
+    /** 5슬롯 → JSON 저장 + 게임 수(=설정된 슬롯 수) 반영 — 두 키 단일 commit(불일치 방지). */
     suspend fun saveManualGames(games: List<List<Int>?>) = withContext(Dispatchers.IO) {
-        setAutoGames(games.count { it != null })
+        val count = games.count { it != null }
+        _autoGames.value = count
         val arr = JSONArray()
         for (g in games) {
             when {
@@ -337,13 +412,13 @@ class AppContainer(context: Context) {
                 else -> arr.put(JSONArray(g))
             }
         }
-        store.setManualNumbers(arr.toString())
+        store.setGamesConfig(count, arr.toString())
     }
 
     // === 데이터 초기화 (원본 설정 화면 `_showResetDialog`) ===
     suspend fun resetAll() = withContext(Dispatchers.IO) {
         store.clearAll()
-        auth.logout()
+        loginMutex.withLock { auth.logout() }
         scheduler.cancelAll()  // 삭제된 설정을 참조하는 알람 제거 (원본 대비 의도된 보강)
         _isLoggedIn.value = false
         _balance.value = 0
@@ -387,6 +462,27 @@ val Context.appContainer: AppContainer
 /** 5슬롯(null=미설정 / 빈=자동 / 6수=수동) → (자동 게임 수, 수동 번호 목록). 첫 구매 변환. */
 fun splitSlots(slots: List<List<Int>?>): Pair<Int, List<List<Int>>> =
     slots.count { it?.isEmpty() == true } to slots.filterNotNull().filter { it.isNotEmpty() }
+
+/** manual_numbers JSON → 5슬롯(순수). malformed JSON은 throw — 호출부가 읽기 실패로 처리. */
+fun parseManualGames(json: String): List<List<Int>?> {
+    val out = MutableList<List<Int>?>(5) { null }
+    val arr = JSONArray(json)
+    for (i in 0 until minOf(arr.length(), 5)) {
+        if (arr.isNull(i)) continue
+        val g = arr.optJSONArray(i) ?: continue
+        out[i] = if (g.length() == 0) emptyList() else (0 until g.length()).map { g.getInt(it) }
+    }
+    return out
+}
+
+/** 즉시구매 CTA 탭의 슬롯 판정(순수) — null=저장소 읽기 실패는 설정 유도와 반드시 구분. */
+enum class TapSlotsOutcome { STORE_ERROR, NEEDS_SETUP, PROCEED }
+
+fun tapSlotsOutcome(slots: List<List<Int>?>?): TapSlotsOutcome = when {
+    slots == null -> TapSlotsOutcome.STORE_ERROR
+    splitSlots(slots).let { (auto, manual) -> auto + manual.size } == 0 -> TapSlotsOutcome.NEEDS_SETUP
+    else -> TapSlotsOutcome.PROCEED
+}
 
 /** Mutex 내 구매 게이트(순수) — 판매 종료·회차 변경은 모드 공통 중단, 회차 가드는 첫 구매에만. */
 enum class PurchaseGate { PROCEED, ALREADY_PURCHASED, ROUND_CHANGED, SALE_CLOSED }

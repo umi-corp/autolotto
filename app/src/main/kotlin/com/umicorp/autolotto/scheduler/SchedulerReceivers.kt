@@ -43,7 +43,9 @@ class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
             Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED ->
-                AlarmScheduler(context.applicationContext).rescheduleAll()
+                // 업데이트 직후는 Keystore가 불안정할 수 있는 창구 — 리시버 크래시 방지.
+                // 재무장 실패해도 앱 실행 시 loadSettings의 rescheduleAll이 이중 안전망.
+                runCatching { AlarmScheduler(context.applicationContext).rescheduleAll() }
         }
     }
 }

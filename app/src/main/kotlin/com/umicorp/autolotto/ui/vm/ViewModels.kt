@@ -8,11 +8,14 @@ import com.umicorp.autolotto.data.WinningResult
 import com.umicorp.autolotto.data.mergePurchasesByRound
 import com.umicorp.autolotto.dhlottery.PurchaseResult
 import com.umicorp.autolotto.dhlottery.PurchaseService
+import com.umicorp.autolotto.TapSlotsOutcome
 import com.umicorp.autolotto.splitSlots
+import com.umicorp.autolotto.tapSlotsOutcome
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.ZoneId
@@ -31,7 +34,17 @@ import java.time.ZonedDateTime
 /** 홈: 카운트다운(회차) + 지난 회차 당첨번호 + 잔액/자동구매 상태(공유). */
 class HomeViewModel(private val container: AppContainer) : ViewModel() {
     val isLoggedIn = container.isLoggedIn
+    val autoLoginFailed = container.autoLoginFailed
+    val hydrationFailed = container.hydrationFailed
     val balance = container.balance
+
+    /** amber 클라우드 아이콘 탭 — 설정 하이드레이션·자동 로그인 수동 재시도(공용 복구 경로). */
+    fun retryConnect() {
+        viewModelScope.launch {
+            container.ensureHydrated()
+            container.autoLogin()
+        }
+    }
     val autoEnabled = container.autoEnabled
     val autoPurchaseDay = container.autoPurchaseDay
     val autoPurchaseHour = container.autoPurchaseHour
@@ -77,15 +90,33 @@ class NumberViewModel(private val container: AppContainer) : ViewModel() {
     private val _games = MutableStateFlow<List<List<Int>?>>(List(5) { null })
     val games: StateFlow<List<List<Int>?>> = _games.asStateFlow()
 
+    /** 최초 로드 성공 전 저장 차단용 — 빈 초기 슬롯을 실데이터 위에 덮어쓰는 유실 방지(crosscheck R2). */
+    private val _gamesLoaded = MutableStateFlow(false)
+    val gamesLoaded: StateFlow<Boolean> = _gamesLoaded.asStateFlow()
+
+    private val _gamesLoadFailed = MutableStateFlow(false)
+    val gamesLoadFailed: StateFlow<Boolean> = _gamesLoadFailed.asStateFlow()
+
     init { loadSavedGames() }
 
     fun loadSavedGames() {
-        viewModelScope.launch { _games.value = container.loadManualGames() }
+        viewModelScope.launch {
+            val loaded = container.loadManualGames()
+            if (loaded != null) {
+                _games.value = loaded
+                _gamesLoaded.value = true
+                _gamesLoadFailed.value = false
+            } else {
+                _gamesLoadFailed.value = true   // 기존 상태 유지 — 실패를 빈 값으로 위장 금지
+            }
+        }
     }
 
-    /** 게임 수는 설정된 슬롯 수로 자동 반영(원본 `_saveConfig`). */
+    /** 게임 수는 설정된 슬롯 수로 자동 반영(원본 `_saveConfig`). 저장 성공 = 로드 상태 확정. */
     fun saveConfig(games: List<List<Int>?>) {
         _games.value = games
+        _gamesLoaded.value = true
+        _gamesLoadFailed.value = false
         viewModelScope.launch { container.saveManualGames(games) }
     }
 
@@ -107,6 +138,7 @@ class NumberViewModel(private val container: AppContainer) : ViewModel() {
     sealed interface InstantState {
         data object Idle : InstantState
         data object NeedsSetup : InstantState         // 저장된 게임 0개 — 설정·저장 안내(스낵바)
+        data object StoreError : InstantState         // 저장 슬롯 읽기 실패 — 미설정과 구분(안내 다이얼로그)
         data class ConfirmingFirst(
             val round: Int,
             val autoGames: Int,
@@ -149,11 +181,15 @@ class NumberViewModel(private val container: AppContainer) : ViewModel() {
                 advanceFromIdle(InstantState.PickingExtra(round))
                 return@launch
             }
-            val (auto, manual) = splitSlots(container.loadManualGames())
-            advanceFromIdle(
-                if (auto + manual.size == 0) InstantState.NeedsSetup
-                else InstantState.ConfirmingFirst(round, auto, manual),
-            )
+            val slots = container.loadManualGames()
+            when (tapSlotsOutcome(slots)) {
+                TapSlotsOutcome.STORE_ERROR -> advanceFromIdle(InstantState.StoreError)
+                TapSlotsOutcome.NEEDS_SETUP -> advanceFromIdle(InstantState.NeedsSetup)
+                TapSlotsOutcome.PROCEED -> {
+                    val (auto, manual) = splitSlots(slots!!)
+                    advanceFromIdle(InstantState.ConfirmingFirst(round, auto, manual))
+                }
+            }
         }
     }
 
@@ -244,7 +280,36 @@ class HistoryViewModel(private val container: AppContainer) : ViewModel() {
     private var oldestStart: LocalDate = LocalDate.now()
     private var windowsLoaded = 0
 
-    init { loadHistory() }
+    /** 현재 목록의 주인 계정 — 계정 전환 시 이전 계정 내역 잔존 방지(crosscheck R2). */
+    private var shownUser: String? = null
+
+    init {
+        // 로그인 전이 관찰: 재로그인 시 자동 복구(빈 목록), 로그아웃·계정 전환 시 목록 초기화.
+        viewModelScope.launch {
+            combine(container.isLoggedIn, container.loggedInUserId) { logged, user -> logged to user }
+                .collect { (logged, user) ->
+                    when {
+                        !logged -> {
+                            shownUser = null
+                            if (_purchases.value.isNotEmpty()) resetList()
+                        }
+                        user != shownUser -> {
+                            shownUser = user
+                            resetList()
+                            loadHistory()
+                        }
+                        _purchases.value.isEmpty() && !_loading.value -> loadHistory()
+                    }
+                }
+        }
+    }
+
+    private fun resetList() {
+        _purchases.value = emptyList()
+        _canLoadMore.value = false
+        oldestStart = LocalDate.now()
+        windowsLoaded = 0
+    }
 
     /** 첫 3개월 창 로드(새로고침 겸용 — 더 보기로 쌓인 이전 창은 버리고 리셋). */
     fun loadHistory() {

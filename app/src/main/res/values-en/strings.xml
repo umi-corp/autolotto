@@ -51,6 +51,7 @@
     <string name="buttonSaveEmpty">Save with No Games</string>
     <string name="snackbarSaveSuccess">✅ %1$d games saved! Auto purchase at %2$s.</string>
     <string name="snackbarSaveEmpty">✅ Saved! No games set — nothing will be purchased.</string>
+    <string name="numbersLoadRetry">Reload saved numbers</string>
 
     <string name="historyTitle">Purchase History</string>
     <string name="historyNoRecords">No purchase records</string>
@@ -77,6 +78,7 @@
     <string name="dhLotteryAccount">DHLottery Account</string>
     <string name="statusLoggedIn">Logged in</string>
     <string name="statusLoginRequired">Login required</string>
+    <string name="statusConnectRetry">Connection failed — tap to retry</string>
     <string name="buttonLogout">Logout</string>
     <string name="buttonLogin">Login</string>
 
@@ -182,5 +184,6 @@
     <string name="instantAlreadyPurchased">This round was just purchased. Use Buy More instead.</string>
     <string name="instantRoundChanged">The round has changed, so the purchase was cancelled. Please review again.</string>
     <string name="instantErrorFallback">Purchase failed. Please try again.</string>
+    <string name="instantStoreError">Couldn\'t read saved numbers. Please try again shortly.</string>
     <string name="instantNeedsSetup">Set up and save your games before buying.</string>
 </resources>

@@ -44,4 +44,33 @@ class DomainCookieStoreTest {
         assertTrue(store.cookieHeader("www.dhlottery.co.kr").isEmpty())
         assertFalse(store.hasCookie("JSESSIONID"))
     }
+
+    @Test
+    fun `snapshot is a deep copy - later mutations do not leak into it`() {
+        val store = DomainCookieStore()
+        store.store(listOf("JSESSIONID=old; Domain=.dhlottery.co.kr"), "www.dhlottery.co.kr")
+        val snap = store.snapshot()
+
+        // 스냅샷 후 원본을 변조(clear + 새 쿠키) — 스냅샷으로 복원하면 변조 전 상태여야 함
+        store.clear()
+        store.store(listOf("JSESSIONID=new; Domain=.dhlottery.co.kr"), "www.dhlottery.co.kr")
+        store.restore(snap)
+
+        assertTrue(store.cookieHeader("www.dhlottery.co.kr").contains("JSESSIONID=old"))
+        assertFalse(store.cookieHeader("www.dhlottery.co.kr").contains("JSESSIONID=new"))
+    }
+
+    @Test
+    fun `restore replaces entirely - cookies from a failed attempt do not survive`() {
+        val store = DomainCookieStore()
+        store.store(listOf("JSESSIONID=valid; Domain=.dhlottery.co.kr"), "www.dhlottery.co.kr")
+        val snap = store.snapshot()
+
+        // 실패한 로그인 시도 중 유입된 잡쿠키 — 복원 후 남아 있으면 안 됨(전체 교체)
+        store.store(listOf("WMONID=stray; Path=/"), "www.dhlottery.co.kr")
+        store.restore(snap)
+
+        assertTrue(store.hasCookie("JSESSIONID"))
+        assertFalse(store.hasCookie("WMONID"))
+    }
 }

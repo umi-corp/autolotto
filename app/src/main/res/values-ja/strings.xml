@@ -51,6 +51,7 @@
     <string name="buttonSaveEmpty">ゲームなしで保存</string>
     <string name="snackbarSaveSuccess">✅ %1$dゲーム設定保存完了！ %2$sに自動購入されます。</string>
     <string name="snackbarSaveEmpty">✅ 保存しました！ゲームがないため自動購入されません。</string>
+    <string name="numbersLoadRetry">保存番号を再読み込み</string>
 
     <string name="historyTitle">購入履歴</string>
     <string name="historyNoRecords">購入履歴がありません</string>
@@ -77,6 +78,7 @@
     <string name="dhLotteryAccount">同行福券アカウント</string>
     <string name="statusLoggedIn">ログイン済み</string>
     <string name="statusLoginRequired">ログインが必要</string>
+    <string name="statusConnectRetry">接続失敗 — タップで再試行</string>
     <string name="buttonLogout">ログアウト</string>
     <string name="buttonLogin">ログイン</string>
 
@@ -182,5 +184,6 @@
     <string name="instantAlreadyPurchased">この回はたった今購入されました。追加購入をご利用ください。</string>
     <string name="instantRoundChanged">回が変わったため購入をキャンセルしました。もう一度ご確認ください。</string>
     <string name="instantErrorFallback">購入に失敗しました。もう一度お試しください。</string>
+    <string name="instantStoreError">保存した番号を読み込めませんでした。しばらくしてから再試行してください。</string>
     <string name="instantNeedsSetup">先に購入するゲームを設定して保存してください。</string>
 </resources>

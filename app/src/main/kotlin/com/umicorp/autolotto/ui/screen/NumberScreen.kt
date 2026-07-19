@@ -115,6 +115,8 @@ fun NumberScreen(modifier: Modifier = Modifier) {
     val vm: NumberViewModel = appViewModel()
     val autoEnabled by vm.autoEnabled.collectAsState()
     val loaded by vm.games.collectAsState()
+    val gamesLoaded by vm.gamesLoaded.collectAsState()
+    val gamesLoadFailed by vm.gamesLoadFailed.collectAsState()
     val day by vm.autoPurchaseDay.collectAsState()
     val hour by vm.autoPurchaseHour.collectAsState()
     val minute by vm.autoPurchaseMinute.collectAsState()
@@ -338,7 +340,9 @@ fun NumberScreen(modifier: Modifier = Modifier) {
                 label = "saveContent",
             )
             // 0게임(구매 안 함)도 유효한 저장 — 비활성화하면 전부 삭제가 저장소에 반영될 길이 없다(P2).
+            // 단, 최초 로드 성공 전엔 차단 — 빈 초기 슬롯이 실데이터를 덮어쓰는 유실 방지(crosscheck R2).
             Button(
+                enabled = gamesLoaded,
                 onClick = {
                     val count = games.count { it != null }
                     vm.saveConfig(games.toList())
@@ -367,6 +371,18 @@ fun NumberScreen(modifier: Modifier = Modifier) {
                     },
                     fontWeight = FontWeight.Bold,
                 )
+            }
+            if (gamesLoadFailed) {
+                TextButton(
+                    onClick = { vm.loadSavedGames() },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        stringResource(R.string.numbersLoadRetry),
+                        color = MaterialTheme.colorScheme.error,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
             }
             Spacer(Modifier.height(12.dp))
 
@@ -857,6 +873,12 @@ private fun InstantPurchaseDialogs(state: InstantState, vm: NumberViewModel) {
             title = stringResource(R.string.instantErrorTitle),
             text = if (state.unknown) stringResource(R.string.instantUnknownResult)
             else state.message ?: stringResource(R.string.instantErrorFallback),
+            onDismiss = { vm.dismissInstant() },
+        )
+        // 저장 슬롯 읽기 실패 — 미설정(NeedsSetup 스낵바)과 구분되는 안내(crosscheck R2).
+        is InstantState.StoreError -> InstantNoticeDialog(
+            title = stringResource(R.string.instantErrorTitle),
+            text = stringResource(R.string.instantStoreError),
             onDismiss = { vm.dismissInstant() },
         )
         InstantState.Idle, InstantState.NeedsSetup -> Unit

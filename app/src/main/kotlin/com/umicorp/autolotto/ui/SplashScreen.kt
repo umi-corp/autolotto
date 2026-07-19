@@ -40,10 +40,9 @@ import kotlinx.coroutines.delay
 fun SplashScreen(container: AppContainer, onFinished: () -> Unit) {
     LaunchedEffect(Unit) {
         val start = System.currentTimeMillis()
-        runCatching {
-            container.loadSettings()
-            container.autoLogin()
-        }
+        // 설정 하이드레이션만 대기(로컬, 빠름). autoLogin은 AppRoot 소유 — 네트워크 지연이
+        // 스플래시를 붙잡지 않는다(crosscheck R2: OkHttp 블로킹 시퀀스는 withTimeout으로 못 끊음).
+        container.ensureHydrated()
         val elapsed = System.currentTimeMillis() - start
         if (elapsed < MIN_SPLASH_MS) delay(MIN_SPLASH_MS - elapsed)
         onFinished()

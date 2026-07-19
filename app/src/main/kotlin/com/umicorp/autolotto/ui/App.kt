@@ -67,9 +67,13 @@ import com.umicorp.autolotto.ui.theme.MotionSpecs
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.delay
 import com.umicorp.autolotto.R
 import com.umicorp.autolotto.appContainer
 import com.umicorp.autolotto.scheduler.Notifications
@@ -91,6 +95,27 @@ import java.util.Locale
 fun AppRoot(pendingTab: MutableStateFlow<String?>? = null) {
     val container = LocalContext.current.appContainer
     var showSplash by rememberSaveable { mutableStateOf(true) }
+
+    // 프로세스 스코프 하이드레이션 + 자동 로그인의 단일 진입점 — 첫 구동과 포그라운드 복귀
+    // (ON_START) 모두 이 블록 하나가 담당한다. 프로세스 사망 후 태스크 복원으로 showSplash=false가
+    // 복원돼 스플래시가 스킵돼도 반드시 실행된다(crosscheck 주 원인). 진입점을 하나로 두는 이유:
+    // 두 이펙트가 autoLogin을 경합하면 tryLock에 밀린 쪽이 남의 미완료 상태를 읽고 3초 재시도를
+    // 건너뛴다(crosscheck 구현 R1 F2) — 단일 코루틴 + 자기 호출 결과(반환값) 판단으로 레이스 제거.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            container.ensureHydrated()
+            if (container.autoLogin()) {   // true = 이 호출이 실제 수행됨(선점 스킵 아님)
+                // 일시 장애면 3초 뒤 1회 자동 재시도(자격증명 거절은 제외). 백그라운드 진입 시 취소되고
+                // 다음 ON_START가 어차피 재시도한다.
+                if (container.autoLoginFailed.value && container.autoLoginRetryable) {
+                    delay(3_000)
+                    container.autoLogin()
+                }
+            }
+        }
+    }
+
     if (showSplash) {
         SplashScreen(container, onFinished = { showSplash = false })
     } else {

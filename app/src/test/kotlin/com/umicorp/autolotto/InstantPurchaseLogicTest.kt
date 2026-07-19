@@ -24,6 +24,31 @@ class InstantPurchaseLogicTest {
     }
 
     @Test
+    fun `tapSlotsOutcome - null은 저장소 오류, 0게임은 설정 유도, 그 외 진행`() {
+        assertEquals(TapSlotsOutcome.STORE_ERROR, tapSlotsOutcome(null))                       // 읽기 실패 ≠ 미설정
+        assertEquals(TapSlotsOutcome.NEEDS_SETUP, tapSlotsOutcome(List(5) { null }))
+        assertEquals(TapSlotsOutcome.PROCEED, tapSlotsOutcome(listOf(emptyList(), null, null, null, null)))
+        assertEquals(TapSlotsOutcome.PROCEED, tapSlotsOutcome(listOf(listOf(1, 2, 3, 4, 5, 6), null, null, null, null)))
+    }
+
+    @Test
+    fun `parseManualGames - 슬롯 구분(null·자동·수동)과 5슬롯 절단`() {
+        val parsed = parseManualGames("""[[1,2,3,4,5,6],[],null,[7,8,9,10,11,12],null,[13]]""")
+        assertEquals(5, parsed.size)                          // 6번째 슬롯은 절단
+        assertEquals(listOf(1, 2, 3, 4, 5, 6), parsed[0])
+        assertTrue(parsed[1]!!.isEmpty())                     // 자동
+        assertEquals(null, parsed[2])                         // 미설정
+        assertEquals(listOf(7, 8, 9, 10, 11, 12), parsed[3])
+    }
+
+    @Test
+    fun `parseManualGames - 기본값 빈 배열은 전부 미설정, malformed는 throw`() {
+        assertTrue(parseManualGames("[]").all { it == null })
+        val ex = runCatching { parseManualGames("not-json") }.exceptionOrNull()
+        assertTrue(ex != null)                                // 호출부가 읽기 실패(null)로 매핑
+    }
+
+    @Test
     fun `splitSlots - 전부 null이면 0게임`() {
         val (auto, manual) = splitSlots(List(5) { null })
         assertEquals(0, auto)

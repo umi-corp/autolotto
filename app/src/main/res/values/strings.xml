@@ -56,6 +56,7 @@
     <string name="buttonSaveEmpty">게임 없이 저장</string>
     <string name="snackbarSaveSuccess">✅ %1$d게임 설정 저장 완료! %2$s에 자동 구매됩니다.</string>
     <string name="snackbarSaveEmpty">✅ 저장 완료! 구매할 게임이 없어 자동 구매되지 않습니다.</string>
+    <string name="numbersLoadRetry">저장 번호 다시 불러오기</string>
 
     <!-- 기록 -->
     <string name="historyTitle">구매 기록</string>
@@ -84,6 +85,7 @@
     <string name="dhLotteryAccount">동행복권 계정</string>
     <string name="statusLoggedIn">로그인됨</string>
     <string name="statusLoginRequired">로그인 필요</string>
+    <string name="statusConnectRetry">연결 실패 — 탭하여 재시도</string>
     <string name="buttonLogout">로그아웃</string>
     <string name="buttonLogin">로그인</string>
 
@@ -190,5 +192,6 @@
     <string name="instantAlreadyPurchased">방금 이 회차가 구매되었습니다. 추가 구매로 이용해주세요.</string>
     <string name="instantRoundChanged">회차가 변경되어 구매를 취소했습니다. 다시 확인해주세요.</string>
     <string name="instantErrorFallback">구매에 실패했습니다. 다시 시도해주세요.</string>
+    <string name="instantStoreError">저장된 번호를 읽지 못했습니다. 잠시 후 다시 시도해주세요.</string>
     <string name="instantNeedsSetup">구매할 게임을 먼저 설정하고 저장해주세요.</string>
 </resources>
