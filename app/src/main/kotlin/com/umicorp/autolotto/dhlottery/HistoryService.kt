@@ -90,9 +90,14 @@ class HistoryService(private val session: DhlotterySession) {
                 val gameDtl = ticket.optJSONArray("game_dtl") ?: JSONArray()
                 val drawed = ticket.optBoolean("drawed", false)
 
-                // 당첨번호 추출 (win_num 없으면 null — 원본의 비저장 필드)
-                val winNum = ticket.optJSONArray("win_num")?.let { toIntList(it) }
-                val bonusNum = ticket.optIntOrNull("bonus_num")
+                // 당첨번호 추출 (win_num 없으면 null — 원본의 비저장 필드).
+                // 실측 정규화(에뮬레이터 1233/1234회): 미추첨이면 win_num이 0으로 채워져 오고,
+                // 추첨 후엔 보너스 포함 7개에 bonus_num이 비기도 한다 → 미추첨=null, 7개면 7번째=보너스.
+                val winNumRaw = ticket.optJSONArray("win_num")?.let { toIntList(it) }
+                    ?.takeIf { drawed && it.all { n -> n in 1..45 } }
+                val winNum = winNumRaw?.take(6)
+                val bonusNum = ticket.optIntOrNull("bonus_num")?.takeIf { it in 1..45 }
+                    ?: winNumRaw?.getOrNull(6)
 
                 val numbers = mutableListOf<List<Int>>()
                 var autoCount = 0

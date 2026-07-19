@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -23,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,13 +38,17 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.umicorp.autolotto.ui.theme.LgAmber
 import com.umicorp.autolotto.ui.theme.MotionSpecs
 import com.umicorp.autolotto.ui.theme.ctaGradient
 import com.umicorp.autolotto.ui.theme.heroGradient
@@ -50,11 +56,15 @@ import com.umicorp.autolotto.ui.util.ballColor
 
 /**
  * 로또 번호 공 (홈·번호·내역 공유). Lucky Gloss "캔디" 룩: 방사형 하이라이트 + 소프트 그림자 + 림.
- * 공개 API는 100% 기존 그대로 (n, size, selected, dimmed, bordered, onClick) — 화면 수정 불필요.
+ * 공개 API는 기존 그대로 (n, size, selected, dimmed, bordered, onClick) + matched 추가.
  *
  * - [selected]=false: 미선택(번호 그리드) — 중립 톤(surfaceVariant), 흐린 광택.
  * - [dimmed]=true: 추첨 후 비당첨(내역) — ballColor 흐림.
  * - [bordered]=true: 보너스 — 강조 림.
+ * - [matched]=true: 당첨 매치(내역) — 할로 링(볼‥카드색 갭‥링). 같은 계열 어두운 림(bordered)은
+ *   볼 색에 묻힌다는 사용자 피드백 → 갭이 볼 색과 링을 분리해 5색 볼 전부에서 읽힌다.
+ *   링 색: 라이트=앰버, 다크=크림(onSurface) — 둘 다 사용자 피드백 반영. 볼 본체는 링 안쪽
+ *   크기로 스케일해 그려 캔디 그라디언트의 진한 가장자리를 보존한다(잘라내면 물빠져 보임).
  * - onClick != null: 탭 시 프레스 스프링(0.92 → overshoot 1.12 → settle), 선택 시 elevation 상승.
  *
  * ponytail: 공 숫자색 흰색은 ballColor 브랜드 처리의 일부(토큰 예외 = ballColor와 한 묶음).
@@ -67,6 +77,7 @@ fun LottoBall(
     selected: Boolean = true,
     dimmed: Boolean = false,
     bordered: Boolean = false,
+    matched: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
     val neutral = MaterialTheme.colorScheme.surfaceVariant
@@ -103,6 +114,12 @@ fun LottoBall(
     val rim = lerp(base, Color.Black, if (selected && !dimmed) 0.28f else 0.12f)
     // 강조 림은 볼 색상과 같은 계열(진한 톤) — 파랑볼→진파랑, 노랑볼→진노랑 (사용자 피드백)
     val bonusRim = lerp(ballColor(n), Color.Black, 0.38f)
+    // 당첨 매치 할로: 갭=카드색(SectionCard surfaceContainerLowest), 링=라이트 앰버/다크 크림(사용자 피드백).
+    // 라이트 앰버(골드보다 한 톤 진함 — 흰 카드·노랑 볼과 분리)는 3dp, 다크 크림은 2dp 유지.
+    val darkTheme = isSystemInDarkTheme()
+    val matchGap = MaterialTheme.colorScheme.surfaceContainerLowest
+    val matchRing = if (darkTheme) MaterialTheme.colorScheme.onSurface else LgAmber
+    val matchRingWidth = if (darkTheme) 2.dp else 3.dp
 
     Box(
         modifier = modifier
@@ -116,22 +133,32 @@ fun LottoBall(
             .drawBehind {
                 val w = this.size.width
                 val h = this.size.height
-                // 캔디 방사형 셰이딩: 좌상단 하이라이트 → base → 하단 어두운 림.
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(highlight, base, rim),
-                        center = Offset(w * 0.35f, h * 0.30f),
-                        radius = w * 0.85f,
-                    ),
-                )
-                // 상단 스페큘러 하이라이트.
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(Color.White.copy(alpha = 0.55f), Color.Transparent),
-                        center = Offset(w * 0.36f, h * 0.24f),
-                        radius = w * 0.28f,
-                    ),
-                )
+                // 할로 시엔 볼 전체를 링 안쪽 크기로 스케일 — 그라디언트 가장자리를 자르면 물빠져 보임.
+                val ballScale = if (matched) (w / 2 - 4.dp.toPx()) / (w / 2) else 1f
+                scale(ballScale) {
+                    // 캔디 방사형 셰이딩: 좌상단 하이라이트 → base → 하단 어두운 림.
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(highlight, base, rim),
+                            center = Offset(w * 0.35f, h * 0.30f),
+                            radius = w * 0.85f,
+                        ),
+                    )
+                    // 상단 스페큘러 하이라이트.
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(Color.White.copy(alpha = 0.55f), Color.Transparent),
+                            center = Offset(w * 0.36f, h * 0.24f),
+                            radius = w * 0.28f,
+                        ),
+                    )
+                }
+                if (matched) {
+                    // 갭(R-4..R-2, 그림자 가림용 불투명)·링(외곽 R 고정) — 갭을 살짝 넓혀 AA 이음새를 덮는다.
+                    val ringPx = matchRingWidth.toPx()
+                    drawCircle(matchGap, radius = w / 2 - 3.dp.toPx(), style = Stroke(2.5.dp.toPx()))
+                    drawCircle(matchRing, radius = w / 2 - ringPx / 2, style = Stroke(ringPx))
+                }
             }
             .then(
                 when {
@@ -153,11 +180,18 @@ fun LottoBall(
             ),
         contentAlignment = Alignment.Center,
     ) {
+        // 숫자: 볼 비례 + 소형 볼 하한 11sp(미니 볼 가독성 피드백 2회 반영). lineHeight를 fontSize에
+        // 맞추고 폰트 패딩을 없애야 상속 lineHeight(24sp) 탓에 글리프가 우하단으로 밀리는 치우침이 사라진다.
+        val fs = (size.value * 0.36f).coerceAtLeast(11f).sp
         Text(
             text = n.toString(),
             color = fg,
             fontWeight = FontWeight.Bold,
-            fontSize = (size.value * 0.36f).sp,
+            fontSize = fs,
+            lineHeight = fs,
+            style = LocalTextStyle.current.copy(
+                platformStyle = PlatformTextStyle(includeFontPadding = false),
+            ),
         )
     }
 }

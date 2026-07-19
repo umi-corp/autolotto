@@ -231,36 +231,59 @@ private fun HistoryCard(item: Purchase, index: Int) {
             .then(if (winner) Modifier.border(2.dp, LgGold, shape) else Modifier),
         contentPadding = PaddingValues(0.dp),
     ) {
-        // 헤더: 제 {n}회 + 날짜 + StatusPill
-        Row(
+        // 헤더: 제 {n}회 + 날짜 + StatusPill (+ 추첨 완료 시 당첨번호 미니 볼 줄)
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(headerBg)
                 .padding(horizontal = 20.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    stringResource(R.string.roundLabel, item.round),
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    dateStr,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        stringResource(R.string.roundLabel, item.round),
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        dateStr,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                when {
+                    !item.checked -> StatusPill(stringResource(R.string.statusPending), PillTone.Pending)
+                    winner -> StatusPill(
+                        stringResource(R.string.rankWithEmoji, localizedRank(item.rank ?: "nowin")),
+                        PillTone.Win,
+                    )
+                    else -> StatusPill(stringResource(R.string.statusNoWin), PillTone.Lose)
+                }
             }
-            when {
-                !item.checked -> StatusPill(stringResource(R.string.statusPending), PillTone.Pending)
-                winner -> StatusPill(
-                    stringResource(R.string.rankWithEmoji, localizedRank(item.rank ?: "nowin")),
-                    PillTone.Win,
-                )
-                else -> StatusPill(stringResource(R.string.statusNoWin), PillTone.Lose)
+            // 회차 당첨번호 미니 볼 — 아래 게임 행의 할로 볼과 색으로 대조(사용자 피드백). 미추첨이면 없음.
+            item.winningNumbers?.let { win ->
+                Spacer(Modifier.height(10.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    win.forEach { LottoBall(it, size = 24.dp) }
+                    item.bonusNumber?.let { b ->
+                        Text(
+                            "+",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.labelLarge,
+                        )
+                        LottoBall(b, size = 24.dp)
+                    }
+                }
             }
         }
 
@@ -340,8 +363,8 @@ private fun GameRow(
                         n = n,
                         size = ball,
                         dimmed = hasResult && !(isMatch || isBonusMatch),
-                        // 맞은 번호는 홈 보너스 볼과 동일한 강조 림 — dimmed 해제만으론 구분이 흐림(사용자 피드백)
-                        bordered = hasResult && (isMatch || isBonusMatch),
+                        // 맞은 번호는 잉크 할로 링 — 같은 계열 어두운 림은 볼에 묻혀 안 보임(사용자 피드백)
+                        matched = hasResult && (isMatch || isBonusMatch),
                     )
                 }
             }

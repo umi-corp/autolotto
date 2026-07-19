@@ -111,6 +111,36 @@ class HistoryServiceTest {
     }
 
     @Test
+    fun `fetchRecentPurchases splits 7-element win_num into six mains plus bonus`() = runBlocking {
+        // 실측(1233회): 추첨 후 win_num이 보너스 포함 7개로 오고 bonus_num이 빈 응답이 있다.
+        val detail = """
+            {"data":{"success":true,"ticket":{
+              "drawed":true,
+              "win_num":[2,7,20,25,37,40,29],
+              "game_dtl":[{"num":[1,2,3,4,5,6],"type":0,"rank":0,"amt":0}]
+            }}}
+        """.trimIndent()
+        val p = historyFor(ledgerOneLotto, detail).fetchRecentPurchases()[0]
+        assertEquals(listOf(2, 7, 20, 25, 37, 40), p.winningNumbers)
+        assertEquals(29, p.bonusNumber)
+    }
+
+    @Test
+    fun `fetchRecentPurchases nulls zero-filled win_num of undrawn ticket`() = runBlocking {
+        // 실측(1234회): 미추첨 티켓은 win_num이 0으로 채워져 온다 — "0" 볼 노출 방지.
+        val detail = """
+            {"data":{"success":true,"ticket":{
+              "drawed":false,
+              "win_num":[0,0,0,0,0,0,0],"bonus_num":0,
+              "game_dtl":[{"num":[1,2,3,4,5,6],"type":0,"rank":0,"amt":0}]
+            }}}
+        """.trimIndent()
+        val p = historyFor(ledgerOneLotto, detail).fetchRecentPurchases()[0]
+        assertNull(p.winningNumbers)
+        assertNull(p.bonusNumber)
+    }
+
+    @Test
     fun `fetchRecentPurchases skips item when detail success is false`() = runBlocking {
         val purchases = historyFor(ledgerOneLotto, """{"data":{"success":false}}""").fetchRecentPurchases()
         assertTrue(purchases.isEmpty())
