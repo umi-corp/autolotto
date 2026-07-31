@@ -17,12 +17,14 @@
 ## ✨ 주요 기능
 
 - **자동 구매** — 설정한 요일/시간에 자동으로 로또 구매 (최대 5게임)
+- **즉시 구매** — 번호 탭에서 저장한 게임을 바로 결제, 이미 구매한 회차는 자동 게임 추가 구매 (주간 5게임 한도는 서버가 검증)
 - **수동/자동 번호** — 게임별로 수동 번호 지정 또는 자동 생성 선택
 - **당첨 확인** — 매주 토요일 21:00 자동 당첨 확인 & 푸시 알림
-- **구매 기록** — 게임별 번호, 등수, 당첨금 한눈에 확인
+- **구매 기록** — 최근 3개월 자동 조회 + '더 보기'로 최대 1년, 게임별 번호·등수·당첨금 한눈에 확인
 - **보안 저장** — 계정 정보는 Android Keystore(EncryptedSharedPreferences) 암호화 저장
+- **다국어** — 한국어·영어·일본어, 설정에서 언어 선택 (기본: 시스템 언어)
 - **모던 디자인** — Material 3 Expressive 'Lucky Gloss', 네이티브 Jetpack Compose · 스프링 인터랙션
-- **자동 업데이트** — 앱 내에서 새 버전 원탭 설치 (사이드로드 배포)
+- **자동 업데이트** — 앱 내에서 새 버전 원탭 설치, 설치 전 패키지명·서명 검증 (사이드로드 배포)
 
 ## 📱 스크린샷
 
@@ -66,6 +68,8 @@ app/src/main/kotlin/com/umicorp/autolotto/
 │   ├── ResultService.kt         # 당첨번호 조회
 │   ├── HistoryService.kt        # 구매 내역
 │   ├── DhlotterySession.kt      # OkHttp 세션 (수동 리다이렉트)
+│   ├── DomainCookieStore.kt     # 도메인별 쿠키 저장소 (www↔ol 세션 공유)
+│   ├── ApiConstants.kt          # API 경로 상수 (테스트용 베이스 URL 분리)
 │   └── RsaCrypto.kt             # RSA PKCS1
 ├── data/
 │   ├── SecureStore.kt           # EncryptedSharedPreferences (+ Flutter 마이그레이션)
@@ -73,9 +77,11 @@ app/src/main/kotlin/com/umicorp/autolotto/
 │   └── WinningResult.kt
 ├── scheduler/                   # AlarmManager 자가연쇄 + WorkManager
 │   ├── AlarmScheduler.kt        # 알람 등록 (자동구매 1001 / 결과확인 1002)
+│   ├── AlarmTimes.kt            # 다음 알람 시각 순수 계산 (단위테스트 대상)
 │   ├── AutoPurchaseWorker.kt    # 백그라운드 자동 구매
 │   ├── CheckResultWorker.kt     # 백그라운드 당첨 확인
 │   ├── SchedulerReceivers.kt    # 부팅·앱 업데이트 시 알람 복원
+│   ├── ExactAlarmPermission.kt  # 정확 알람 권한 확인·설정 이동
 │   └── Notifications.kt         # 알림 (구매/당첨/잔액)
 ├── update/
 │   └── AppUpdater.kt            # 인앱 업데이트 (GitHub 릴리스 확인·설치)
@@ -83,6 +89,7 @@ app/src/main/kotlin/com/umicorp/autolotto/
     ├── App.kt                   # 하단 pill 네비 + 4탭 페이저
     ├── SplashScreen.kt          # 스플래시 (자동 로그인)
     ├── screen/                  # Home · Number · History · Settings
+    ├── vm/                      # 화면별 ViewModel (상태 홀더)
     ├── theme/                   # Lucky Gloss 테마·색·모션
     └── util/                    # 볼 색상·포맷 등 UI 헬퍼
 ```
@@ -91,7 +98,8 @@ app/src/main/kotlin/com/umicorp/autolotto/
 
 - 계정 정보는 **EncryptedSharedPreferences**(Android Keystore)로 암호화 저장 (Flutter판에서 자동 마이그레이션)
 - 로그인 비밀번호는 동행복권 서버의 **RSA 공개키로 암호화** 후 전송
-- 디버그 로그는 릴리즈 빌드에서 비활성화
+- 인앱 업데이트 APK는 다운로드 크기 상한(50MB)과 설치 전 **패키지명·서명 인증서 검증**을 거침 — 불일치 시 폐기 (fail-closed)
+- 앱 코드에 로그 출력 없음, 릴리즈 빌드는 R8 축소·난독화 적용
 - 모든 API 통신은 HTTPS
 
 ## ⚠️ 주의사항
