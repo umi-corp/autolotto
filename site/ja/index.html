@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AutoLotto｜ロト6/45の自動購入・当選確認アプリ（Android）</title>
+<meta name="description" content="同行福券のロト6/45を指定した曜日・時間に毎週自動購入し、土曜日の抽選後に当選を自動確認・通知。最大5ゲームで、番号はゲームごとに手動・自動を選択可能。アカウント情報は端末内に暗号化して保存。無料・広告なしのオープンソースアプリ。Android 12以上対応">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f1e7">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#15161b">
+<link rel="canonical" href="https://autolotto.umicorp.kr/ja/">
+<link rel="alternate" hreflang="ko" href="https://autolotto.umicorp.kr/">
+<link rel="alternate" hreflang="en" href="https://autolotto.umicorp.kr/en/">
+<link rel="alternate" hreflang="ja" href="https://autolotto.umicorp.kr/ja/">
+<link rel="alternate" hreflang="x-default" href="https://autolotto.umicorp.kr/">
+<meta property="og:locale:alternate" content="ko_KR">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:type" content="website">
+<meta property="og:title" content="AutoLotto｜ロト6/45の自動購入・当選確認アプリ（Android）">
+<meta property="og:description" content="同行福券のロト6/45を指定した曜日・時間に毎週自動購入し、土曜日の抽選後に当選を自動確認・通知。最大5ゲームで、番号はゲームごとに手動・自動を選択可能。アカウント情報は端末内に暗号化して保存。無料・広告なしのオープンソースアプリ。Android 12以上対応">
+<meta property="og:url" content="https://autolotto.umicorp.kr/ja/">
+<meta property="og:image" content="https://autolotto.umicorp.kr/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="AutoLotto">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" sizes="48x48" href="../assets/favicon-48.png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<script>
+  // 첫 화면부터 테마를 맞춘다: 직접 고른 값 → 시스템 설정
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('theme'); } catch (e) {}
+    document.documentElement.dataset.theme = t || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.classList.add('js');
+  })();
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-Q2ZL599WPJ"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-Q2ZL599WPJ');</script>
+<link rel="preload" href="../assets/fonts/noto-sans-jp.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/space-grotesk.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/site.css">
+<script defer src="../assets/site.js"></script>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "Organization",
+   "@id": "https://autolotto.umicorp.kr/#org",
+   "name": "UMI Corp",
+   "url": "https://umicorp.kr",
+   "email": "contact@umicorp.kr",
+   "sameAs": [
+    "https://www.youtube.com/@UmiCorp",
+    "https://github.com/umi-corp"
+   ]
+  },
+  {
+   "@type": "WebSite",
+   "@id": "https://autolotto.umicorp.kr/#site",
+   "url": "https://autolotto.umicorp.kr/",
+   "name": "AutoLotto",
+   "inLanguage": [
+    "ko",
+    "en",
+    "ja"
+   ],
+   "publisher": {
+    "@id": "https://autolotto.umicorp.kr/#org"
+   }
+  },
+  {
+   "@type": "MobileApplication",
+   "@id": "https://autolotto.umicorp.kr/#app",
+   "name": "AutoLotto",
+   "alternateName": "오토로또",
+   "operatingSystem": "Android 12+",
+   "applicationCategory": "UtilitiesApplication",
+   "description": "同行福券のロト6/45を指定した曜日・時間に毎週自動購入し、土曜日の抽選後に当選を自動確認・通知。最大5ゲームで、番号はゲームごとに手動・自動を選択可能。アカウント情報は端末内に暗号化して保存。無料・広告なしのオープンソースアプリ。Android 12以上対応",
+   "url": "https://autolotto.umicorp.kr/ja/",
+   "installUrl": "https://github.com/umi-corp/autolotto/releases/latest",
+   "downloadUrl": "https://github.com/umi-corp/autolotto/releases/latest",
+   "image": "https://autolotto.umicorp.kr/assets/icon-512.png",
+   "screenshot": [
+    "https://autolotto.umicorp.kr/assets/shots/home.webp",
+    "https://autolotto.umicorp.kr/assets/shots/numbers.webp",
+    "https://autolotto.umicorp.kr/assets/shots/history.webp",
+    "https://autolotto.umicorp.kr/assets/shots/settings.webp"
+   ],
+   "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "KRW"
+   },
+   "author": {
+    "@id": "https://autolotto.umicorp.kr/#org"
+   },
+   "inLanguage": "ja",
+   "license": "https://github.com/umi-corp/autolotto/blob/main/LICENSE",
+   "featureList": [
+    "自動購入",
+    "当選確認",
+    "即時購入",
+    "残高不足の通知",
+    "購入履歴",
+    "安全な保存"
+   ]
+  },
+  {
+   "@type": "FAQPage",
+   "@id": "https://autolotto.umicorp.kr/ja/#faq",
+   "inLanguage": "ja",
+   "mainEntity": [
+    {
+     "@type": "Question",
+     "name": "AutoLottoの利用に必要なものは何ですか？",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "同行福券（dhlottery.co.kr）の会員アカウントと、購入金額分の預託金が必要です。預託金は同行福券のホームページでチャージでき、アプリからチャージページを開けます。"
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "同行福券のアカウント情報は安全ですか？",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "アカウント情報はAndroid Keystoreで暗号化して端末内にのみ保存し、同行福券へのログインにのみ使用します。自社サーバーはなく、GitHubで公開しているソースコードで確認できます。"
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Google Playで配信していないのはなぜですか？",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Google Playのギャンブルに関するポリシーにより、宝くじ購入アプリは登録できません。APKはGitHubのリリースで配布しており、新しいバージョンはアプリ内の更新機能でインストールできます。"
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "各回で何ゲーム購入できますか？",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "同行福券のオンライン購入限度は各回5ゲーム（5,000ウォン）です。限度超過の判定は同行福券のサーバーが行い、超過時は同行福券のエラーメッセージをそのまま表示します。"
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "アプリを開いていなくても自動購入できますか？",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "アプリを起動していなくても、指定した時刻に自動購入します。インターネット接続が必要です。定刻に実行するため、バッテリー最適化の対象から除外することをおすすめします。"
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "iPhoneに対応していますか？",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Android 12以上の端末専用です。iPhone版アプリはありません。"
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "同行福券の公式アプリですか？",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "同行福券の公式アプリではなく、UMI Corpが開発したアプリです。利用に伴う責任は利用者にあり、19歳未満の方は宝くじを購入できません。"
+     }
+    }
+   ]
+  }
+ ]
+}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">本文へ移動</a>
+<header class="site-nav">
+  <nav class="wrap nav" aria-label="AutoLotto">
+    <a class="brand" href="../ja/"><img src="../assets/icon-160.webp" alt="" width="32" height="32"><span>AutoLotto</span></a>
+    <div class="nav-right">
+      <div class="nav-links">
+        <a href="#flow">処理の流れ</a>
+        <a href="#features">機能</a>
+        <a href="#how">使い方</a>
+        <a href="#faq">よくある質問</a>
+      </div>
+      <div class="lang-switch" role="group" aria-label="言語"><a href="../" lang="ko" hreflang="ko">KR</a><a href="../en/" lang="en" hreflang="en">EN</a><a href="../ja/" lang="ja" hreflang="ja" aria-current="page">JP</a></div>
+      <button class="icon-btn theme-btn" type="button" data-theme-toggle aria-label="明るいテーマと暗いテーマの切り替え">
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+      <a class="nav-cta" href="#download">ダウンロード</a>
+    </div>
+  </nav>
+</header>
+
+<main id="main">
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="badge">Android 12以上・無料・広告なし</span>
+        <h1 class="headline"><span class="l1">番号設定は最初だけ</span><span class="l2">毎週の購入・当選確認はAutoLottoにお任せ</span></h1>
+        <p class="lead">AutoLotto（オートロト）は、同行福券（DHLottery）のロト6/45を指定した曜日・時間に毎週自動購入するAndroidアプリです。土曜日の抽選後に当選結果を確認し、通知します。</p>
+        <ul class="balls" data-balls aria-hidden="true"><li style="--i:0"><span class="ball" style="--c:#fbc400">7</span></li><li style="--i:1"><span class="ball" style="--c:#69c8f2">14</span></li><li style="--i:2"><span class="ball" style="--c:#ff7272">22</span></li><li style="--i:3"><span class="ball" style="--c:#aaaaaa">37</span></li><li style="--i:4"><span class="ball" style="--c:#b0d840">41</span></li><li class="plus" style="--i:5">+</li><li style="--i:6"><span class="ball bonus" style="--c:#69c8f2">16</span></li></ul>
+        <div class="hero-actions">
+          <div class="hero-dl"><a class="btn btn-cta" href="https://github.com/umi-corp/autolotto/releases/latest" data-apk><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Androidアプリをダウンロード</a><span class="apk-meta" data-apk-meta>Android 12+</span></div>
+          <a class="btn btn-ghost" href="#flow">機能を見る</a>
+        </div>
+        <ul class="points"><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>アカウント情報は暗号化して端末内にのみ保存</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>広告・定期購入なし、オープンソース</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>画面言語は韓国語・英語・日本語</li></ul>
+      </div>
+      <div class="hero-media"><div class="phone"><img src="../assets/shots/home.webp" alt="AutoLottoのホーム画面。次回の抽選までの残り時間、前回の当選番号、預託金残高、自動購入の状態" width="540" height="1200" decoding="async"></div></div>
+    </div>
+  </section>
+
+  <section class="band" id="flow" aria-labelledby="flow-title">
+    <div class="wrap">
+      <h2 class="band-title" id="flow-title">番号設定から当選通知までの自動処理</h2>
+      <p class="band-desc">アプリを起動しなくても、指定した時刻に購入・当選確認・通知を自動で行います</p>
+      <ol class="stages"><li class="stage"><span class="stage-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><circle cx="17.5" cy="17.5" r="3.5"/></svg></span><span class="stage-n">01</span><h3>番号設定</h3><p>ゲーム A〜Eの最大5ゲームそれぞれで、毎週固定の手動番号か毎週新しく生成する自動番号を選択</p></li><li class="stage"><span class="stage-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="stage-n">02</span><h3>自動購入</h3><p>指定した曜日・時間に、保存した番号で購入、初期設定は日曜日の午前9時</p></li><li class="stage"><span class="stage-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg></span><span class="stage-n">03</span><h3>当選確認</h3><p>毎週土曜日の21:00にアプリがその週の抽選結果を自動確認し、ゲーム別の等級と当選金を表示</p></li><li class="stage"><span class="stage-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4l2-2z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></span><span class="stage-n">04</span><h3>通知</h3><p>購入完了・当選結果・預託金の残高不足をプッシュ通知</p></li></ol>
+    </div>
+  </section>
+
+  <section class="band alt" id="features" aria-labelledby="features-title">
+    <div class="wrap">
+      <h2 class="band-title" id="features-title">主な機能</h2>
+      <p class="band-desc">番号・購入・履歴・預託金をアプリでまとめて管理</p>
+      <div class="feature">
+        <div>
+          <span class="feature-tag">番号</span>
+          <h3>ゲームごとの番号設定</h3>
+          <p>ゲームごとに手動・自動を選べます。手動では1~45から6個を選択でき、「すべて自動」ボタンですべてのゲームを自動に切り替えられます。</p>
+        </div>
+        <div class="feature-media"><div class="phone"><img src="../assets/shots/numbers.webp" alt="番号設定画面。ゲームA〜Eの選択、手動・自動の切り替え、1〜45の番号が付いたボール" width="540" height="1200" loading="lazy" decoding="async"></div></div>
+      </div>
+      <div class="feature rev">
+        <div>
+          <span class="feature-tag">履歴</span>
+          <h3>購入履歴</h3>
+          <p>直近3か月分を自動で取得し、「もっと見る」から最大1年分を確認できます。回ごとのゲーム番号、当選番号、等級、当選金を表示します。</p>
+        </div>
+        <div class="feature-media"><div class="phone"><img src="../assets/shots/history.webp" alt="購入履歴画面。回ごとのゲーム番号と当選結果" width="540" height="1200" loading="lazy" decoding="async"></div></div>
+      </div>
+      <div class="feature">
+        <div>
+          <span class="feature-tag">設定</span>
+          <h3>自動購入の設定</h3>
+          <p>購入する曜日・時間の変更や預託金の残高確認ができ、同行福券のチャージページに移動できます。定刻に実行するためのバッテリー最適化の対象から除外する方法も案内します。</p>
+        </div>
+        <div class="feature-media"><div class="phone"><img src="../assets/shots/settings.webp" alt="設定画面。同行福券のアカウント、預託金残高、自動購入の曜日・時間" width="540" height="1200" loading="lazy" decoding="async"></div></div>
+      </div>
+      <ul class="cards"><li class="card"><span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg></span><h3>即時購入</h3><p>番号タブに保存したゲームをすぐに決済、購入済みの回には自動番号のゲームを追加購入</p></li><li class="card"><span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="2.5"/><path d="M3 10h18M16 15h2"/><path d="M6 6l9-3 1.5 3"/></svg></span><h3>残高不足の通知</h3><p>預託金の残高が基準額を下回ると通知、基準額は5,000ウォン・10,000ウォン・20,000ウォンから選択可能で、初期設定は5,000ウォン</p></li><li class="card"><span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/><path d="M12 8v5l3 2"/></svg></span><h3>アプリ内更新</h3><p>タップだけで新バージョンをインストール、インストール前にパッケージ名と署名を検証</p></li><li class="card"><span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span><h3>安全な保存</h3><p>アカウント情報はAndroid Keystoreで暗号化して端末内にのみ保存、同行福券へのログインにのみ使用し、自社・第3者のサーバーへの送信なし</p></li><li class="card"><span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span><h3>言語の選択</h3><p>画面言語は韓国語・英語・日本語に対応し、初期設定はシステム言語、プッシュ通知の文言は韓国語のみ</p></li><li class="card"><span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 8l-5 4 5 4M16 8l5 4-5 4M14 4l-4 16"/></svg></span><h3>無料・オープンソース</h3><p>広告・サブスクリプション・アプリ内課金なし、ソースコードはGitHubで公開（MITライセンス）</p></li></ul>
+    </div>
+  </section>
+
+  <section class="band" id="how" aria-labelledby="how-title">
+    <div class="wrap">
+      <h2 class="band-title" id="how-title">使い方</h2>
+      <ol class="steps"><li class="step" data-n="1"><h3>アプリのインストール</h3><p>このページからAPKをダウンロードしてインストール、インストール時は「不明なアプリ」の許可が必要</p></li><li class="step" data-n="2"><h3>同行福券へのログイン</h3><p>設定タブで同行福券のIDとパスワードを使ってログイン</p></li><li class="step" data-n="3"><h3>番号の保存</h3><p>番号タブでゲームごとに手動・自動の番号を指定して保存</p></li><li class="step" data-n="4"><h3>自動購入の有効化</h3><p>設定タブで自動購入を有効にすると、以降は毎週自動購入</p></li></ol>
+    </div>
+  </section>
+
+  <section class="band alt" id="faq" aria-labelledby="faq-title">
+    <div class="wrap">
+      <h2 class="band-title" id="faq-title">よくある質問</h2>
+      <div class="faq"><details><summary>AutoLottoの利用に必要なものは何ですか？</summary><p>同行福券（dhlottery.co.kr）の会員アカウントと、購入金額分の預託金が必要です。預託金は同行福券のホームページでチャージでき、アプリからチャージページを開けます。</p></details><details><summary>同行福券のアカウント情報は安全ですか？</summary><p>アカウント情報はAndroid Keystoreで暗号化して端末内にのみ保存し、同行福券へのログインにのみ使用します。自社サーバーはなく、GitHubで公開しているソースコードで確認できます。</p></details><details><summary>Google Playで配信していないのはなぜですか？</summary><p>Google Playのギャンブルに関するポリシーにより、宝くじ購入アプリは登録できません。APKはGitHubのリリースで配布しており、新しいバージョンはアプリ内の更新機能でインストールできます。</p></details><details><summary>各回で何ゲーム購入できますか？</summary><p>同行福券のオンライン購入限度は各回5ゲーム（5,000ウォン）です。限度超過の判定は同行福券のサーバーが行い、超過時は同行福券のエラーメッセージをそのまま表示します。</p></details><details><summary>アプリを開いていなくても自動購入できますか？</summary><p>アプリを起動していなくても、指定した時刻に自動購入します。インターネット接続が必要です。定刻に実行するため、バッテリー最適化の対象から除外することをおすすめします。</p></details><details><summary>iPhoneに対応していますか？</summary><p>Android 12以上の端末専用です。iPhone版アプリはありません。</p></details><details><summary>同行福券の公式アプリですか？</summary><p>同行福券の公式アプリではなく、UMI Corpが開発したアプリです。利用に伴う責任は利用者にあり、19歳未満の方は宝くじを購入できません。</p></details></div>
+    </div>
+  </section>
+
+  <section class="outro" id="download" aria-labelledby="dl-title">
+    <div class="wrap">
+      <div class="outro-card">
+        <div>
+          <h2 id="dl-title">AutoLottoのダウンロード</h2>
+          <p class="outro-desc">GitHubの最新リリースからAPKを無料でダウンロード</p>
+          <ul class="notes"><li>同行福券のアカウントと預託金が必要</li><li>19歳未満の方は購入不可</li><li>同行福券の非公式アプリ</li></ul>
+        </div>
+        <div class="hero-dl"><a class="btn btn-cta" href="https://github.com/umi-corp/autolotto/releases/latest" data-apk><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Androidアプリをダウンロード</a><span class="apk-meta" data-apk-meta>Android 12+</span></div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="site-foot">
+  <div class="wrap foot">
+    <p>© 2026 <a href="https://umicorp.kr">UMI Corp</a> · 同行福券の非公式アプリ</p>
+    <nav aria-label="UMI Corp">
+      <a href="https://github.com/umi-corp/autolotto">GitHub</a>
+      <a href="https://www.youtube.com/@UmiCorp">YouTube</a>
+      <a href="mailto:contact@umicorp.kr">メールでのお問い合わせ</a>
+      <span>同じ会社のアプリ: <a href="https://autolotto720.umicorp.kr">AutoLotto720 — 年金福券720+</a></span>
+    </nav>
+  </div>
+</footer>
+</body>
+</html>

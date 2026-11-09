@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://autolotto.umicorp.kr/</loc>
+    <lastmod>2026-11-10</lastmod>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://autolotto.umicorp.kr/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://autolotto.umicorp.kr/en/"/>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://autolotto.umicorp.kr/ja/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://autolotto.umicorp.kr/"/>
+  </url>
+  <url>
+    <loc>https://autolotto.umicorp.kr/en/</loc>
+    <lastmod>2026-11-10</lastmod>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://autolotto.umicorp.kr/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://autolotto.umicorp.kr/en/"/>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://autolotto.umicorp.kr/ja/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://autolotto.umicorp.kr/"/>
+  </url>
+  <url>
+    <loc>https://autolotto.umicorp.kr/ja/</loc>
+    <lastmod>2026-11-10</lastmod>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://autolotto.umicorp.kr/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://autolotto.umicorp.kr/en/"/>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://autolotto.umicorp.kr/ja/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://autolotto.umicorp.kr/"/>
+  </url>
+</urlset>
