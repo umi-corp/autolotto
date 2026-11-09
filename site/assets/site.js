@@ -22,8 +22,6 @@
     addEventListener('scroll', onScroll, { passive: true });
   }
 
-  // 공 색은 앱 ballColor(UiHelpers.kt)와 같은 번호대 규칙
-  const ballColor = (n) => n <= 10 ? '#fbc400' : n <= 20 ? '#69c8f2' : n <= 30 ? '#ff7272' : n <= 40 ? '#aaaaaa' : '#b0d840';
   const draw = () => {
     const pool = Array.from({ length: 45 }, (_, i) => i + 1);
     const pick = Array.from({ length: 7 }, () => pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
@@ -33,9 +31,8 @@
   document.querySelectorAll('[data-balls]').forEach((list) => {
     const balls = list.querySelectorAll('.ball');
     draw().forEach((n, i) => {
-      if (!balls[i]) return;
       balls[i].textContent = n;
-      balls[i].style.setProperty('--c', ballColor(n));
+      balls[i].dataset.b = Math.min(5, Math.ceil(n / 10));
     });
   });
 
@@ -76,17 +73,19 @@
     a.style.visibility = 'hidden';
     shade.animate([{ opacity: 0 }, { opacity: 1 }], { duration: ms });
     close.animate([{ opacity: 0 }, { opacity: 1 }], { duration: ms, delay: ms / 2, fill: 'backwards' });
+    let done = false;
     frame.animate([box(from), box(to)], { duration: ms, easing: ease }).finished.then(() => {
-      if (!frame.isConnected) return;
+      // 펼치는 도중 닫으면 플레이어를 붙이지 않는다
+      if (done) return;
       frame.append(Object.assign(document.createElement('iframe'), {
         src: `https://www.youtube-nocookie.com/embed/${a.dataset.yt}?autoplay=1&playsinline=1&rel=0`,
         title: a.getAttribute('aria-label'),
         allow: 'autoplay; encrypted-media; picture-in-picture; fullscreen',
+        allowFullscreen: true,
       }));
     });
     close.focus();
 
-    let done = false;
     const shut = () => {
       if (done) return;
       done = true;
@@ -117,5 +116,4 @@
     pop(a);
   }));
 
-  root.classList.add('js');
 })();
