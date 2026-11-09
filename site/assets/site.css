@@ -157,7 +157,7 @@ p { margin: 0; }
 .headline .l1 { display: block; color: var(--text-2); font-size: 20px; font-weight: 600; }
 .headline .l2 { display: block; margin-top: 6px; font-size: clamp(34px, 5.2vw, 56px); font-weight: 800; letter-spacing: -.02em; line-height: 1.2; background: var(--headline-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .lead { margin-top: 20px; max-width: 34em; color: var(--text-2); font-size: 18px; }
-.hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.hero-actions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; }
 .hero-dl { display: flex; flex-direction: column; }
 .points { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 28px 0 0; padding: 0; list-style: none; color: var(--text-2); font-size: 14px; }
 .points li { display: inline-flex; align-items: center; gap: 8px; }
