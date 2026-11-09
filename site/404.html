@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>페이지 없음 — AutoLotto</title>
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" type="image/png" sizes="48x48" href="/assets/favicon-48.png">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('theme'); } catch (e) {}
+    document.documentElement.dataset.theme = t || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.classList.add('js');
+  })();
+</script>
+<link rel="stylesheet" href="/assets/site.css">
+<script defer src="/assets/site.js"></script>
+</head>
+<body>
+<main id="main" class="nf"><div>
+<ul class="balls" data-balls aria-hidden="true"><li style="--i:0"><span class="ball" data-b="1">7</span></li><li style="--i:1"><span class="ball" data-b="2">14</span></li><li style="--i:2"><span class="ball" data-b="3">22</span></li><li style="--i:3"><span class="ball" data-b="3">29</span></li><li style="--i:4"><span class="ball" data-b="4">37</span></li><li style="--i:5"><span class="ball" data-b="5">41</span></li><li class="plus" style="--i:6">+</li><li style="--i:7"><span class="ball bonus" data-b="2">16</span></li></ul><section lang="ko"><h1>페이지 없음</h1><p>요청한 주소의 페이지가 없으니 주소를 확인하거나 첫 화면으로 이동해 주세요</p></section>
+<section lang="en"><h2>Page not found</h2><p>There is no page at the requested address; check the address or go to the home page</p></section>
+<section lang="ja"><h2>ページが見つかりません</h2><p>ご指定のアドレスにページがありません。アドレスをご確認いただくか、トップページへお戻りください</p></section>
+<a class="btn btn-cta" href="/">첫 화면으로 · Home · ホーム</a>
+</div></main>
+</body>
+</html>

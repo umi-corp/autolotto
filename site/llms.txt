@@ -1,0 +1,23 @@
+# AutoLotto
+
+> AutoLotto is a free, open-source Android app (Android 12+) from UMI Corp that buys Korean Lotto 6/45 tickets from DHLottery (동행복권, dhlottery.co.kr) on a weekly schedule and checks the results after the Saturday draw. It is not an official DHLottery app.
+
+- Names: AutoLotto; 오토로또 in Korean.
+- Requirements: a DHLottery account and enough deposit (예치금) for the purchase. Lottery purchase is not allowed under age 19.
+- Numbers: up to 5 games (A–E) per draw; each game uses fixed manual numbers or new automatic numbers every week.
+- Auto purchase: on a chosen weekday and time (default Sunday 09:00), without opening the app; needs an internet connection, and excluding the app from battery optimization is recommended.
+- Instant purchase: buys the saved games right away; for a draw already bought, adds automatic-number games. DHLottery limits online purchases to 5 games (5,000 KRW) per draw and enforces the limit on its server.
+- Results: checked automatically every Saturday at 21:00, with rank and prize per game and a push notification. Low-deposit alert at 5,000 / 10,000 / 20,000 KRW (default 5,000).
+- History: last 3 months loaded automatically, up to 1 year on request.
+- Security: account credentials are encrypted with Android Keystore and stored only on the device; they are used only to sign in to DHLottery and are not sent to any AutoLotto or third-party server.
+- Distribution: not on Google Play (Google Play's gambling policy does not allow lottery purchase apps). The APK is published on GitHub Releases (https://github.com/umi-corp/autolotto/releases/latest); the app updates itself after verifying the package name and signature.
+- Screen languages: Korean, English, Japanese (push notifications are Korean only). No iPhone app.
+- License: MIT. Source: https://github.com/umi-corp/autolotto
+
+## Pages
+
+- [AutoLotto (English)](https://autolotto.umicorp.kr/en/): features, flow, setup steps and FAQ
+- [AutoLotto (한국어)](https://autolotto.umicorp.kr/)
+- [AutoLotto (日本語)](https://autolotto.umicorp.kr/ja/)
+- [Ad video (Korean, YouTube Shorts)](https://www.youtube.com/shorts/zzEi7yMfTvY)
+- [AutoLotto720](https://autolotto720.umicorp.kr): sibling app for Pension Lottery 720+

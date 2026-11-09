@@ -94,6 +94,10 @@ app/src/main/kotlin/com/umicorp/autolotto/
     └── util/                    # 볼 색상·포맷 등 UI 헬퍼
 ```
 
+## 🌐 소개 페이지
+
+[autolotto.umicorp.kr](https://autolotto.umicorp.kr) — `site/` 정적 HTML(한국어 `/`, 영어 `/en/`, 일본어 `/ja/`), Cloudflare Pages 배포 (도메인 이전 전까지는 `docs/` GitHub Pages)
+
 ## 🔐 보안
 
 - 계정 정보는 **EncryptedSharedPreferences**(Android Keystore)로 암호화 저장 (Flutter판에서 자동 마이그레이션)

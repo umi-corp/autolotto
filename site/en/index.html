@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AutoLotto: Lotto 6/45 auto purchase and win checking for Android</title>
+<meta name="description" content="Schedule a weekly auto purchase of DHLottery Lotto 6/45 and get results and notifications after Saturday&#x27;s draw. Choose manual or automatic numbers for up to 5 games. Account information is encrypted on your device. Free, ad-free and open source. Requires Android 12 or later.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f1e7">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#15161b">
+<link rel="canonical" href="https://autolotto.umicorp.kr/en/">
+<link rel="alternate" hreflang="ko" href="https://autolotto.umicorp.kr/">
+<link rel="alternate" hreflang="en" href="https://autolotto.umicorp.kr/en/">
+<link rel="alternate" hreflang="ja" href="https://autolotto.umicorp.kr/ja/">
+<link rel="alternate" hreflang="x-default" href="https://autolotto.umicorp.kr/">
+<meta property="og:locale:alternate" content="ko_KR">
+<meta property="og:locale:alternate" content="ja_JP">
+<meta property="og:type" content="website">
+<meta property="og:title" content="AutoLotto: Lotto 6/45 auto purchase and win checking for Android">
+<meta property="og:description" content="Schedule a weekly auto purchase of DHLottery Lotto 6/45 and get results and notifications after Saturday&#x27;s draw. Choose manual or automatic numbers for up to 5 games. Account information is encrypted on your device. Free, ad-free and open source. Requires Android 12 or later.">
+<meta property="og:url" content="https://autolotto.umicorp.kr/en/">
+<meta property="og:image" content="https://autolotto.umicorp.kr/assets/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="AutoLotto">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" sizes="48x48" href="../assets/favicon-48.png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<script>
+  // 첫 화면부터 테마를 맞춘다: 직접 고른 값 → 시스템 설정
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('theme'); } catch (e) {}
+    document.documentElement.dataset.theme = t || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.classList.add('js');
+  })();
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-Q2ZL599WPJ"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-Q2ZL599WPJ');</script>
+<link rel="preload" href="../assets/fonts/space-grotesk.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/site.css">
+<script defer src="../assets/site.js"></script>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "Organization",
+   "@id": "https://autolotto.umicorp.kr/#org",
+   "name": "UMI Corp",
+   "url": "https://umicorp.kr",
+   "email": "contact@umicorp.kr",
+   "sameAs": [
+    "https://www.youtube.com/@UmiCorp",
+    "https://github.com/umi-corp"
+   ]
+  },
+  {
+   "@type": "WebSite",
+   "@id": "https://autolotto.umicorp.kr/#site",
+   "url": "https://autolotto.umicorp.kr/",
+   "name": "AutoLotto",
+   "inLanguage": [
+    "ko",
+    "en",
+    "ja"
+   ],
+   "publisher": {
+    "@id": "https://autolotto.umicorp.kr/#org"
+   }
+  },
+  {
+   "@type": "MobileApplication",
+   "@id": "https://autolotto.umicorp.kr/en/#app",
+   "name": "AutoLotto",
+   "alternateName": "오토로또",
+   "operatingSystem": "Android 12+",
+   "applicationCategory": "UtilitiesApplication",
+   "description": "Schedule a weekly auto purchase of DHLottery Lotto 6/45 and get results and notifications after Saturday's draw. Choose manual or automatic numbers for up to 5 games. Account information is encrypted on your device. Free, ad-free and open source. Requires Android 12 or later.",
+   "url": "https://autolotto.umicorp.kr/en/",
+   "installUrl": "https://github.com/umi-corp/autolotto/releases/latest",
+   "downloadUrl": "https://github.com/umi-corp/autolotto/releases/latest",
+   "image": "https://autolotto.umicorp.kr/assets/icon-512.png",
+   "screenshot": [
+    "https://autolotto.umicorp.kr/assets/shots/home.webp",
+    "https://autolotto.umicorp.kr/assets/shots/numbers.webp",
+    "https://autolotto.umicorp.kr/assets/shots/history.webp",
+    "https://autolotto.umicorp.kr/assets/shots/settings.webp"
+   ],
+   "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "KRW"
+   },
+   "author": {
+    "@id": "https://autolotto.umicorp.kr/#org"
+   },
+   "inLanguage": "en",
+   "license": "https://github.com/umi-corp/autolotto/blob/main/LICENSE",
+   "featureList": [
+    "Auto purchase",
+    "Results check",
+    "Instant purchase",
+    "Low balance alerts",
+    "Purchase history",
+    "Secure storage"
+   ]
+  },
+  {
+   "@type": "FAQPage",
+   "@id": "https://autolotto.umicorp.kr/en/#faq",
+   "inLanguage": "en",
+   "mainEntity": [
+    {
+     "@type": "Question",
+     "name": "What do I need to use AutoLotto?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "You need a DHLottery account at dhlottery.co.kr and enough deposit to cover your purchase. Add funds on the DHLottery website; the app links to the deposit page."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Is my DHLottery account information secure?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Your account information is encrypted with Android Keystore, stored only on your device, and used only to sign in to DHLottery; the app has no server of its own. You can verify this in the public source code on GitHub."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Why isn't AutoLotto on Google Play?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Google Play's gambling policy does not allow lottery purchase apps. The APK is distributed through GitHub releases, and you can install new versions through in-app updates."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "How many games can I buy per draw?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "DHLottery limits online purchases to 5 games (5,000 won) per draw. The DHLottery server determines whether you have exceeded the limit, and AutoLotto displays the DHLottery error message unchanged if you have."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Does auto purchase work when the app is closed?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "The app makes an auto purchase at your scheduled time without being open, but it needs an internet connection. Exclude it from battery optimization to help it run on time."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Does AutoLotto support iPhone?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "AutoLotto requires Android 12 or later. There is no iPhone app."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Is AutoLotto an official DHLottery app?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "AutoLotto is not an official DHLottery app; it was developed by UMI Corp. You are responsible for your use of the app, and anyone under 19 cannot buy lottery tickets."
+     }
+    }
+   ]
+  }
+ ]
+}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-nav">
+  <nav class="wrap nav" aria-label="AutoLotto">
+    <a class="brand" href="../en/"><img src="../assets/icon-160.webp" alt="" width="32" height="32"><span>AutoLotto</span></a>
+    <div class="nav-right">
+      <div class="nav-links">
+        <a href="#flow">How it works</a>
+        <a href="#features">Features</a>
+        <a href="#how">Getting started</a>
+        <a href="#faq">FAQ</a>
+      </div>
+      <div class="lang-switch" role="group" aria-label="Language"><a href="../" lang="ko" hreflang="ko">KR</a><a href="../en/" lang="en" hreflang="en" aria-current="page">EN</a><a href="../ja/" lang="ja" hreflang="ja">JP</a></div>
+      <button class="icon-btn theme-btn" type="button" data-theme-toggle aria-label="Switch between light and dark themes">
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+      <a class="nav-cta" href="#download">Download</a>
+    </div>
+  </nav>
+</header>
+
+<main id="main">
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="badge">Android 12 or later · Free · No ads</span>
+        <h1 class="headline"><span class="l1">Set your numbers once</span><span class="l2">AutoLotto buys and checks wins each week</span></h1>
+        <p class="lead">AutoLotto is an Android app that schedules a weekly auto purchase of DHLottery Lotto 6/45 on your chosen day and time. It checks your results and sends a notification after Saturday's draw.</p>
+        <ul class="balls" data-balls aria-hidden="true"><li style="--i:0"><span class="ball" data-b="1">7</span></li><li style="--i:1"><span class="ball" data-b="2">14</span></li><li style="--i:2"><span class="ball" data-b="3">22</span></li><li style="--i:3"><span class="ball" data-b="3">29</span></li><li style="--i:4"><span class="ball" data-b="4">37</span></li><li style="--i:5"><span class="ball" data-b="5">41</span></li><li class="plus" style="--i:6">+</li><li style="--i:7"><span class="ball bonus" data-b="2">16</span></li></ul>
+        <div class="hero-actions">
+          <div class="hero-dl"><a class="btn btn-cta" href="https://github.com/umi-corp/autolotto/releases/latest" data-apk><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Download for Android</a><span class="apk-meta" data-apk-meta>Android 12+</span></div>
+          <a class="btn btn-ghost" href="#flow">Explore features</a>
+        </div>
+        <ul class="points"><li><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>Account information encrypted only on your device</li><li><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>Open source, with no ads or subscriptions</li><li><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>Interface in Korean, English, and Japanese</li></ul>
+      </div>
+      <div class="hero-media"><div class="phone"><img src="../assets/shots/home.webp" alt="AutoLotto home screen showing time until the next draw, previous draw&#x27;s winning numbers, deposit balance, and auto purchase status" width="540" height="1200" fetchpriority="high" decoding="async"></div></div>
+    </div>
+  </section>
+
+  <section class="band" id="flow" aria-labelledby="flow-title">
+    <div class="wrap">
+      <h2 class="band-title" id="flow-title">From number setup to automatic win notifications</h2>
+      <p class="band-desc">The app automatically purchases, checks results and sends notifications at the set time without being open</p>
+      <ol class="stages"><li class="stage"><span class="stage-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><circle cx="17.5" cy="17.5" r="3.5"/></svg></span><span class="stage-n">01</span><h3>Number setup</h3><p>Choose up to 5 games, A–E, with fixed manual numbers or new automatic numbers each week for each game</p></li><li class="stage"><span class="stage-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="stage-n">02</span><h3>Auto purchase</h3><p>Buy with saved numbers on your chosen day and time, with Sunday at 9 a.m. as the default</p></li><li class="stage"><span class="stage-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg></span><span class="stage-n">03</span><h3>Results check</h3><p>The app automatically checks that week's draw results every Saturday at 21:00 and shows each game's rank and prize</p></li><li class="stage"><span class="stage-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4l2-2z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></span><span class="stage-n">04</span><h3>Notifications</h3><p>Get push notifications for completed purchases, results and low deposit balances</p></li></ol>
+    </div>
+  </section>
+
+  <section class="band alt" id="features" aria-labelledby="features-title">
+    <div class="wrap">
+      <h2 class="band-title" id="features-title">Key features</h2>
+      <p class="band-desc">Manage your numbers, purchases, history and deposit in one app</p>
+      <div class="feature">
+        <div>
+          <span class="feature-tag">Numbers</span>
+          <h3>Numbers for each game</h3>
+          <p>Choose manual or automatic numbers for each game. Pick 6 numbers from 1–45 manually, or use the All auto button to switch every game to automatic numbers.</p>
+        </div>
+        <div class="feature-media"><div class="phone"><img src="../assets/shots/numbers.webp" alt="Number settings screen showing game selection A–E, manual and automatic options, and numbered balls 1–45" width="540" height="1200" loading="lazy" decoding="async"></div></div>
+      </div>
+      <div class="feature rev">
+        <div>
+          <span class="feature-tag">History</span>
+          <h3>Purchase history</h3>
+          <p>The app automatically loads the last 3 months of purchases; select Show more to see up to 1 year. Each draw shows game numbers, winning numbers, prize tiers and winnings.</p>
+        </div>
+        <div class="feature-media"><div class="phone"><img src="../assets/shots/history.webp" alt="Purchase history screen showing game numbers and win status by draw" width="540" height="1200" loading="lazy" decoding="async"></div></div>
+      </div>
+      <div class="feature">
+        <div>
+          <span class="feature-tag">Settings</span>
+          <h3>Auto purchase settings</h3>
+          <p>Change your purchase day and time, check your deposit balance, and open the DHLottery deposit page. The app also explains how to exclude it from battery optimization for on-time purchases.</p>
+        </div>
+        <div class="feature-media"><div class="phone"><img src="../assets/shots/settings.webp" alt="Settings screen showing DHLottery account, deposit balance, and auto purchase day and time" width="540" height="1200" loading="lazy" decoding="async"></div></div>
+      </div>
+      <ul class="cards"><li class="card"><span class="card-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg></span><h3>Instant purchase</h3><p>Buy games saved in the Numbers tab immediately, or buy additional games with automatic numbers for a draw you've already purchased</p></li><li class="card"><span class="card-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="2.5"/><path d="M3 10h18M16 15h2"/><path d="M6 6l9-3 1.5 3"/></svg></span><h3>Low balance alerts</h3><p>Get an alert when your deposit balance falls below 5,000, 10,000 or 20,000 won, with 5,000 won as the default threshold</p></li><li class="card"><span class="card-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/><path d="M12 8v5l3 2"/></svg></span><h3>In-app updates</h3><p>Install a new version with one tap, with the package name and signature verified before installation</p></li><li class="card"><span class="card-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span><h3>Secure storage</h3><p>Account information is encrypted with Android Keystore and stored only on your device, used only for DHLottery login, and never sent to our own or 3rd-party servers</p></li><li class="card"><span class="card-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span><h3>Language selection</h3><p>Choose Korean, English, or Japanese for the app; the default is your system language, and push notifications appear only in Korean</p></li><li class="card"><span class="card-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8l-5 4 5 4M16 8l5 4-5 4M14 4l-4 16"/></svg></span><h3>Free and open source</h3><p>There are no ads, subscriptions, or in-app purchases, and the source code is available on GitHub under the MIT license</p></li></ul>
+    </div>
+  </section>
+
+  <section class="band" id="how" aria-labelledby="how-title">
+    <div class="wrap">
+      <h2 class="band-title" id="how-title">How to use</h2>
+      <ol class="steps"><li class="step" data-n="1"><h3>App installation</h3><p>Download the APK from this page and install it, allowing “Install unknown apps” when prompted</p></li><li class="step" data-n="2"><h3>DHLottery login</h3><p>Sign in with your DHLottery ID and password in the Settings tab</p></li><li class="step" data-n="3"><h3>Number selection</h3><p>Choose manual or automatic numbers for each game in the Numbers tab, then save them</p></li><li class="step" data-n="4"><h3>Enable auto purchase</h3><p>Enable auto purchase in the Settings tab, and purchases will run automatically each week</p></li></ol>
+    </div>
+  </section>
+
+  <section class="band alt" id="faq" aria-labelledby="faq-title">
+    <div class="wrap">
+      <h2 class="band-title" id="faq-title">Frequently asked questions</h2>
+      <div class="faq"><details><summary>What do I need to use AutoLotto?</summary><p>You need a DHLottery account at dhlottery.co.kr and enough deposit to cover your purchase. Add funds on the DHLottery website; the app links to the deposit page.</p></details><details><summary>Is my DHLottery account information secure?</summary><p>Your account information is encrypted with Android Keystore, stored only on your device, and used only to sign in to DHLottery; the app has no server of its own. You can verify this in the public source code on GitHub.</p></details><details><summary>Why isn't AutoLotto on Google Play?</summary><p>Google Play's gambling policy does not allow lottery purchase apps. The APK is distributed through GitHub releases, and you can install new versions through in-app updates.</p></details><details><summary>How many games can I buy per draw?</summary><p>DHLottery limits online purchases to 5 games (5,000 won) per draw. The DHLottery server determines whether you have exceeded the limit, and AutoLotto displays the DHLottery error message unchanged if you have.</p></details><details><summary>Does auto purchase work when the app is closed?</summary><p>The app makes an auto purchase at your scheduled time without being open, but it needs an internet connection. Exclude it from battery optimization to help it run on time.</p></details><details><summary>Does AutoLotto support iPhone?</summary><p>AutoLotto requires Android 12 or later. There is no iPhone app.</p></details><details><summary>Is AutoLotto an official DHLottery app?</summary><p>AutoLotto is not an official DHLottery app; it was developed by UMI Corp. You are responsible for your use of the app, and anyone under 19 cannot buy lottery tickets.</p></details></div>
+    </div>
+  </section>
+
+  <section class="outro" id="download" aria-labelledby="dl-title">
+    <div class="wrap">
+      <div class="outro-card">
+        <div>
+          <h2 class="band-title" id="dl-title">AutoLotto download</h2>
+          <p class="outro-desc">The latest APK release on GitHub is free</p>
+          <ul class="notes"><li>DHLottery account and deposit required</li><li>No purchases under age 19</li><li>Not an official DHLottery app</li></ul>
+        </div>
+        <div class="hero-dl"><a class="btn btn-cta" href="https://github.com/umi-corp/autolotto/releases/latest" data-apk><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Download for Android</a><span class="apk-meta" data-apk-meta>Android 12+</span></div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="site-foot">
+  <div class="wrap foot">
+    <p>© 2026 <a href="https://umicorp.kr">UMI Corp</a> · Not an official DHLottery app</p>
+    <nav aria-label="UMI Corp">
+      <a href="https://github.com/umi-corp/autolotto">GitHub</a>
+      <a href="https://www.youtube.com/@UmiCorp">YouTube</a>
+      <a href="mailto:contact@umicorp.kr">Email contact</a>
+      <span>Other apps from UMI Corp: <a href="https://autolotto720.umicorp.kr">AutoLotto720 — Pension Lottery 720+</a></span>
+    </nav>
+  </div>
+</footer>
+</body>
+</html>
