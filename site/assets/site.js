@@ -63,11 +63,14 @@
     const ease = 'cubic-bezier(.2, .8, .2, 1)';
 
     const shade = Object.assign(document.createElement('div'), { className: 'video-shade' });
-    const frame = Object.assign(document.createElement('div'), { className: 'video-pop' });
+    const frame = Object.assign(document.createElement('div'), { className: 'video-pop', role: 'dialog', ariaModal: 'true', ariaLabel: a.getAttribute('aria-label') });
     Object.assign(frame.style, box(to));
     frame.append(a.querySelector('img').cloneNode());
     const close = Object.assign(document.createElement('button'), { type: 'button', className: 'video-close', ariaLabel: a.dataset.close });
     close.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+    // 뒤 페이지는 키보드·화면 낭독기에서 빠진다
+    const behind = [...document.body.children];
+    behind.forEach((el) => { el.inert = true; });
     document.body.append(shade, frame, close);
     root.classList.add('video-open');
     a.style.visibility = 'hidden';
@@ -94,6 +97,7 @@
       frame.querySelector('iframe')?.remove();
       shade.animate([{ opacity: 1 }, { opacity: 0 }], { duration: ms, fill: 'forwards' });
       close.remove();
+      behind.forEach((el) => { el.inert = false; });
       frame.animate([box(to), box(a.getBoundingClientRect())], { duration: ms, easing: ease, fill: 'forwards' }).finished.then(() => {
         shade.remove();
         frame.remove();
@@ -104,13 +108,17 @@
     };
     // 휴대폰 뒤로 가기로 닫히게 기록을 하나 쌓는다
     history.pushState({ video: true }, '');
-    const back = () => history.back();
+    // 연속 클릭이 기록을 두 번 되돌려 페이지를 떠나지 않게 한 번만 되돌린다
+    let leaving = false;
+    const back = () => { if (!leaving) { leaving = true; history.back(); } };
     const onKey = (e) => { if (e.key === 'Escape') back(); };
     addEventListener('popstate', shut);
     addEventListener('keydown', onKey);
     shade.addEventListener('click', back);
     close.addEventListener('click', back);
   };
+  // 영상을 연 채 새로고침하면 남는 기록을 지운다
+  if (history.state?.video) history.replaceState(null, '');
   document.querySelectorAll('[data-yt]').forEach((a) => a.addEventListener('click', (e) => {
     e.preventDefault();
     pop(a);

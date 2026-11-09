@@ -96,7 +96,7 @@ app/src/main/kotlin/com/umicorp/autolotto/
 
 ## 🌐 소개 페이지
 
-[autolotto.umicorp.kr](https://autolotto.umicorp.kr) — `site/` 정적 HTML(한국어 `/`, 영어 `/en/`, 일본어 `/ja/`), Cloudflare Pages 배포
+[autolotto.umicorp.kr](https://autolotto.umicorp.kr) — `site/` 정적 HTML(한국어 `/`, 영어 `/en/`, 일본어 `/ja/`), Cloudflare Pages 배포 (도메인 이전 전까지는 `docs/` GitHub Pages)
 
 ## 🔐 보안
 

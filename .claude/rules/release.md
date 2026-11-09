@@ -2,7 +2,7 @@
 
 "vX.Y.Z 배포" 요청 시 아래 순서를 그대로 따른다. 배포 채널은 GitHub Releases 하나이며,
 랜딩 페이지(autolotto.umicorp.kr)와 인앱 업데이터가 `releases/latest`를 자동 추적하므로
-릴리스만 올리면 끝 — **랜딩 페이지(docs/index.html)는 절대 손대지 않는다.**
+릴리스만 올리면 끝 — **랜딩 페이지(site/, Cloudflare 이관 전까지 docs/index.html)는 절대 손대지 않는다.**
 
 ## 0. 전제
 
