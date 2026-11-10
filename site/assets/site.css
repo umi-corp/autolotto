@@ -279,6 +279,11 @@ p { margin: 0; }
 .foot nav { display: flex; flex-wrap: wrap; gap: 8px 20px; }
 .foot a { color: var(--text-2); text-decoration: none; }
 .foot a:hover { color: var(--text); text-decoration: underline; }
+/* 회사 로고: 가로형은 타일 높이 24px 이상(로고 사용 규칙) */
+.co-logo { display: block; width: fit-content; margin-bottom: 12px; border-radius: 6px; }
+.co-logo img { display: block; width: auto; height: 24px; }
+.co-logo .on-dark, [data-theme="dark"] .co-logo .on-light { display: none; }
+[data-theme="dark"] .co-logo .on-dark { display: block; }
 
 /* 404 */
 .nf { min-height: 100vh; display: grid; place-items: center; text-align: center; padding: 48px 16px; }
