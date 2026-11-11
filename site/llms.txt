@@ -19,5 +19,5 @@
 - [AutoLotto (English)](https://autolotto.umicorp.kr/en/): features, flow, setup steps and FAQ
 - [AutoLotto (한국어)](https://autolotto.umicorp.kr/)
 - [AutoLotto (日本語)](https://autolotto.umicorp.kr/ja/)
-- [Ad video (Korean, YouTube Shorts)](https://www.youtube.com/shorts/l2JQLsZyHfI)
+- [Ad video (Korean, YouTube Shorts)](https://www.youtube.com/shorts/om7wkH-o0V8)
 - [AutoLotto720](https://autolotto720.umicorp.kr): sibling app for Pension Lottery 720+
