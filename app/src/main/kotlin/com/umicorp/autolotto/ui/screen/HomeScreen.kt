@@ -318,10 +318,11 @@ private fun WinningNumbers(winning: com.umicorp.autolotto.data.WinningResult?, l
     }
 }
 
+/** [balance] null = 조회 실패·미로그인(모름). 0으로 위장하지 않고 "₩—"로 표시한다. */
 @Composable
-private fun BalanceCard(balance: Int, alertEnabled: Boolean, threshold: Int) {
+private fun BalanceCard(balance: Int?, alertEnabled: Boolean, threshold: Int) {
     val context = LocalContext.current
-    val isLow = alertEnabled && balance <= threshold && balance > 0
+    val isLow = alertEnabled && balance != null && balance <= threshold && balance > 0
     ColorDrenchedCard(accent = if (isLow) LgAmber else LgTeal) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             GlossyIconTile(
@@ -338,7 +339,7 @@ private fun BalanceCard(balance: Int, alertEnabled: Boolean, threshold: Int) {
                     color = Color.White.copy(alpha = 0.85f),
                 )
                 Text(
-                    "₩${formatNumber(balance)}",
+                    if (balance == null) "₩—" else "₩${formatNumber(balance)}",
                     style = MaterialTheme.typography.headlineMedium,
                     // ponytail: Black(900)은 ₩ 폴백 글리프가 합성볼드로 겹쳐 그려짐(취소선처럼 보임) — Bold로 회피
                     fontWeight = FontWeight.Bold,

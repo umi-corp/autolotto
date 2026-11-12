@@ -273,8 +273,13 @@ class HistoryViewModel(private val container: AppContainer) : ViewModel() {
     val loadingMore: StateFlow<Boolean> = _loadingMore.asStateFlow()
     private val _canLoadMore = MutableStateFlow(false)
     val canLoadMore: StateFlow<Boolean> = _canLoadMore.asStateFlow()
-    private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error.asStateFlow()
+
+    /**
+     * 조회 실패 여부. 메시지(String?)가 아니라 Boolean인 이유: 예외의 message가 null이면
+     * 실패가 통째로 사라져 화면이 "기록 없음"으로 위장됐다(실제 사용자 리포트).
+     */
+    private val _loadFailed = MutableStateFlow(false)
+    val loadFailed: StateFlow<Boolean> = _loadFailed.asStateFlow()
 
     /** 다음 "더 보기" 창의 끝 날짜 다음 날(= 마지막으로 로드한 창의 시작일). */
     private var oldestStart: LocalDate = LocalDate.now()
@@ -307,6 +312,7 @@ class HistoryViewModel(private val container: AppContainer) : ViewModel() {
     private fun resetList() {
         _purchases.value = emptyList()
         _canLoadMore.value = false
+        _loadFailed.value = false
         oldestStart = LocalDate.now()
         windowsLoaded = 0
     }
@@ -316,7 +322,7 @@ class HistoryViewModel(private val container: AppContainer) : ViewModel() {
         if (!container.isLoggedIn.value) return
         viewModelScope.launch {
             _loading.value = true
-            _error.value = null
+            _loadFailed.value = false
             try {
                 val end = LocalDate.now()
                 val start = end.minusMonths(WINDOW_MONTHS)
@@ -327,7 +333,11 @@ class HistoryViewModel(private val container: AppContainer) : ViewModel() {
                 windowsLoaded = 1
                 _canLoadMore.value = true
             } catch (e: Exception) {
-                _error.value = e.message  // 5b가 historyLoadError 템플릿으로 로컬라이즈
+                // HistoryService가 연결 실패만 던진다(정상 응답 속 개별 스킵은 삼킨다) — 화면은 연결 안내를 띄운다.
+                // 이전 목록도 비운다: 남겨두면 새로고침 실패가 "오래된 목록 = 최신"으로 보여
+                // 원 리포트("오늘 구매했는데 기록에 없다")가 그대로 재현된다.
+                _purchases.value = emptyList()
+                _loadFailed.value = true
                 _canLoadMore.value = false
             } finally {
                 _loading.value = false

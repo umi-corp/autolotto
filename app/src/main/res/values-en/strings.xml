@@ -56,8 +56,10 @@
     <string name="historyTitle">Purchase History</string>
     <string name="historyNoRecords">No purchase records</string>
     <string name="historyLoginToLoad">Login to load purchase history</string>
-    <string name="historyLoadError">Load failed: %1$s</string>
     <string name="historyLoadMore">Load More</string>
+    <string name="connectionErrorTitle">Couldn\'t load purchases</string>
+    <string name="connectionErrorBody">Check your network and whether DHLottery is under maintenance</string>
+    <string name="retry">Try again</string>
     <string name="statusPending">Pending</string>
     <string name="statusNoWin">No Win</string>
     <string name="rankWithEmoji">%1$s 🎉</string>

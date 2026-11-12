@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -50,10 +51,12 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.umicorp.autolotto.R
 import com.umicorp.autolotto.data.Purchase
 import com.umicorp.autolotto.ui.appViewModel
+import com.umicorp.autolotto.ui.theme.LgAmber
 import com.umicorp.autolotto.ui.theme.LgGold
 import com.umicorp.autolotto.ui.theme.LgTeal
 import com.umicorp.autolotto.ui.theme.MotionSpecs
@@ -76,7 +79,7 @@ fun HistoryScreen(modifier: Modifier = Modifier) {
     val loading by vm.loading.collectAsState()
     val loadingMore by vm.loadingMore.collectAsState()
     val canLoadMore by vm.canLoadMore.collectAsState()
-    val error by vm.error.collectAsState()
+    val loadFailed by vm.loadFailed.collectAsState()
     val isLoggedIn by vm.isLoggedIn.collectAsState()
 
     Scaffold(
@@ -100,8 +103,10 @@ fun HistoryScreen(modifier: Modifier = Modifier) {
         },
     ) { inner ->
         // 로딩→빈화면→목록 전환을 부드럽게(표준 Crossfade — 1.4.0엔 Expressive 컴포넌트 미수록).
+        // 실패는 "기록 없음"보다 앞선다 — 못 불러온 것을 없는 것으로 보여주면 안 된다.
         val phase = when {
             loading && purchases.isEmpty() -> 0
+            loadFailed && purchases.isEmpty() -> 3
             purchases.isEmpty() -> 1
             else -> 2
         }
@@ -114,12 +119,13 @@ fun HistoryScreen(modifier: Modifier = Modifier) {
 
                     1 -> EmptyState(
                         isLoggedIn = isLoggedIn,
-                        error = error,
                         // 최근 3개월이 비어도 이전 창에 내역이 있을 수 있음 → 빈 화면에서도 더 보기
                         canLoadMore = isLoggedIn && canLoadMore,
                         loadingMore = loadingMore,
                         onLoadMore = vm::loadMore,
                     )
+
+                    3 -> ConnectionErrorState(onRetry = vm::loadHistory)
 
                     else -> PullToRefreshBox(
                         isRefreshing = loading,
@@ -145,7 +151,6 @@ fun HistoryScreen(modifier: Modifier = Modifier) {
 @Composable
 private fun EmptyState(
     isLoggedIn: Boolean,
-    error: String?,
     canLoadMore: Boolean = false,
     loadingMore: Boolean = false,
     onLoadMore: () -> Unit = {},
@@ -164,17 +169,47 @@ private fun EmptyState(
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
         )
-        if (error != null) {
-            Spacer(Modifier.height(8.dp))
-            Text(
-                stringResource(R.string.historyLoadError, error),
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-            )
-        }
         if (canLoadMore) {
             Spacer(Modifier.height(8.dp))
             LoadMoreButton(loading = loadingMore, onClick = onLoadMore)
+        }
+    }
+}
+
+/**
+ * 동행복권에 닿지 못했을 때. "구매 기록이 없습니다"로 위장하던 자리다.
+ * 원인을 단정하지 않는다 — 같은 타임아웃이 사용자 폰이 오프라인일 때도 난다.
+ */
+@Composable
+private fun ConnectionErrorState(onRetry: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(horizontal = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        GlossyIconTile(Icons.Rounded.CloudOff, tint = LgAmber, size = 64.dp)
+        Spacer(Modifier.height(16.dp))
+        Text(
+            stringResource(R.string.connectionErrorTitle),
+            color = MaterialTheme.colorScheme.onSurface,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            stringResource(R.string.connectionErrorBody),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(16.dp))
+        TextButton(onClick = onRetry) {
+            Text(
+                stringResource(R.string.retry),
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.ExtraBold,
+            )
         }
     }
 }

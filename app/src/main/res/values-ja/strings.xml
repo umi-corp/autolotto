@@ -56,8 +56,10 @@
     <string name="historyTitle">購入履歴</string>
     <string name="historyNoRecords">購入履歴がありません</string>
     <string name="historyLoginToLoad">ログインすると購入履歴を表示します</string>
-    <string name="historyLoadError">読み込み失敗: %1$s</string>
     <string name="historyLoadMore">もっと見る</string>
+    <string name="connectionErrorTitle">購入履歴を読み込めませんでした</string>
+    <string name="connectionErrorBody">ネットワークの接続状況と、同行福券のサイトがメンテナンス中かどうかをご確認ください</string>
+    <string name="retry">再試行</string>
     <string name="statusPending">確認待ち</string>
     <string name="statusNoWin">落選</string>
     <string name="rankWithEmoji">%1$s 🎉</string>

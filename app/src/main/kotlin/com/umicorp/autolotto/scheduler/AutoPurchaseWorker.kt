@@ -10,6 +10,7 @@ import com.umicorp.autolotto.dhlottery.PurchaseService
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.json.JSONArray
+import java.io.IOException
 
 /**
  * 구매 직렬화 락 — 예약 워커와 즉시 구매(AppContainer)가 같은 앱 프로세스에서 공유.
@@ -49,12 +50,7 @@ class AutoPurchaseWorker(context: Context, params: WorkerParameters) : Coroutine
             if (!ambiguous && runAttemptCount < MAX_ATTEMPTS - 1) {
                 result = Result.retry()
             } else {
-                val body = when {
-                    msg.contains("[login]") -> "로그인에 실패했습니다. 아이디/비밀번호를 확인해주세요."
-                    // API 응답 메시지 그대로 전달 (주간구매금액 초과 등)
-                    msg.contains("구매 실패:") -> msg.replace("[purchase] ", "")
-                    else -> "자동 구매에 실패했습니다. 앱을 열어 상태를 확인해주세요."
-                }
+                val body = autoPurchaseFailureBody(msg, e.isConnectivityFailure())
                 Notifications.show(ctx, "⚠️ AutoLotto 오류", body, 99)
             }
         }
@@ -124,7 +120,8 @@ class AutoPurchaseWorker(context: Context, params: WorkerParameters) : Coroutine
                 val r = try {
                     purchaseService.purchase(autoGames = autoGames, manualNumbers = manualNumbers)
                 } catch (purchaseError: Exception) {
-                    throw Exception(purchaseError.message ?: "$purchaseError")
+                    // cause 보존 — 알림 문구가 연결 실패와 서버 거절을 구분하는 근거다.
+                    throw Exception(purchaseError.message ?: "$purchaseError", purchaseError)
                 }
 
                 // 성공 즉시 회차+계정 기록(commit) — 이후 재실행은 round_guard가 차단.
@@ -134,10 +131,10 @@ class AutoPurchaseWorker(context: Context, params: WorkerParameters) : Coroutine
                 r
             }
 
-            // 구매 후 잔액 체크 (락 밖, 실패 무시 — 원본 catch (_) {})
+            // 구매 후 잔액 체크 (락 밖, 실패 무시 — 원본 catch (_) {}).
+            // 조회 실패(null)면 알림 없음 — 0으로 위장하면 허위 "잔액 부족"이 나가고 그날 진짜 알림이 막힌다.
             runCatching {
-                val postBalance = auth.getBalance()
-                BalanceAlert.checkAndNotify(ctx, postBalance)
+                auth.getBalance()?.let { BalanceAlert.checkAndNotify(ctx, it) }
             }
 
             step = "notify"
@@ -153,7 +150,7 @@ class AutoPurchaseWorker(context: Context, params: WorkerParameters) : Coroutine
                 tab = Notifications.TAB_HISTORY,
             )
         } catch (e: Exception) {
-            throw Exception("[$step] ${e.message ?: e}")
+            throw Exception("[$step] ${e.message ?: e}", e)  // cause 보존 — 알림 문구 판정에 쓴다
         }
     }
 
@@ -161,4 +158,31 @@ class AutoPurchaseWorker(context: Context, params: WorkerParameters) : Coroutine
         /** 총 시도 횟수(최초 1 + 재시도 2). 간격은 SchedulerReceivers의 backoff(15분 선형). */
         const val MAX_ATTEMPTS = 3
     }
+}
+
+/**
+ * 원인 사슬에 [IOException]이 있으면 "동행복권에 닿지 못한 실패"(타임아웃·연결끊김·5xx·HTML).
+ * step 라벨(`[login]` 등)만으로는 서버가 아픈 것과 자격증명이 틀린 것이 구분되지 않는다.
+ * ponytail: cause 사이클 방어로 8단계에서 끊는다 — 워커가 무한루프에 빠지느니 오분류가 낫다.
+ */
+fun Throwable.isConnectivityFailure(): Boolean =
+    generateSequence(this) { it.cause }.take(8).any { it is IOException }
+
+/**
+ * 자동구매 실패 알림 본문(순수). [connectivity] = [isConnectivityFailure] 판정 결과.
+ *
+ * 연결 실패를 "아이디/비밀번호를 확인해주세요"로 통보하면 사용자는 멀쩡한 계정을 의심하며
+ * 손을 놓는다(실제 리포트). 그렇다고 "동행복권 장애"라 단정하지도 않는다 — 같은 타임아웃이
+ * 사용자 폰이 오프라인일 때도 나므로, 확인 가능한 두 가지를 모두 제시한다.
+ *
+ * [connectivity]는 **`[login]` 단계에만** 적용한다. `[purchase]` 이후의 IOException은 구매가
+ * 이미 접수됐을 수 있어 "연결 실패"로 뭉뚱그리면 안 되고, 기존 "앱을 열어 확인" 안내가 맞다.
+ */
+fun autoPurchaseFailureBody(msg: String, connectivity: Boolean): String = when {
+    msg.contains("[login]") && connectivity ->
+        "자동 구매 중 동행복권에 연결하지 못했습니다. 네트워크 상태와 동행복권 사이트의 점검 여부를 확인해주세요."
+    msg.contains("[login]") -> "로그인에 실패했습니다. 아이디/비밀번호를 확인해주세요."
+    // API 응답 메시지 그대로 전달 (주간구매금액 초과 등)
+    msg.contains("구매 실패:") -> msg.replace("[purchase] ", "")
+    else -> "자동 구매에 실패했습니다. 앱을 열어 상태를 확인해주세요."
 }

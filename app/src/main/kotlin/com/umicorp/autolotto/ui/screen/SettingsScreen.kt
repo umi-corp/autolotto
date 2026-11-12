@@ -235,7 +235,7 @@ fun SettingsScreen(modifier: Modifier = Modifier, onNavigateToNumbers: () -> Uni
                     headlineContent = { Text(stringResource(R.string.balanceTitle), fontWeight = FontWeight.Bold) },
                     supportingContent = {
                         Text(
-                            "₩${formatNumber(balance)}",
+                            "₩" + (balance?.let { formatNumber(it) } ?: "—"),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                         )
