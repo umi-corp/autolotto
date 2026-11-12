@@ -188,14 +188,14 @@ class AppContainer(context: Context) {
     private val _supportDot = MutableStateFlow(false)
     val supportDot: StateFlow<Boolean> = _supportDot.asStateFlow()
 
-    /** 확인 시점: 프로세스 시작 1회 + 게시판을 연 뒤 다음 ON_START 1회. */
+    /** 진행 중 확인의 옛 응답이 탭 뒤 "확인 필요"를 끄지 않게 하는 탭 세대. */
     @Volatile
-    private var supportCheckDue = true
+    private var supportTaps = 0
 
     /** "문의" 탭: 키 준비·"확인 필요" 켜기 → 게시판 주소. 저장소 오류는 throw. */
     suspend fun prepareSupportBoard(): String = withContext(Dispatchers.IO) {
         val key = store.startSupportInquiry()
-        supportCheckDue = true
+        supportTaps++
         supportBoardUrl(
             lang = boardLang(_language.value, Locale.getDefault().language),
             appVersion = BuildConfig.VERSION_NAME,
@@ -204,20 +204,18 @@ class AppContainer(context: Context) {
         )
     }
 
-    /** ON_START마다 호출 — 예정된 확인만 수행한다. 취소 외에는 던지지 않는다. */
-    suspend fun checkSupportIfDue() {
-        if (!supportCheckDue) return
-        supportCheckDue = false
+    /** ON_START(앱 시작·게시판 복귀)마다 호출. 취소 외에는 던지지 않는다. */
+    suspend fun checkSupport() {
+        val taps = supportTaps
         try {
             val (key, needed) = withContext(Dispatchers.IO) { store.getSupportKey() to store.getSupportCheckNeeded() }
             if (key == null || !shouldCheckSupport(key, needed)) return
-            // 게시판을 열어 ON_STOP으로 취소되면 여기서 끊긴다 — 탭이 켠 "확인 필요"를 옛 응답이 끄지 않게.
             val status = supportApi.status(key)
+            if (taps != supportTaps) return
             val next = nextSupportState(SupportState(_supportDot.value, needed), status)
             _supportDot.value = next.dot
             if (next.checkNeeded != needed) withContext(Dispatchers.IO) { store.setSupportCheckNeeded(next.checkNeeded) }
         } catch (e: CancellationException) {
-            supportCheckDue = true
             throw e
         } catch (_: Exception) {
             // 저장소 일시 오류 — 아무것도 바꾸지 않는다.
