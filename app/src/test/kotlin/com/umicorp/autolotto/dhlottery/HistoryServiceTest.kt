@@ -12,6 +12,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.IOException
 import java.time.LocalDate
 
 /**
@@ -212,5 +213,64 @@ class HistoryServiceTest {
         """.trimIndent()
         val p = historyFor(ledger, detail).fetchRecentPurchases()[0]
         assertEquals(LocalDate.of(2026, 6, 27).atStartOfDay(), p.date) // 컴팩트 날짜가 now로 폴백 안 됨
+    }
+
+    // === 연결 실패는 빈 목록으로 위장하지 않는다 (사용자 리포트: 구매는 됐는데 "기록이 없습니다") ===
+
+    /** 목록은 정상, 상세만 실패시키는 디스패처. 타임아웃과 같은 IOException 경로를 5xx로 재현한다. */
+    private fun historyWithFailingDetail(detailResponse: MockResponse): HistoryService {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse =
+                when (request.path?.substringBefore('?')) {
+                    ApiConstants.PURCHASE_HISTORY -> ok(ledgerOneLotto)
+                    ApiConstants.TICKET_DETAIL -> detailResponse
+                    else -> ok("")
+                }
+        }
+        val baseUrl = server.url("/").toString().trimEnd('/')
+        return HistoryService(DhlotterySession(baseUrl = baseUrl, olottoUrl = baseUrl))
+    }
+
+    @Test(expected = IOException::class)
+    fun `detail 5xx throws instead of silently returning empty list`(): Unit = runBlocking {
+        historyWithFailingDetail(MockResponse().setResponseCode(503).setBody("<html>maintenance</html>"))
+            .fetchRecentPurchases()
+        Unit
+    }
+
+    @Test(expected = IOException::class)
+    fun `detail HTML (session expired) throws instead of silently returning empty list`(): Unit = runBlocking {
+        historyWithFailingDetail(ok("<!DOCTYPE html><html>login</html>"))
+            .fetchRecentPurchases()
+        Unit
+    }
+
+    @Test(expected = IOException::class)
+    fun `list HTML (session expired) throws`(): Unit = runBlocking {
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse =
+                when (request.path?.substringBefore('?')) {
+                    ApiConstants.PURCHASE_HISTORY -> ok("<!DOCTYPE html><html>login</html>")
+                    else -> ok("")
+                }
+        }
+        val baseUrl = server.url("/").toString().trimEnd('/')
+        HistoryService(DhlotterySession(baseUrl = baseUrl, olottoUrl = baseUrl)).fetchRecentPurchases()
+        Unit
+    }
+
+    /** `{`로 시작해도 절단된 본문은 전송 실패 — 개별 스킵으로 삼키면 다시 빈 목록으로 위장된다. */
+    @Test(expected = IOException::class)
+    fun `detail truncated JSON throws instead of being skipped`(): Unit = runBlocking {
+        historyWithFailingDetail(ok("""{"data":{"success":true,"ticket":"""))
+            .fetchRecentPurchases()
+        Unit
+    }
+
+    /** 서버가 정상 응답한 개별 주문 스킵(취소 주문 등)은 화면을 죽이지 않는다 — 전체 에러와 구분. */
+    @Test
+    fun `detail success=false is skipped without throwing`() = runBlocking {
+        val purchases = historyFor(ledgerOneLotto, """{"data":{"success":false}}""").fetchRecentPurchases()
+        assertEquals(0, purchases.size)
     }
 }

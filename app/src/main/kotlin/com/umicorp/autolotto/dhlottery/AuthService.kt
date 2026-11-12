@@ -97,9 +97,13 @@ class AuthService(private val session: DhlotterySession) {
             resp.code == 200
         }
 
-    /** 예치금 잔액. 로그인 상태에서만. 만료(HTML)/실패 시 0. (Dart처럼 리다이렉트 추적 안 함) */
-    suspend fun getBalance(): Int = withContext(Dispatchers.IO) {
-        if (!isLoggedIn) return@withContext 0
+    /**
+     * 예치금 잔액. 로그인 상태에서만. **조회 실패는 null** — 0으로 위장하면 "잔액 부족" 알림이
+     * 허위 발송되고(그날 중복방지 잠금까지 걸려 진짜 부족 알림을 잡아먹는다) 홈에 ₩0이 표시된다.
+     * (Dart처럼 리다이렉트 추적 안 함)
+     */
+    suspend fun getBalance(): Int? = withContext(Dispatchers.IO) {
+        if (!isLoggedIn) return@withContext null
         try {
             val body = session.get(
                 session.base(ApiConstants.BALANCE),
@@ -108,13 +112,17 @@ class AuthService(private val session: DhlotterySession) {
                     "Referer" to session.base("/mypage/home"),
                 ),
             ).use { it.body?.string().orEmpty() }
-            // HTML = 세션 만료 센티넬 (Dart: data.startsWith('{') 가드와 동일)
-            if (!body.trimStart().startsWith("{")) return@withContext 0
+            // HTML = 세션 만료 센티넬 (Dart: data.startsWith('{') 가드와 동일) — 잔액을 "모르는" 상태다.
+            if (!body.trimStart().startsWith("{")) return@withContext null
+            // 문법만 유효한 응답(`{"error":"maintenance"}` 등)에서 구조가 비면 그것도 "모름"이다.
+            // 예전처럼 `?: 0`으로 떨어뜨리면 이 함수가 막으려던 허위 "잔액 부족" 알림이 그대로 재발한다.
+            // 실잔액 0만 0으로 인정하려고 값 부재·파싱 실패를 MIN_VALUE 센티넬로 걸러낸다.
             JSONObject(body).optJSONObject("data")
                 ?.optJSONObject("userMndp")
-                ?.optInt("crntEntrsAmt", 0) ?: 0
+                ?.optInt("crntEntrsAmt", Int.MIN_VALUE)
+                ?.takeIf { it != Int.MIN_VALUE }
         } catch (e: Exception) {
-            0
+            null
         }
     }
 

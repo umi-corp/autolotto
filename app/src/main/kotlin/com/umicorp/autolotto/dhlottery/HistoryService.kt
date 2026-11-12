@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.IOException
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -18,8 +19,10 @@ import java.time.format.DateTimeFormatter
  * 흐름: 마이페이지 원장 방문(Referer용) → selectMyLotteryledger.do(목록) →
  *       "로또6/45" 항목마다 lotto645TicketDetail.do(번호+당첨결과) → Purchase 빌드.
  *
- * 세션 만료 시 JSON 자리에 HTML이 오는데, org.json 파싱이 던지는 JSONException으로 원본 Dart의
- * 암묵적 throw(String 인덱싱 실패)를 그대로 재현한다 — 목록 호출: 예외 전파 / 상세 호출: try-catch로 건너뜀.
+ * **실패 구분**: 동행복권에 닿지 못한 실패(타임아웃·연결끊김·5xx·JSON 자리 HTML)는 전부
+ * [IOException]으로 통일해 즉시 전파한다. 조용히 건너뛰면 목록이 비어 "구매 기록이 없습니다"로
+ * 위장되기 때문(실제 사용자 리포트). 반면 서버가 정상 응답한 상태에서 개별 주문만 표시 불가한
+ * 경우(success=false, 번호 0개 등)는 원본대로 건너뛴다 — 취소 주문 하나가 화면 전체를 죽이면 안 된다.
  *
  * 세션(로그인 쿠키 보유)은 생성자 주입. 원본은 `_auth.dio`(리다이렉트 추적 off)를 썼으므로 follow는 기본값(false).
  */
@@ -50,9 +53,15 @@ class HistoryService(private val session: DhlotterySession) {
                 "X-Requested-With" to "XMLHttpRequest",
                 "Referer" to session.base(ApiConstants.MYPAGE_LEDGER),
             ),
-        ).use { it.body?.string().orEmpty() }
+        ).use {
+            if (it.code >= 500) throw IOException("history_list_http_${it.code}")
+            it.body?.string().orEmpty()
+        }
 
-        // HTML(세션 만료)이면 JSONObject가 던진다 → 원본 Dart의 String 인덱싱 throw와 동일하게 전파.
+        // JSON 자리에 HTML = 세션 만료·점검 페이지. 연결 실패는 전부 IOException으로 통일해
+        // 호출부가 "동행복권에 닿지 못함"을 한 가지 조건으로 판정하게 한다.
+        if (!listBody.trimStart().startsWith("{")) throw IOException("history_list_not_json")
+
         val items = JSONObject(listBody).optJSONObject("data")?.optJSONArray("list")
         val purchases = mutableListOf<Purchase>()
         if (items == null) return@withContext purchases // data/list 누락은 빈 목록(원본 `?? []`)
@@ -81,9 +90,17 @@ class HistoryService(private val session: DhlotterySession) {
                         "X-Requested-With" to "XMLHttpRequest",
                         "Referer" to session.base(ApiConstants.MYPAGE_LEDGER),
                     ),
-                ).use { it.body?.string().orEmpty() }
+                ).use {
+                    if (it.code >= 500) throw IOException("history_detail_http_${it.code}")
+                    it.body?.string().orEmpty()
+                }
+                if (!detailBody.trimStart().startsWith("{")) throw IOException("history_detail_not_json")
 
-                val data = JSONObject(detailBody).optJSONObject("data")
+                // `{`로 시작해도 절단·손상된 본문은 전송 실패지 "이 주문만 못 보는" 상황이 아니다.
+                // JSONException으로 두면 아래 catch가 건너뛰어 다시 빈 목록으로 위장된다.
+                val data = runCatching { JSONObject(detailBody) }
+                    .getOrElse { throw IOException("history_detail_malformed_json") }
+                    .optJSONObject("data")
                 if (data == null || !data.optBoolean("success", false)) continue
 
                 val ticket = data.getJSONObject("ticket")
@@ -153,8 +170,13 @@ class HistoryService(private val session: DhlotterySession) {
                     ),
                 )
                 if (purchases.size >= count) break
+            } catch (e: IOException) {
+                // 연결·서버 실패를 건너뛰면 항목이 통째로 사라져 화면이 "구매 기록이 없습니다"로
+                // 위장된다(실제 사용자 리포트). 어차피 전체 실패로 처리하므로 남은 항목을
+                // 기다리지 않고 즉시 중단한다 — 13건 × 10초 타임아웃을 다 소진할 이유가 없다.
+                throw e
             } catch (e: Exception) {
-                // 원본은 debugPrint 후 continue (릴리스에서 제거). 상세 실패(HTML/누락)는 건너뛴다.
+                // 서버는 정상 응답했는데 이 주문만 표시 불가(취소 주문 등) — 원본대로 건너뛴다.
                 continue
             }
         }

@@ -104,6 +104,7 @@ fun AppRoot(pendingTab: MutableStateFlow<String?>? = null) {
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            launch { container.checkSupport() }   // 자동 로그인과 무관 — 기다리지 않는다
             container.ensureHydrated()
             if (container.autoLogin()) {   // true = 이 호출이 실제 수행됨(선점 스킵 아님)
                 // 일시 장애면 3초 뒤 1회 자동 재시도(자격증명 거절은 제외). 백그라운드 진입 시 취소되고

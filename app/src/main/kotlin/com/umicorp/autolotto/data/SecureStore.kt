@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import com.umicorp.autolotto.support.newSupportKey
 
 /**
  * 보안저장 키 문자열 — Flutter `SecureStorageService`와 1:1.
@@ -28,6 +29,10 @@ object SecureKeys {
 
     /** 네이티브 전용 — 회차 가드의 계정 스코프(구매한 계정 ID). ALL(이관 목록) 미포함. */
     const val LAST_PURCHASE_OWNER = "last_purchase_owner"
+
+    /** 네이티브 전용 — 문의 게시판 기기 키(로그 금지)와 상태 "확인 필요". ALL(이관 목록) 미포함. */
+    const val SUPPORT_KEY = "support_key"
+    const val SUPPORT_CHECK_NEEDED = "support_check_needed"
 
     /** 마이그레이션·일괄 처리용 전체 키 목록. */
     val ALL = listOf(
@@ -233,6 +238,25 @@ class SecureStore(context: Context) {
     fun setLastPurchaseOwner(userId: String) = putString(SecureKeys.LAST_PURCHASE_OWNER, userId)
 
     fun getLastPurchaseOwner(): String? = read(SecureKeys.LAST_PURCHASE_OWNER)
+
+    // === 문의 게시판 ===
+
+    fun getSupportKey(): String? = read(SecureKeys.SUPPORT_KEY)
+
+    fun getSupportCheckNeeded(): Boolean = read(SecureKeys.SUPPORT_CHECK_NEEDED) == "true"
+
+    fun setSupportCheckNeeded(v: Boolean) = putString(SecureKeys.SUPPORT_CHECK_NEEDED, v.toString())
+
+    /** "문의"를 누를 때: 키가 없으면 만들고 "확인 필요"를 켠다. 연속 탭에도 키는 하나. */
+    @Synchronized
+    fun startSupportInquiry(): String {
+        val key = getSupportKey() ?: newSupportKey()
+        prefs.edit()
+            .putString(SecureKeys.SUPPORT_KEY, key)
+            .putString(SecureKeys.SUPPORT_CHECK_NEEDED, "true")
+            .commit()
+        return key
+    }
 
     // === 전체 초기화 ===
 

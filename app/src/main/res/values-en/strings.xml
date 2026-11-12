@@ -56,8 +56,10 @@
     <string name="historyTitle">Purchase History</string>
     <string name="historyNoRecords">No purchase records</string>
     <string name="historyLoginToLoad">Login to load purchase history</string>
-    <string name="historyLoadError">Load failed: %1$s</string>
     <string name="historyLoadMore">Load More</string>
+    <string name="connectionErrorTitle">Couldn\'t load purchases</string>
+    <string name="connectionErrorBody">Check your network and whether DHLottery is under maintenance</string>
+    <string name="retry">Try again</string>
     <string name="statusPending">Pending</string>
     <string name="statusNoWin">No Win</string>
     <string name="rankWithEmoji">%1$s 🎉</string>
@@ -108,6 +110,8 @@
     <string name="settingVersion">Version</string>
     <string name="settingOpenSource">Open Source</string>
     <string name="settingResetData">Reset Data</string>
+    <string name="settingSupport">Contact Us</string>
+    <string name="supportNewReply">New Unread Reply</string>
     <string name="dialogResetTitle">Reset Data</string>
     <string name="dialogResetMessage">All settings and purchase records will be deleted.\nAre you sure?</string>
     <string name="buttonReset2">Reset</string>

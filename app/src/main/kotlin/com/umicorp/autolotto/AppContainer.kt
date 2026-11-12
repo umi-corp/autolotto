@@ -2,6 +2,7 @@ package com.umicorp.autolotto
 
 import android.app.Application
 import android.content.Context
+import android.os.Build
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -16,6 +17,13 @@ import com.umicorp.autolotto.dhlottery.ResultService
 import com.umicorp.autolotto.scheduler.AlarmScheduler
 import com.umicorp.autolotto.scheduler.BalanceAlert
 import com.umicorp.autolotto.scheduler.PurchaseLock
+import com.umicorp.autolotto.support.SupportApi
+import com.umicorp.autolotto.support.SupportState
+import com.umicorp.autolotto.support.boardLang
+import com.umicorp.autolotto.support.deviceLabel
+import com.umicorp.autolotto.support.nextSupportState
+import com.umicorp.autolotto.support.shouldCheckSupport
+import com.umicorp.autolotto.support.supportBoardUrl
 import com.umicorp.autolotto.update.AppUpdater
 import com.umicorp.autolotto.update.UpdateInfo
 import java.io.File
@@ -36,6 +44,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.util.Locale
 
 /**
  * 앱 스코프 컴포지션 루트 (원본 Riverpod `ProviderScope` + 전역 프로바이더 대응).
@@ -66,8 +75,9 @@ class AppContainer(context: Context) {
     private val _isLoggedIn = MutableStateFlow(false)
     val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
 
-    private val _balance = MutableStateFlow(0)
-    val balance: StateFlow<Int> = _balance.asStateFlow()
+    /** null = 아직 모름(미로그인·조회 실패). 실패를 0으로 위장하면 허위 "잔액 부족" 알림이 나간다. */
+    private val _balance = MutableStateFlow<Int?>(null)
+    val balance: StateFlow<Int?> = _balance.asStateFlow()
 
     private val _autoEnabled = MutableStateFlow(false)
     val autoEnabled: StateFlow<Boolean> = _autoEnabled.asStateFlow()
@@ -171,6 +181,47 @@ class AppContainer(context: Context) {
         return file
     }
 
+    // === 문의 게시판 (docs/DESIGN-support-board.md) ===
+
+    private val supportApi = SupportApi()
+
+    private val _supportDot = MutableStateFlow(false)
+    val supportDot: StateFlow<Boolean> = _supportDot.asStateFlow()
+
+    /** 진행 중 확인의 옛 응답이 탭 뒤 "확인 필요"를 끄지 않게 하는 탭 세대. */
+    @Volatile
+    private var supportTaps = 0
+
+    /** "문의" 탭: 키 준비·"확인 필요" 켜기 → 게시판 주소. 저장소 오류는 throw. */
+    suspend fun prepareSupportBoard(): String = withContext(Dispatchers.IO) {
+        val key = store.startSupportInquiry()
+        supportTaps++
+        supportBoardUrl(
+            lang = boardLang(_language.value, Locale.getDefault().language),
+            appVersion = BuildConfig.VERSION_NAME,
+            device = deviceLabel(Build.MANUFACTURER, Build.MODEL, Build.VERSION.RELEASE),
+            key = key,
+        )
+    }
+
+    /** ON_START(앱 시작·게시판 복귀)마다 호출. 취소 외에는 던지지 않는다. */
+    suspend fun checkSupport() {
+        val taps = supportTaps
+        try {
+            val (key, needed) = withContext(Dispatchers.IO) { store.getSupportKey() to store.getSupportCheckNeeded() }
+            if (key == null || !shouldCheckSupport(key, needed)) return
+            val status = supportApi.status(key)
+            if (taps != supportTaps) return
+            val next = nextSupportState(SupportState(_supportDot.value, needed), status)
+            _supportDot.value = next.dot
+            if (next.checkNeeded != needed) withContext(Dispatchers.IO) { store.setSupportCheckNeeded(next.checkNeeded) }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            // 저장소 일시 오류 — 아무것도 바꾸지 않는다.
+        }
+    }
+
     // === 자동 로그인 (crosscheck: 공유 세션의 모든 auth.login/logout은 loginMutex로 직렬화.
     //     락 순서 규칙: PurchaseLock 안에서 loginMutex 획득은 허용, 역방향 중첩 금지.
     //     loginMutex는 로그인/로그아웃만 직렬화 — 세션 IO 전체가 아님) ===
@@ -217,9 +268,11 @@ class AppContainer(context: Context) {
                 _isLoggedIn.value = true
                 _loggedInUserId.value = id
                 _autoLoginFailed.value = false
-                val b = auth.getBalance()
-                _balance.value = b
-                BalanceAlert.checkAndNotify(appContext, b, _balanceAlertEnabled.value, _balanceAlertThreshold.value)
+                // 조회 실패(null)면 잔액을 갱신하지도, 부족 알림을 쏘지도 않는다 — 아래 refreshBalance와 동일 규칙.
+                auth.getBalance()?.let { b ->
+                    _balance.value = b
+                    BalanceAlert.checkAndNotify(appContext, b, _balanceAlertEnabled.value, _balanceAlertThreshold.value)
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -250,7 +303,7 @@ class AppContainer(context: Context) {
         _isLoggedIn.value = true
         _loggedInUserId.value = id
         _autoLoginFailed.value = false
-        _balance.value = auth.getBalance()
+        auth.getBalance()?.let { _balance.value = it }
     }
 
     suspend fun logout() = withContext(Dispatchers.IO) {
@@ -261,14 +314,18 @@ class AppContainer(context: Context) {
         // → 로그아웃과 함께 해제·알람 취소. 비로그인 상태에선 스위치가 잠겨 사용자가 끌 수도 없다.
         if (_autoEnabled.value) setAutoEnabled(false)
         _isLoggedIn.value = false
-        _balance.value = 0
+        _balance.value = null
         _loggedInUserId.value = null
         _autoLoginFailed.value = false  // 자격증명 없음 = 실패 상태 아님(amber 해제)
     }
 
-    /** 잔액 재조회 + 잔액부족 체크(원본 home/_refreshBalance). */
+    /**
+     * 잔액 재조회 + 잔액부족 체크(원본 home/_refreshBalance).
+     * 조회 실패(null)는 마지막 성공값을 유지하고 알림도 보내지 않는다 — 서버가 느린 것을
+     * "예치금 0원"으로 통보하면 그날 중복방지 잠금이 걸려 진짜 부족 알림까지 막힌다.
+     */
     suspend fun refreshBalance() {
-        val b = auth.getBalance()
+        val b = auth.getBalance() ?: return
         _balance.value = b
         BalanceAlert.checkAndNotify(appContext, b, _balanceAlertEnabled.value, _balanceAlertThreshold.value)
     }
@@ -421,7 +478,7 @@ class AppContainer(context: Context) {
         loginMutex.withLock { auth.logout() }
         scheduler.cancelAll()  // 삭제된 설정을 참조하는 알람 제거 (원본 대비 의도된 보강)
         _isLoggedIn.value = false
-        _balance.value = 0
+        _balance.value = null
         _autoEnabled.value = false
         _autoGames.value = 0
         _autoPurchaseDay.value = 7
@@ -430,6 +487,7 @@ class AppContainer(context: Context) {
         _balanceAlertEnabled.value = false
         _balanceAlertThreshold.value = 5000
         _loggedInUserId.value = null
+        _supportDot.value = false  // clearAll이 기기 키·"확인 필요"도 지운다
     }
 
     /** 화면별 ViewModel 팩토리(컴포지션 루트가 컨테이너 주입). */

@@ -97,6 +97,9 @@ dependencies {
     // 백그라운드 작업 (Slice 4) — AlarmManager 리시버가 expedited OneTimeWork로 위임
     implementation("androidx.work:work-runtime-ktx:2.10.0")
 
+    // 문의 게시판 — Custom Tabs (세션 쿠키·Turnstile이 브라우저에서 동작)
+    implementation("androidx.browser:browser:1.10.0")
+
     debugImplementation("androidx.compose.ui:ui-tooling")
 
     testImplementation("junit:junit:4.13.2")

@@ -62,8 +62,10 @@
     <string name="historyTitle">구매 기록</string>
     <string name="historyNoRecords">구매 기록이 없습니다</string>
     <string name="historyLoginToLoad">로그인하면 구매 기록을 불러옵니다</string>
-    <string name="historyLoadError">조회 실패: %1$s</string>
     <string name="historyLoadMore">더 보기</string>
+    <string name="connectionErrorTitle">구매 기록을 불러오지 못했습니다</string>
+    <string name="connectionErrorBody">네트워크 상태와 동행복권 사이트의 점검 여부를 확인해주세요</string>
+    <string name="retry">다시 시도</string>
     <string name="statusPending">확인 대기</string>
     <string name="statusNoWin">낙첨</string>
     <string name="rankWithEmoji">%1$s 🎉</string>
@@ -115,6 +117,8 @@
     <string name="settingVersion">버전</string>
     <string name="settingOpenSource">오픈소스</string>
     <string name="settingResetData">데이터 초기화</string>
+    <string name="settingSupport">문의</string>
+    <string name="supportNewReply">문의에 읽지 않은 새 답변 있음</string>
     <string name="dialogResetTitle">데이터 초기화</string>
     <string name="dialogResetMessage">모든 설정과 구매 기록이 삭제됩니다.\n정말 초기화하시겠습니까?</string>
     <string name="buttonReset2">초기화</string>
