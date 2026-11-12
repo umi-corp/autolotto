@@ -12,6 +12,7 @@ import android.os.PowerManager
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -40,6 +41,7 @@ import androidx.compose.material.icons.rounded.BatterySaver
 import androidx.compose.material.icons.rounded.CalendarToday
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.SupportAgent
 import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.ConfirmationNumber
 import androidx.compose.material.icons.rounded.DeleteOutline
@@ -64,6 +66,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.Badge
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -90,6 +93,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -149,6 +154,7 @@ fun SettingsScreen(modifier: Modifier = Modifier, onNavigateToNumbers: () -> Uni
     val threshold by vm.balanceAlertThreshold.collectAsState()
     val language by vm.language.collectAsState()
     val loginState by vm.loginState.collectAsState()
+    val supportDot by vm.supportDot.collectAsState()
 
     // 알림 토글(원본 _purchaseNoti/_resultNoti) — 화면-로컬, 비영속(원본과 동일하게 표시용).
     var purchaseNoti by remember { mutableStateOf(true) }
@@ -429,6 +435,25 @@ fun SettingsScreen(modifier: Modifier = Modifier, onNavigateToNumbers: () -> Uni
                     leadingContent = { SettingIcon(Icons.Rounded.DeleteOutline, MaterialTheme.colorScheme.error) },
                     headlineContent = {
                         Text(stringResource(R.string.settingResetData), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                    },
+                )
+                HorizontalDivider()
+                ListItem(
+                    modifier = Modifier.clickable {
+                        scope.launch { runCatching { vm.prepareSupportBoard() }.onSuccess { openInCustomTab(context, it) } }
+                    },
+                    colors = transparentListColors(),
+                    leadingContent = { SettingIcon(Icons.Rounded.SupportAgent, LgTeal) },
+                    headlineContent = { Text(stringResource(R.string.settingSupport), fontWeight = FontWeight.Bold) },
+                    trailingContent = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (supportDot) {
+                                val desc = stringResource(R.string.supportNewReply)
+                                Badge(Modifier.semantics { contentDescription = desc })
+                                Spacer(Modifier.width(8.dp))
+                            }
+                            Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     },
                 )
             }
@@ -730,6 +755,10 @@ private fun languageLabel(code: String): String = when (code) {
 
 private fun openUrl(context: Context, url: String) =
     context.launchActivitySafely(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+
+// Custom Tabs 미지원 브라우저는 같은 인텐트를 일반 ACTION_VIEW로 연다.
+private fun openInCustomTab(context: Context, url: String) =
+    context.launchActivitySafely(CustomTabsIntent.Builder().build().intent.setData(Uri.parse(url)))
 
 private fun notificationsEnabled(context: Context): Boolean =
     NotificationManagerCompat.from(context).areNotificationsEnabled()
