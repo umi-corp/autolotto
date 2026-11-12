@@ -2,6 +2,7 @@ package com.umicorp.autolotto
 
 import android.app.Application
 import android.content.Context
+import android.os.Build
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -16,6 +17,13 @@ import com.umicorp.autolotto.dhlottery.ResultService
 import com.umicorp.autolotto.scheduler.AlarmScheduler
 import com.umicorp.autolotto.scheduler.BalanceAlert
 import com.umicorp.autolotto.scheduler.PurchaseLock
+import com.umicorp.autolotto.support.SupportApi
+import com.umicorp.autolotto.support.SupportState
+import com.umicorp.autolotto.support.boardLang
+import com.umicorp.autolotto.support.deviceLabel
+import com.umicorp.autolotto.support.nextSupportState
+import com.umicorp.autolotto.support.shouldCheckSupport
+import com.umicorp.autolotto.support.supportBoardUrl
 import com.umicorp.autolotto.update.AppUpdater
 import com.umicorp.autolotto.update.UpdateInfo
 import java.io.File
@@ -36,6 +44,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.util.Locale
 
 /**
  * 앱 스코프 컴포지션 루트 (원본 Riverpod `ProviderScope` + 전역 프로바이더 대응).
@@ -170,6 +179,49 @@ class AppContainer(context: Context) {
         val file = AppUpdater.download(context, info.downloadUrl) { p -> _updateProgress.value = p }
         _updateProgress.value = null
         return file
+    }
+
+    // === 문의 게시판 (docs/DESIGN-support-board.md) ===
+
+    private val supportApi = SupportApi()
+
+    private val _supportDot = MutableStateFlow(false)
+    val supportDot: StateFlow<Boolean> = _supportDot.asStateFlow()
+
+    /** 확인 시점: 프로세스 시작 1회 + 게시판을 연 뒤 다음 ON_START 1회. */
+    @Volatile
+    private var supportCheckDue = true
+
+    /** "문의" 탭: 키 준비·"확인 필요" 켜기 → 게시판 주소. 저장소 오류는 throw. */
+    suspend fun prepareSupportBoard(): String = withContext(Dispatchers.IO) {
+        val key = store.startSupportInquiry()
+        supportCheckDue = true
+        supportBoardUrl(
+            lang = boardLang(_language.value, Locale.getDefault().language),
+            appVersion = BuildConfig.VERSION_NAME,
+            device = deviceLabel(Build.MANUFACTURER, Build.MODEL, Build.VERSION.RELEASE),
+            key = key,
+        )
+    }
+
+    /** ON_START마다 호출 — 예정된 확인만 수행한다. 취소 외에는 던지지 않는다. */
+    suspend fun checkSupportIfDue() {
+        if (!supportCheckDue) return
+        supportCheckDue = false
+        try {
+            val (key, needed) = withContext(Dispatchers.IO) { store.getSupportKey() to store.getSupportCheckNeeded() }
+            if (key == null || !shouldCheckSupport(key, needed)) return
+            // 게시판을 열어 ON_STOP으로 취소되면 여기서 끊긴다 — 탭이 켠 "확인 필요"를 옛 응답이 끄지 않게.
+            val status = supportApi.status(key)
+            val next = nextSupportState(SupportState(_supportDot.value, needed), status)
+            _supportDot.value = next.dot
+            if (next.checkNeeded != needed) withContext(Dispatchers.IO) { store.setSupportCheckNeeded(next.checkNeeded) }
+        } catch (e: CancellationException) {
+            supportCheckDue = true
+            throw e
+        } catch (_: Exception) {
+            // 저장소 일시 오류 — 아무것도 바꾸지 않는다.
+        }
     }
 
     // === 자동 로그인 (crosscheck: 공유 세션의 모든 auth.login/logout은 loginMutex로 직렬화.
@@ -437,6 +489,7 @@ class AppContainer(context: Context) {
         _balanceAlertEnabled.value = false
         _balanceAlertThreshold.value = 5000
         _loggedInUserId.value = null
+        _supportDot.value = false  // clearAll이 기기 키·"확인 필요"도 지운다
     }
 
     /** 화면별 ViewModel 팩토리(컴포지션 루트가 컨테이너 주입). */

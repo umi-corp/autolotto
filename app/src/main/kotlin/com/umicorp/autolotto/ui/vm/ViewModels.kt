@@ -385,6 +385,9 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     val balanceAlertThreshold = container.balanceAlertThreshold
     val language = container.language
     val loggedInUserId = container.loggedInUserId
+    val supportDot = container.supportDot
+
+    suspend fun prepareSupportBoard(): String = container.prepareSupportBoard()
 
     /** 로그인 진행/결과 (스낵바·다이얼로그용). 원본 INVALID_CREDENTIALS 분기 유지. */
     sealed interface LoginState {
