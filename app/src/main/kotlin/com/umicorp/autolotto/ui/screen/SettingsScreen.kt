@@ -758,7 +758,7 @@ private fun openUrl(context: Context, url: String) =
 
 // Custom Tabs 미지원 브라우저는 같은 인텐트를 일반 ACTION_VIEW로 연다.
 private fun openInCustomTab(context: Context, url: String) =
-    context.launchActivitySafely(CustomTabsIntent.Builder().build().intent.setData(Uri.parse(url)))
+    context.launchActivitySafely(CustomTabsIntent.Builder().setShareState(CustomTabsIntent.SHARE_STATE_OFF).build().intent.setData(Uri.parse(url)))
 
 private fun notificationsEnabled(context: Context): Boolean =
     NotificationManagerCompat.from(context).areNotificationsEnabled()
