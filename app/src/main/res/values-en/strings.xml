@@ -110,6 +110,8 @@
     <string name="settingVersion">Version</string>
     <string name="settingOpenSource">Open Source</string>
     <string name="settingResetData">Reset Data</string>
+    <string name="settingSupport">Support</string>
+    <string name="supportNewReply">New reply</string>
     <string name="dialogResetTitle">Reset Data</string>
     <string name="dialogResetMessage">All settings and purchase records will be deleted.\nAre you sure?</string>
     <string name="buttonReset2">Reset</string>
