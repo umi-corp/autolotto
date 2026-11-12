@@ -111,7 +111,7 @@
     <string name="settingOpenSource">オープンソース</string>
     <string name="settingResetData">データ初期化</string>
     <string name="settingSupport">お問い合わせ</string>
-    <string name="supportNewReply">新しい返信</string>
+    <string name="supportNewReply">お問い合わせに未読の新しい返信あり</string>
     <string name="dialogResetTitle">データ初期化</string>
     <string name="dialogResetMessage">すべての設定と購入履歴が削除されます。\n本当に初期化しますか？</string>
     <string name="buttonReset2">初期化</string>
