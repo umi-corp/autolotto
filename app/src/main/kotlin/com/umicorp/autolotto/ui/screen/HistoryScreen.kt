@@ -106,7 +106,7 @@ fun HistoryScreen(modifier: Modifier = Modifier) {
         // 실패는 "기록 없음"보다 앞선다 — 못 불러온 것을 없는 것으로 보여주면 안 된다.
         val phase = when {
             loading && purchases.isEmpty() -> 0
-            loadFailed && purchases.isEmpty() -> 3
+            isLoggedIn && loadFailed && purchases.isEmpty() -> 3
             purchases.isEmpty() -> 1
             else -> 2
         }
