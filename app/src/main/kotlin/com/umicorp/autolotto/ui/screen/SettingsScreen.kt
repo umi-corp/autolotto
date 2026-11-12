@@ -430,15 +430,6 @@ fun SettingsScreen(modifier: Modifier = Modifier, onNavigateToNumbers: () -> Uni
                 )
                 HorizontalDivider()
                 ListItem(
-                    modifier = Modifier.clickable { showReset = true },
-                    colors = transparentListColors(),
-                    leadingContent = { SettingIcon(Icons.Rounded.DeleteOutline, MaterialTheme.colorScheme.error) },
-                    headlineContent = {
-                        Text(stringResource(R.string.settingResetData), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
-                    },
-                )
-                HorizontalDivider()
-                ListItem(
                     modifier = Modifier.clickable {
                         scope.launch { runCatching { vm.prepareSupportBoard() }.onSuccess { openInCustomTab(context, it) } }
                     },
@@ -454,6 +445,15 @@ fun SettingsScreen(modifier: Modifier = Modifier, onNavigateToNumbers: () -> Uni
                             }
                             Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
+                    },
+                )
+                HorizontalDivider()
+                ListItem(
+                    modifier = Modifier.clickable { showReset = true },
+                    colors = transparentListColors(),
+                    leadingContent = { SettingIcon(Icons.Rounded.DeleteOutline, MaterialTheme.colorScheme.error) },
+                    headlineContent = {
+                        Text(stringResource(R.string.settingResetData), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
                     },
                 )
             }
