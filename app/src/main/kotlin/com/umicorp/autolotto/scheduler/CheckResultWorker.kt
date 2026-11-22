@@ -3,13 +3,20 @@ package com.umicorp.autolotto.scheduler
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.umicorp.autolotto.data.LEDGER_ZONE
+import com.umicorp.autolotto.data.LedgerStore
+import com.umicorp.autolotto.data.LedgerSync
 import com.umicorp.autolotto.data.SecureStore
 import com.umicorp.autolotto.data.mergePurchasesByRound
 import com.umicorp.autolotto.dhlottery.AuthService
 import com.umicorp.autolotto.dhlottery.DhlotterySession
 import com.umicorp.autolotto.dhlottery.HistoryService
+import com.umicorp.autolotto.dhlottery.LedgerService
 import com.umicorp.autolotto.dhlottery.PurchaseService
 import com.umicorp.autolotto.dhlottery.ResultService
+import kotlinx.coroutines.CancellationException
+import java.io.File
+import java.time.OffsetDateTime
 
 /**
  * 당첨확인 백그라운드 작업 (원본 `_onCheckResultAlarm` + `_executeCheckResult` 포트).
@@ -31,6 +38,7 @@ class CheckResultWorker(context: Context, params: WorkerParameters) : CoroutineW
         val done = try {
             executeCheckResult(lastAttempt)
         } catch (e: Exception) {
+            if (e is CancellationException) throw e  // 중단된 작업은 WorkManager가 다시 실행한다
             if (lastAttempt) Notifications.show(ctx, "⚠️ AutoLotto 오류", "당첨 결과 확인에 실패했습니다.", 99)
             lastAttempt
         }
@@ -100,8 +108,10 @@ class CheckResultWorker(context: Context, params: WorkerParameters) : CoroutineW
             }
 
             Notifications.show(ctx, title, body, 2, tab = Notifications.TAB_HISTORY)
+            syncLedger(userId, session)
             return true
         } catch (e: Exception) {
+            if (e is CancellationException) throw e  // 원장 동기화 중 작업 중단이 폴백 알림·재시도로 바뀌지 않게
             // 미구매(no_matching_purchase)는 재시도 무의미 → 즉시 당첨번호만 알리고 완결(기존 폴백).
             // 그 외(미추첨·로그인·이력 조회 실패)는 재시도하고, 마지막 시도에만 같은 폴백을 보낸다.
             if (e.message != "no_matching_purchase" && !lastAttempt) return false
@@ -113,6 +123,17 @@ class CheckResultWorker(context: Context, params: WorkerParameters) : CoroutineW
                 tab = Notifications.TAB_HISTORY,
             )
             return true
+        }
+    }
+
+    /** 누적 요약 원장 갱신. 실패해도 알림·재시도 판정은 바꾸지 않는다. */
+    private suspend fun syncLedger(userId: String, session: DhlotterySession) {
+        try {
+            LedgerSync(LedgerStore(File(ctx.filesDir, "ledger"), "645"), { OffsetDateTime.now(LEDGER_ZONE) })
+                .run(userId, LedgerService(session))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
         }
     }
 

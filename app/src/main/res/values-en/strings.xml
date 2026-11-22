@@ -191,4 +191,23 @@
     <string name="instantErrorFallback">Purchase failed. Please try again.</string>
     <string name="instantStoreError">Couldn\'t read saved numbers. Please try again shortly.</string>
     <string name="instantNeedsSetup">Set up and save your games before buying.</string>
+
+    <!-- 누적 요약 -->
+    <string name="ledgerTitle">Totals</string>
+    <string name="ledgerSince">Since %1$s</string>
+    <string name="ledgerPurchase">Spent</string>
+    <string name="ledgerPrize">Winnings</string>
+    <string name="ledgerWon">₩%1$s</string>
+    <string name="ledgerUnits">%1$d games</string>
+    <string name="ledgerWins">%1$d wins</string>
+    <string name="ledgerReturn">Winnings vs. spent</string>
+    <string name="ledgerMonthly">Monthly view</string>
+    <string name="ledgerSynced">Updated %1$s</string>
+    <string name="ledgerPendingCount">%1$d awaiting draw</string>
+    <string name="ledgerPrefilling">Checked back to %1$s</string>
+    <string name="ledgerPrefillingMeta">Checking past records</string>
+    <string name="ledgerFailed">Couldn\'t reach DHLottery. Showing saved totals.</string>
+    <string name="ledgerSheetTitle">Monthly spending and winnings</string>
+    <string name="ledgerColMonth">Month</string>
+    <string name="ledgerColWins">Wins</string>
 </resources>

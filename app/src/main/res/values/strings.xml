@@ -199,4 +199,23 @@
     <string name="instantErrorFallback">구매에 실패했습니다. 다시 시도해주세요.</string>
     <string name="instantStoreError">저장된 번호를 읽지 못했습니다. 잠시 후 다시 시도해주세요.</string>
     <string name="instantNeedsSetup">구매할 게임을 먼저 설정하고 저장해주세요.</string>
+
+    <!-- 누적 요약 -->
+    <string name="ledgerTitle">누적 요약</string>
+    <string name="ledgerSince">%1$s부터</string>
+    <string name="ledgerPurchase">구매</string>
+    <string name="ledgerPrize">당첨금</string>
+    <string name="ledgerWon">%1$s원</string>
+    <string name="ledgerUnits">%1$d게임</string>
+    <string name="ledgerWins">당첨 %1$d회</string>
+    <string name="ledgerReturn">구매 대비 당첨금</string>
+    <string name="ledgerMonthly">월별 보기</string>
+    <string name="ledgerSynced">%1$s 갱신</string>
+    <string name="ledgerPendingCount">추첨 전 %1$d건</string>
+    <string name="ledgerPrefilling">%1$s까지 확인했습니다</string>
+    <string name="ledgerPrefillingMeta">과거 기록 확인 중</string>
+    <string name="ledgerFailed">동행복권에 연결하지 못했습니다. 저장된 값을 보여 드립니다.</string>
+    <string name="ledgerSheetTitle">월별 구매·당첨</string>
+    <string name="ledgerColMonth">월</string>
+    <string name="ledgerColWins">당첨</string>
 </resources>

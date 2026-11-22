@@ -188,7 +188,7 @@ fun AppShell(pendingTab: MutableStateFlow<String?>? = null) {
                     onNavigateToNumbers = { scope.launch { pagerState.animateScrollToPage(1) } },
                 )
                 1 -> NumberScreen(modifier = screenModifier)
-                2 -> HistoryScreen(modifier = screenModifier)
+                2 -> HistoryScreen(modifier = screenModifier, visible = pagerState.currentPage == 2)
                 else -> SettingsScreen(
                     modifier = screenModifier,
                     onNavigateToNumbers = { scope.launch { pagerState.animateScrollToPage(1) } },

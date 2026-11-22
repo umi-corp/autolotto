@@ -6,11 +6,17 @@ import android.os.Build
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.umicorp.autolotto.data.LEDGER_ZONE
+import com.umicorp.autolotto.data.Ledger
+import com.umicorp.autolotto.data.LedgerLock
+import com.umicorp.autolotto.data.LedgerStore
+import com.umicorp.autolotto.data.LedgerSync
 import com.umicorp.autolotto.data.SecureStore
 import com.umicorp.autolotto.dhlottery.AuthService
 import com.umicorp.autolotto.dhlottery.DhlotteryException
 import com.umicorp.autolotto.dhlottery.DhlotterySession
 import com.umicorp.autolotto.dhlottery.HistoryService
+import com.umicorp.autolotto.dhlottery.LedgerService
 import com.umicorp.autolotto.dhlottery.PurchaseResult
 import com.umicorp.autolotto.dhlottery.PurchaseService
 import com.umicorp.autolotto.dhlottery.ResultService
@@ -42,6 +48,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
+import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.Locale
@@ -70,6 +77,7 @@ class AppContainer(context: Context) {
     val scheduler = AlarmScheduler(appContext)
     val resultService = ResultService()            // 로그인 불필요 — 자체 세션
     val historyService = HistoryService(session)   // 로그인된 공유 세션 차용
+    val ledgerStore = LedgerStore(File(appContext.filesDir, "ledger"), "645")
 
     // === 공유 반응형 상태 (원본 전역 프로바이더와 1:1) ===
     private val _isLoggedIn = MutableStateFlow(false)
@@ -472,9 +480,15 @@ class AppContainer(context: Context) {
         store.setGamesConfig(count, arr.toString())
     }
 
+    /** 누적 요약 원장 동기화(+프리필). 연결 실패는 IOException. */
+    suspend fun syncLedger(userId: String, onProgress: (Ledger) -> Unit): Ledger = withContext(Dispatchers.IO) {
+        LedgerSync(ledgerStore, { OffsetDateTime.now(LEDGER_ZONE) }).run(userId, LedgerService(session), onProgress)
+    }
+
     // === 데이터 초기화 (원본 설정 화면 `_showResetDialog`) ===
     suspend fun resetAll() = withContext(Dispatchers.IO) {
         store.clearAll()
+        LedgerLock.mutex.withLock { ledgerStore.clearAll() }
         loginMutex.withLock { auth.logout() }
         scheduler.cancelAll()  // 삭제된 설정을 참조하는 알람 제거 (원본 대비 의도된 보강)
         _isLoggedIn.value = false

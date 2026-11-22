@@ -184,7 +184,7 @@ class HistoryService(private val session: DhlotterySession) {
         purchases
     }
 
-    private companion object {
+    internal companion object {
         val DATE_FMT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
         private val COMPACT_DT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss")
 

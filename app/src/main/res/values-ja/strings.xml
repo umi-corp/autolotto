@@ -191,4 +191,23 @@
     <string name="instantErrorFallback">購入に失敗しました。もう一度お試しください。</string>
     <string name="instantStoreError">保存した番号を読み込めませんでした。しばらくしてから再試行してください。</string>
     <string name="instantNeedsSetup">先に購入するゲームを設定して保存してください。</string>
+
+    <!-- 누적 요약 -->
+    <string name="ledgerTitle">累計</string>
+    <string name="ledgerSince">%1$sから</string>
+    <string name="ledgerPurchase">購入額</string>
+    <string name="ledgerPrize">当選金</string>
+    <string name="ledgerWon">%1$sウォン</string>
+    <string name="ledgerUnits">%1$dゲーム</string>
+    <string name="ledgerWins">当選%1$d回</string>
+    <string name="ledgerReturn">購入額に対する当選金の割合</string>
+    <string name="ledgerMonthly">月別表示</string>
+    <string name="ledgerSynced">%1$s更新</string>
+    <string name="ledgerPendingCount">抽選前%1$d件</string>
+    <string name="ledgerPrefilling">%1$sまで確認しました</string>
+    <string name="ledgerPrefillingMeta">過去の記録を確認中</string>
+    <string name="ledgerFailed">同行福券に接続できませんでした。保存済みの集計値を表示しています。</string>
+    <string name="ledgerSheetTitle">月別の購入・当選</string>
+    <string name="ledgerColMonth">月</string>
+    <string name="ledgerColWins">当選</string>
 </resources>

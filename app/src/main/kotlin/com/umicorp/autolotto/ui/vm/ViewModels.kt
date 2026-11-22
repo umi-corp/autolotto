@@ -3,21 +3,29 @@ package com.umicorp.autolotto.ui.vm
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.umicorp.autolotto.AppContainer
+import com.umicorp.autolotto.data.Ledger
+import com.umicorp.autolotto.data.LedgerSummary
 import com.umicorp.autolotto.data.Purchase
 import com.umicorp.autolotto.data.WinningResult
 import com.umicorp.autolotto.data.mergePurchasesByRound
+import com.umicorp.autolotto.data.summarize
 import com.umicorp.autolotto.dhlottery.PurchaseResult
 import com.umicorp.autolotto.dhlottery.PurchaseService
 import com.umicorp.autolotto.TapSlotsOutcome
 import com.umicorp.autolotto.splitSlots
 import com.umicorp.autolotto.tapSlotsOutcome
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
+import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
@@ -288,6 +296,10 @@ class HistoryViewModel(private val container: AppContainer) : ViewModel() {
     /** 현재 목록의 주인 계정 — 계정 전환 시 이전 계정 내역 잔존 방지(crosscheck R2). */
     private var shownUser: String? = null
 
+    private val _ledger = MutableStateFlow(LedgerUi())
+    val ledger: StateFlow<LedgerUi> = _ledger.asStateFlow()
+    private var ledgerJob: Job? = null
+
     init {
         // 로그인 전이 관찰: 재로그인 시 자동 복구(빈 목록), 로그아웃·계정 전환 시 목록 초기화.
         viewModelScope.launch {
@@ -297,10 +309,12 @@ class HistoryViewModel(private val container: AppContainer) : ViewModel() {
                         !logged -> {
                             shownUser = null
                             if (_purchases.value.isNotEmpty()) resetList()
+                            resetLedger()
                         }
                         user != shownUser -> {
                             shownUser = user
                             resetList()
+                            resetLedger()
                             loadHistory()
                         }
                         _purchases.value.isEmpty() && !_loading.value -> loadHistory()
@@ -317,9 +331,38 @@ class HistoryViewModel(private val container: AppContainer) : ViewModel() {
         windowsLoaded = 0
     }
 
+    private fun resetLedger() {
+        ledgerJob?.cancel()
+        _ledger.value = LedgerUi()
+    }
+
+    /**
+     * 누적 요약: 저장된 원장을 먼저 보이고, 동기화·프리필 진행에 따라 갱신한다. 이미 도는 중이면 건너뛴다.
+     * [force]가 아니면(탭 재진입·앱 복귀) 최근 동기화가 있을 때 저장본만 보인다 — 원장은 추첨 뒤에만 바뀐다.
+     */
+    fun syncLedger(force: Boolean = false) {
+        val user = container.loggedInUserId.value ?: return
+        if (!container.isLoggedIn.value || ledgerJob?.isActive == true) return
+        ledgerJob = viewModelScope.launch {
+            val saved = withContext(Dispatchers.IO) { container.ledgerStore.load(user) }
+            _ledger.update { it.withLedger(saved) }
+            val fresh = saved.syncedAt?.isAfter(OffsetDateTime.now().minusMinutes(LEDGER_FRESH_MINUTES)) == true
+            if (!force && fresh && saved.prefill?.done == true) return@launch
+            try {
+                val done = container.syncLedger(user) { l -> _ledger.update { it.withLedger(l) } }
+                _ledger.update { it.withLedger(done).copy(failed = false) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                _ledger.update { it.copy(failed = true, prefilling = false) }
+            }
+        }
+    }
+
     /** 첫 3개월 창 로드(새로고침 겸용 — 더 보기로 쌓인 이전 창은 버리고 리셋). */
     fun loadHistory() {
         if (!container.isLoggedIn.value) return
+        syncLedger(force = true)
         viewModelScope.launch {
             _loading.value = true
             _loadFailed.value = false
@@ -371,6 +414,24 @@ class HistoryViewModel(private val container: AppContainer) : ViewModel() {
         const val MAX_WINDOWS = 4     // 4×3개월 = 서버 보관 한도 1년
     }
 }
+
+private const val LEDGER_FRESH_MINUTES = 10L
+
+/** 내역 탭 누적 요약 카드 상태. */
+data class LedgerUi(
+    val summary: LedgerSummary? = null,
+    val prefilling: Boolean = false,
+    val prefillReached: LocalDate? = null,
+    val failed: Boolean = false,
+    val syncedAt: OffsetDateTime? = null,
+)
+
+private fun LedgerUi.withLedger(l: Ledger) = copy(
+    summary = summarize(l.rows),
+    prefilling = l.prefill?.done != true,
+    prefillReached = l.prefill?.nextEnd,
+    syncedAt = l.syncedAt,
+)
 
 /** 설정: 로그인/로그아웃·잔액·자동구매 설정·언어·잔액알림·초기화. */
 class SettingsViewModel(private val container: AppContainer) : ViewModel() {

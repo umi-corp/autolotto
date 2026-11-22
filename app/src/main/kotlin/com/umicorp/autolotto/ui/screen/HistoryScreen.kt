@@ -53,6 +53,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.umicorp.autolotto.R
 import com.umicorp.autolotto.data.Purchase
 import com.umicorp.autolotto.ui.appViewModel
@@ -73,14 +74,24 @@ import kotlinx.coroutines.delay
  * 시그니처 모션: 카드 스태거 등장(fade + rise, MotionSpecs.staggerDelay).
  */
 @Composable
-fun HistoryScreen(modifier: Modifier = Modifier) {
+fun HistoryScreen(modifier: Modifier = Modifier, visible: Boolean = true) {
     val vm: HistoryViewModel = appViewModel()
+    // 탭은 keep-alive라 재진입·앱 복귀 때 누적 요약을 다시 맞춘다(워커가 원장을 갱신했을 수 있다).
+    LifecycleResumeEffect(visible) {
+        if (visible) vm.syncLedger()
+        onPauseOrDispose {}
+    }
     val purchases by vm.purchases.collectAsState()
     val loading by vm.loading.collectAsState()
     val loadingMore by vm.loadingMore.collectAsState()
     val canLoadMore by vm.canLoadMore.collectAsState()
     val loadFailed by vm.loadFailed.collectAsState()
     val isLoggedIn by vm.isLoggedIn.collectAsState()
+    val ledger by vm.ledger.collectAsState()
+    var showMonthly by remember { mutableStateOf(false) }
+    val summaryCard: @Composable (Modifier) -> Unit = { m ->
+        if (isLoggedIn) LedgerSummaryCard(ledger, onOpenMonthly = { showMonthly = true }, onRetry = { vm.syncLedger(force = true) }, modifier = m)
+    }
 
     Scaffold(
         modifier = modifier.creamPageBackground(),
@@ -117,15 +128,24 @@ fun HistoryScreen(modifier: Modifier = Modifier) {
                         CircularProgressIndicator()
                     }
 
-                    1 -> EmptyState(
-                        isLoggedIn = isLoggedIn,
-                        // 최근 3개월이 비어도 이전 창에 내역이 있을 수 있음 → 빈 화면에서도 더 보기
-                        canLoadMore = isLoggedIn && canLoadMore,
-                        loadingMore = loadingMore,
-                        onLoadMore = vm::loadMore,
-                    )
+                    // 카드는 원장 값이라 목록이 비거나 조회에 실패해도 남는다.
+                    1 -> Column(Modifier.fillMaxSize()) {
+                        summaryCard(Modifier.padding(20.dp))
+                        Box(Modifier.weight(1f)) {
+                            EmptyState(
+                                isLoggedIn = isLoggedIn,
+                                // 최근 3개월이 비어도 이전 창에 내역이 있을 수 있음 → 빈 화면에서도 더 보기
+                                canLoadMore = isLoggedIn && canLoadMore,
+                                loadingMore = loadingMore,
+                                onLoadMore = vm::loadMore,
+                            )
+                        }
+                    }
 
-                    3 -> ConnectionErrorState(onRetry = vm::loadHistory)
+                    3 -> Column(Modifier.fillMaxSize()) {
+                        summaryCard(Modifier.padding(20.dp))
+                        Box(Modifier.weight(1f)) { ConnectionErrorState(onRetry = vm::loadHistory) }
+                    }
 
                     else -> PullToRefreshBox(
                         isRefreshing = loading,
@@ -136,6 +156,7 @@ fun HistoryScreen(modifier: Modifier = Modifier) {
                             contentPadding = PaddingValues(20.dp),
                             verticalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
+                            if (isLoggedIn) item { summaryCard(Modifier) }
                             itemsIndexed(purchases) { i, item -> HistoryCard(item, index = i) }
                             if (canLoadMore) {
                                 item { LoadMoreButton(loading = loadingMore, onClick = vm::loadMore) }
@@ -146,6 +167,8 @@ fun HistoryScreen(modifier: Modifier = Modifier) {
             }
         }
     }
+    val summary = ledger.summary
+    if (showMonthly && summary != null) LedgerMonthlySheet(summary, onDismiss = { showMonthly = false })
 }
 
 @Composable
