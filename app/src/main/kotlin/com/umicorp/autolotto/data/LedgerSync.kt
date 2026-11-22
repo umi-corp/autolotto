@@ -1,10 +1,13 @@
 package com.umicorp.autolotto.data
 
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.OffsetDateTime
 
 /** 결과확인 워커와 내역 화면이 같은 프로세스에서 원장을 읽고-고쳐-쓴다. 그 구간을 직렬화한다. */
+private const val PREFILL_PAUSE_MS = 500L
+
 object LedgerLock {
     val mutex = Mutex()
 }
@@ -13,6 +16,8 @@ class LedgerSync(
     private val store: LedgerStore,
     private val now: () -> OffsetDateTime,
     private val resolve: suspend (List<LedgerRow>) -> List<LedgerRow> = { it },
+    // 동행복권 차단 기준은 공개되지 않았다. 첫 프리필(약 24창)이 요청을 몰아 보내지 않게 창마다 쉰다.
+    private val pause: suspend () -> Unit = { delay(PREFILL_PAUSE_MS) },
 ) {
     /** 동기화 창 → resolve → 프리필 순서. 창마다 저장하므로 IOException이 나도 받은 창은 남는다. */
     suspend fun run(userId: String, fetcher: WindowFetcher, onProgress: (Ledger) -> Unit = {}): Ledger =
@@ -31,6 +36,7 @@ class LedgerSync(
             onProgress(l)
             while (true) {
                 val w = nextPrefillWindow(p) ?: break
+                pause()
                 p = advancePrefill(p, w)
                 l = l.copy(rows = applyWindow(l.rows, fetcher.fetch(w)), prefill = p)
                 store.save(userId, l)

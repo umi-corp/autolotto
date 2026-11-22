@@ -24,7 +24,9 @@ class LedgerSyncTest {
     private val now = OffsetDateTime.parse("2026-11-22T10:00:00+09:00")
     private val today = LocalDate.parse("2026-11-22")
     private val store by lazy { LedgerStore(File(tmp.root, "ledger"), "645") }
-    private fun sync(resolve: suspend (List<LedgerRow>) -> List<LedgerRow> = { it }) = LedgerSync(store, { now }, resolve)
+    private var pauses = 0
+    private fun sync(resolve: suspend (List<LedgerRow>) -> List<LedgerRow> = { it }) =
+        LedgerSync(store, { now }, resolve, pause = { pauses++ })
 
     /** 받은 창을 기록하고, 창마다 키가 `prefix+창 끝`인 행 하나를 준다. [failAt]번째 호출(1부터)에서 실패한다. */
     private class Recorder(val prefix: String = "W", val failAt: Int = 0, val u: Boolean = false) : WindowFetcher {
@@ -44,6 +46,16 @@ class LedgerSyncTest {
         assertEquals(today, f.windows.first().to)
         assertEquals(LocalDate.parse("2021-01-01"), f.windows.last().from)
         assertTrue(store.load("user1").prefill!!.done)
+    }
+
+    // 회귀 방지: 첫 프리필이 동행복권에 연속 요청을 몰아 보내지 않게 프리필 창마다 쉰다.
+    @Test fun run_pausesBeforeEachPrefillWindowOnly() = runBlocking {
+        val f = Recorder()
+        sync().run("user1", f)
+        assertEquals(f.windows.size - 1, pauses) // 동기화 1창은 쉬지 않는다
+        pauses = 0
+        sync().run("user1", Recorder())
+        assertEquals(0, pauses)
     }
 
     @Test fun run_secondTime_onlySyncs() = runBlocking {
