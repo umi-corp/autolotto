@@ -7,9 +7,9 @@
 ## 0. 전제
 
 - 서명 키: 리포 루트의 `key.properties` + `autolotto-key.jks` (둘 다 gitignored, **유일본** — 커밋·노출·이동 금지)
-- GitHub 토큰: 로컬 `.env`의 `umicorp` PAT. 토큰을 argv·echo·출력에 절대 노출하지 않는다 —
-  `-H @<(printf 'Authorization: Bearer %s\n' "$TOKEN")` 프로세스 치환으로만 전달
-- JDK: `JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"` (gradlew·apksigner 공통)
+- GitHub API: 로그인된 `gh`로만 호출한다(`gh api`). `.env`에는 GitHub 토큰이 없고 다른 비밀 값만 있으니 읽지 않는다
+- JDK 21: `gradle/gradle-daemon-jvm.properties`(`toolchainVersion=21`)가 빌드 데몬을 설치된 JDK 21에서 띄운다.
+  `JAVA_HOME`이 Android Studio 번들 JBR 25여도 된다. JDK 21이 없으면 빌드가 실패한다(자동 다운로드 미설정)
 - 커밋/푸시는 사용자가 배포를 요청한 경우에 한함. force-push는 건별 명시 승인 필수
 
 ## 1. 버전 범프
@@ -24,7 +24,7 @@
 ## 3. 릴리스 빌드
 
 ```sh
-JAVA_HOME=... ./gradlew assembleRelease
+./gradlew assembleRelease
 ```
 
 산출물: `app/build/outputs/apk/release/app-release.apk`
@@ -39,20 +39,22 @@ JAVA_HOME=... ./gradlew assembleRelease
 
 ## 5. GitHub 릴리스 생성
 
-- 요청 본문은 **JSON 파일로 작성** 후 `-d @파일` (zsh echo가 `\n`을 해석해 JSON을 깨뜨리는 사고 방지)
+- 요청 본문은 **JSON 파일로 작성** 후 `--input 파일` (zsh echo가 `\n`을 해석해 JSON을 깨뜨리는 사고 방지)
 - `tag_name: "vX.Y.Z"`, `name: "vX.Y.Z"`, `body`: 릴리스 노트
 - 노트는 인앱 markdownLite가 지원하는 서브셋만 사용: `###` 헤딩, `**굵게**`, `-` 리스트
-- `POST /repos/umi-corp/autolotto/releases` → 응답을 파일로 저장해 python으로 `id` 파싱
+- `gh api -X POST repos/umi-corp/autolotto/releases --input 파일 --jq .id` → 릴리스 `id`
 
 ## 6. APK 업로드
 
-`POST https://uploads.github.com/repos/umi-corp/autolotto/releases/{id}/assets?name=autolotto-X.Y.Z-universal.apk`
-(`Content-Type: application/vnd.android.package-archive`, `--data-binary @app-release.apk`)
+```sh
+gh api -X POST "https://uploads.github.com/repos/umi-corp/autolotto/releases/{id}/assets?name=autolotto-X.Y.Z-universal.apk" \
+  -H "Content-Type: application/vnd.android.package-archive" --input app/build/outputs/apk/release/app-release.apk
+```
 에셋 이름은 `.apk`로 끝나기만 하면 됨(업데이터·랜딩 모두 이름 무관) — 관례상 `autolotto-X.Y.Z-universal.apk`.
 
 ## 7. 최종 검증 (필수)
 
-- `GET /repos/umi-corp/autolotto/releases/latest` → `tag_name == vX.Y.Z`, 에셋 존재
+- `gh api repos/umi-corp/autolotto/releases/latest` → `tag_name == vX.Y.Z`, 에셋 존재
 - 공개 다운로드 URL로 받아 `md5 == 로컬 빌드 md5` 확인
 
 ## 8. 사후
