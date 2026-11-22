@@ -20,9 +20,14 @@
         android:fullBackupContent="false"
         android:supportsRtl="true"
         android:theme="@style/Theme.AutoLotto.Launch">
+        <!-- 세로 전용 앱. Android 16 큰 화면(sw600dp+)이 targetSdk 36 앱의 방향 고정을 무시하지 않게 한다(API 37에서 폐지) -->
+        <property
+            android:name="android.window.PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY"
+            android:value="true" />
 
         <activity
             android:name=".MainActivity"
+            android:screenOrientation="portrait"
             android:exported="true"
             android:launchMode="singleTop"
             android:theme="@style/Theme.AutoLotto.Launch"

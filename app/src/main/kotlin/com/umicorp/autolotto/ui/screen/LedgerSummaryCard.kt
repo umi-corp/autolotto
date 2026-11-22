@@ -29,12 +29,14 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -55,6 +57,8 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 private val SYNCED_FMT: DateTimeFormatter = DateTimeFormatter.ofPattern("MM-dd HH:mm")
+private val TABLE_BODY_HEIGHT = 220.dp
+private const val SKELETON_ROWS = 4
 private val MONTH_FMT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM")
 
 /** 내역 탭 맨 위 누적 요약. 손익을 빨강·초록으로 강조하지 않는다. 글자색은 카드의 내용 색(onSurface)을 물려받는다. */
@@ -154,16 +158,23 @@ fun LedgerMonthlySheet(summary: LedgerSummary, onDismiss: () -> Unit) {
                 Legend(prizeColor, stringResource(R.string.ledgerPrize))
             }
             HorizontalPager(pager, Modifier.fillMaxWidth()) { i -> YearBars(pages[i], max, purchaseColor, prizeColor) }
-            val rows = page.months.filterNotNull().filter { it.purchaseWon > 0 || it.prizeWon > 0 }.asReversed()
-            if (rows.isNotEmpty()) {
-                TableRow(
-                    stringResource(R.string.ledgerColMonth), stringResource(R.string.ledgerPurchase),
-                    stringResource(R.string.ledgerPrize), stringResource(R.string.ledgerColWins), header = true,
-                )
-            }
-            rows.forEach { m ->
-                HorizontalDivider()
-                TableRow(MONTH_FMT.format(m.month), formatNumber(m.purchaseWon), formatNumber(m.prizeWon), m.wins.toString())
+            TableRow(
+                stringResource(R.string.ledgerColMonth), stringResource(R.string.ledgerPurchase),
+                stringResource(R.string.ledgerPrize), stringResource(R.string.ledgerColWins), header = true,
+            )
+            // 연도를 넘겨도 시트 높이가 같도록 표 본문은 고정 높이 안에서 스크롤한다.
+            key(page.year) {
+                val rows = page.months.filterNotNull().filter { it.purchaseWon > 0 || it.prizeWon > 0 }.asReversed()
+                Column(Modifier.fillMaxWidth().height(TABLE_BODY_HEIGHT).verticalScroll(rememberScrollState(), enabled = rows.isNotEmpty())) {
+                    rows.forEach { m ->
+                        HorizontalDivider()
+                        TableRow(MONTH_FMT.format(m.month), formatNumber(m.purchaseWon), formatNumber(m.prizeWon), m.wins.toString())
+                    }
+                    if (rows.isEmpty()) repeat(SKELETON_ROWS) {
+                        HorizontalDivider()
+                        SkeletonRow()
+                    }
+                }
             }
         }
     }
@@ -209,6 +220,19 @@ private fun Bar(fraction: Float, color: Color) {
         Modifier.width(6.dp).fillMaxHeight(fraction.coerceIn(0.02f, 1f))
             .background(color, RoundedCornerShape(topStart = 3.dp, topEnd = 3.dp)),
     )
+}
+
+/** 기록이 없는 해의 표 자리. 표 행과 같은 칸 비율의 회색 막대만 그린다. */
+@Composable
+private fun SkeletonRow() {
+    val tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.12f)
+    Row(Modifier.fillMaxWidth().padding(vertical = 11.dp).clearAndSetSemantics {}) {
+        listOf(1f to Alignment.Start, 1.2f to Alignment.End, 1.2f to Alignment.End, 0.7f to Alignment.End).forEach { (w, align) ->
+            Box(Modifier.weight(w), contentAlignment = if (align == Alignment.Start) Alignment.CenterStart else Alignment.CenterEnd) {
+                Box(Modifier.fillMaxWidth(0.6f).height(14.dp).background(tint, RoundedCornerShape(7.dp)))
+            }
+        }
+    }
 }
 
 @Composable
