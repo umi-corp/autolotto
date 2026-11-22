@@ -45,13 +45,12 @@
     <string name="buttonAllAuto">전부 자동</string>
     <string name="buttonReset">초기화</string>
     <string name="buttonConfirmGame">게임 %1$s 확정 ✓</string>
-    <string name="buttonConfirmSemiAuto">나머지 %1$d개 자동 ✓</string>
+    <string name="buttonConfirmSemiAuto">🎲 나머지 %1$d개 자동 ✓</string>
     <string name="selectionCount">선택: %1$d/6</string>
     <string name="gameSummaryTitle">📋 게임 설정</string>
     <string name="gameSummarySelecting">지금 설정 중</string>
     <string name="rollingAllAuto">행운을 굴리는 중</string>
     <string name="gameSummaryNotSet">미설정</string>
-    <string name="gameSummaryAuto">🎲 자동 (매주 랜덤)</string>
     <string name="buttonSaveDone">저장 완료!</string>
     <string name="buttonSaveGames">%1$d게임 설정 저장</string>
     <string name="buttonSaveEmpty">게임 없이 저장</string>

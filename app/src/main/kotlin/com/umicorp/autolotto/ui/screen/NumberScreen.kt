@@ -80,7 +80,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -91,6 +91,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.umicorp.autolotto.R
 import com.umicorp.autolotto.ui.appViewModel
@@ -615,21 +616,32 @@ private fun NumberGrid(selected: Set<Int>, onToggle: (Int) -> Unit) {
 @Composable
 private fun SelectedNumbers(selected: Set<Int>) {
     SectionCard(contentPadding = PaddingValues(16.dp)) {
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        // 개수와 볼을 두 줄로 둔다 — 한 줄이면 360dp 폭에서 6칸이 넘친다
+        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 stringResource(R.string.selectionCount, selected.size),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
             )
-            Spacer(Modifier.width(8.dp))
-            selected.sorted().forEach {
-                LottoBall(it, size = 36.dp, modifier = Modifier.padding(end = 6.dp))
+            if (selected.isNotEmpty()) {
+                Spacer(Modifier.height(10.dp))
+                SixSlots(selected.sorted(), size = 36.dp, gap = 6.dp)
             }
+        }
+    }
+}
+
+/** 고른 번호는 볼, 구매 때 랜덤으로 채울 자리는 같은 크기의 주사위 원 — 자동·반자동·수동이 같은 6칸으로 읽힌다 */
+@Composable
+private fun SixSlots(numbers: List<Int>, size: Dp, gap: Dp, modifier: Modifier = Modifier) {
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(gap)) {
+        numbers.forEach { LottoBall(it, size = size) }
+        repeat(6 - numbers.size) {
+            Box(
+                Modifier.size(size).background(LgTeal, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) { Icon(Icons.Rounded.Casino, null, tint = Color.White, modifier = Modifier.size(size * 0.57f)) }
         }
     }
 }
@@ -675,15 +687,6 @@ private fun GameSummary(
             val g = games[i]
             val confirmed = g != null
             val selecting = g == null && i == currentSlot
-            val label = when {
-                g == null -> if (selecting) stringResource(R.string.gameSummarySelecting)
-                else stringResource(R.string.gameSummaryNotSet)
-                g.isEmpty() -> stringResource(R.string.gameSummaryAuto)
-                else -> g.joinToString(", ") + ", ?".repeat(6 - g.size)
-            }
-            val semiAutoDescription = if (g != null && g.size in 1..5) {
-                stringResource(R.string.cdSemiAutoGame, g.joinToString(", "), 6 - g.size)
-            } else null
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -725,19 +728,28 @@ private fun GameSummary(
                     )
                     Spacer(Modifier.width(6.dp))
                 }
-                Text(
-                    label,
-                    modifier = Modifier.weight(1f).semantics {
-                        semiAutoDescription?.let { contentDescription = it }
-                    },
-                    color = when {
-                        selecting -> LgTeal
-                        confirmed -> MaterialTheme.colorScheme.onSurface
-                        else -> MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = if (confirmed || selecting) FontWeight.SemiBold else FontWeight.Normal,
-                )
+                if (g != null) {
+                    val description = when {
+                        g.isEmpty() -> stringResource(R.string.autoNumberTitle)
+                        g.size < 6 -> stringResource(R.string.cdSemiAutoGame, g.joinToString(", "), 6 - g.size)
+                        else -> g.joinToString(", ")
+                    }
+                    SixSlots(
+                        g,
+                        size = 28.dp,
+                        gap = 4.dp,
+                        modifier = Modifier.weight(1f).clearAndSetSemantics { contentDescription = description },
+                    )
+                } else {
+                    Text(
+                        if (selecting) stringResource(R.string.gameSummarySelecting)
+                        else stringResource(R.string.gameSummaryNotSet),
+                        modifier = Modifier.weight(1f),
+                        color = if (selecting) LgTeal else MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = if (selecting) FontWeight.SemiBold else FontWeight.Normal,
+                    )
+                }
                 if (confirmed) {
                     // 터치 타깃 확대(18dp→40dp) + contentDescription(접근성).
                     IconButton(onClick = { onRemove(i) }, modifier = Modifier.size(40.dp)) {
