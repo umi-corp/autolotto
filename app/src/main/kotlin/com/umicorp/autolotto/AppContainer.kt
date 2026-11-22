@@ -17,6 +17,7 @@ import com.umicorp.autolotto.dhlottery.DhlotteryException
 import com.umicorp.autolotto.dhlottery.DhlotterySession
 import com.umicorp.autolotto.dhlottery.HistoryService
 import com.umicorp.autolotto.dhlottery.LedgerService
+import com.umicorp.autolotto.dhlottery.resolveWinCounts
 import com.umicorp.autolotto.dhlottery.PurchaseResult
 import com.umicorp.autolotto.dhlottery.PurchaseService
 import com.umicorp.autolotto.dhlottery.ResultService
@@ -482,7 +483,9 @@ class AppContainer(context: Context) {
 
     /** 누적 요약 원장 동기화(+프리필). 연결 실패는 IOException. */
     suspend fun syncLedger(userId: String, onProgress: (Ledger) -> Unit): Ledger = withContext(Dispatchers.IO) {
-        LedgerSync(ledgerStore, { OffsetDateTime.now(LEDGER_ZONE) }).run(userId, LedgerService(session), onProgress)
+        val service = LedgerService(session)
+        LedgerSync(ledgerStore, { OffsetDateTime.now(LEDGER_ZONE) }, resolve = { resolveWinCounts(it, service) })
+            .run(userId, service, onProgress)
     }
 
     // === 데이터 초기화 (원본 설정 화면 `_showResetDialog`) ===

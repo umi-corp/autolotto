@@ -12,6 +12,7 @@ import com.umicorp.autolotto.dhlottery.AuthService
 import com.umicorp.autolotto.dhlottery.DhlotterySession
 import com.umicorp.autolotto.dhlottery.HistoryService
 import com.umicorp.autolotto.dhlottery.LedgerService
+import com.umicorp.autolotto.dhlottery.resolveWinCounts
 import com.umicorp.autolotto.dhlottery.PurchaseService
 import com.umicorp.autolotto.dhlottery.ResultService
 import kotlinx.coroutines.CancellationException
@@ -129,8 +130,9 @@ class CheckResultWorker(context: Context, params: WorkerParameters) : CoroutineW
     /** 누적 요약 원장 갱신. 실패해도 알림·재시도 판정은 바꾸지 않는다. */
     private suspend fun syncLedger(userId: String, session: DhlotterySession) {
         try {
-            LedgerSync(LedgerStore(File(ctx.filesDir, "ledger"), "645"), { OffsetDateTime.now(LEDGER_ZONE) })
-                .run(userId, LedgerService(session))
+            val service = LedgerService(session)
+            LedgerSync(LedgerStore(File(ctx.filesDir, "ledger"), "645"), { OffsetDateTime.now(LEDGER_ZONE) }, resolve = { resolveWinCounts(it, service) })
+                .run(userId, service)
         } catch (e: CancellationException) {
             throw e
         } catch (_: Exception) {

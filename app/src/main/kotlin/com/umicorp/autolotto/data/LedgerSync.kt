@@ -19,7 +19,7 @@ class LedgerSync(
     // 동행복권 차단 기준은 공개되지 않았다. 첫 프리필(약 24창)이 요청을 몰아 보내지 않게 창마다 쉰다.
     private val pause: suspend () -> Unit = { delay(PREFILL_PAUSE_MS) },
 ) {
-    /** 동기화 창 → resolve → 프리필 순서. 창마다 저장하므로 IOException이 나도 받은 창은 남는다. */
+    /** 동기화 창 → resolve → 프리필 → (프리필로 받은 행) resolve 순서. 창마다 저장하므로 IOException이 나도 받은 창은 남는다. */
     suspend fun run(userId: String, fetcher: WindowFetcher, onProgress: (Ledger) -> Unit = {}): Ledger =
         LedgerLock.mutex.withLock {
             val at = now()
@@ -31,6 +31,7 @@ class LedgerSync(
             }
             // 프리필 하한은 처음 시작한 날 기준으로 고정한다. 첫 프리필 창 전에 저장해 둔다.
             var p = l.prefill ?: initialPrefill(today)
+            var prefilled = false
             l = l.copy(syncedAt = at, rows = resolve(l.rows), prefill = p)
             store.save(userId, l)
             onProgress(l)
@@ -39,6 +40,12 @@ class LedgerSync(
                 pause()
                 p = advancePrefill(p, w)
                 l = l.copy(rows = applyWindow(l.rows, fetcher.fetch(w)), prefill = p)
+                store.save(userId, l)
+                onProgress(l)
+                prefilled = true
+            }
+            if (prefilled) {
+                l = l.copy(rows = resolve(l.rows))
                 store.save(userId, l)
                 onProgress(l)
             }

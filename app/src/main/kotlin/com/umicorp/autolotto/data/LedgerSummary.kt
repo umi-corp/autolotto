@@ -23,6 +23,7 @@ data class LedgerSummary(
 
 private fun List<LedgerRow>.purchase() = sumOf { it.q } * UNIT_PRICE
 private fun List<LedgerRow>.prize() = filter { it.st == RowStatus.WIN }.sumOf { it.amt }
+private fun List<LedgerRow>.wins() = filter { it.st == RowStatus.WIN }.sumOf { it.w ?: 1 }
 
 fun summarize(rows: List<LedgerRow>): LedgerSummary {
     val units = rows.sumOf { it.q }
@@ -35,12 +36,12 @@ fun summarize(rows: List<LedgerRow>): LedgerSummary {
         purchaseWon = purchase,
         units = units,
         prizeWon = prize,
-        wins = rows.count { it.st == RowStatus.WIN },
+        wins = rows.wins(),
         annuityWins = rows.count { it.rk in ANNUITY_RANKS },
         pending = rows.count { it.st == RowStatus.PENDING },
         returnPct = if (settled > 0) prize * 100.0 / settled else null,
         monthly = rows.groupBy { YearMonth.from(it.d) }
-            .map { (m, rs) -> MonthlyTotal(m, rs.purchase(), rs.prize(), rs.count { it.st == RowStatus.WIN }) }
+            .map { (m, rs) -> MonthlyTotal(m, rs.purchase(), rs.prize(), rs.wins()) }
             .sortedByDescending { it.month },
     )
 }

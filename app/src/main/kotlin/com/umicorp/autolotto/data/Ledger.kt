@@ -24,6 +24,8 @@ data class LedgerRow(
     val amt: Long,
     val rk: String? = null,
     val u: Boolean = false,
+    /** 당첨 게임 수(6/45 주문 상세에서 센 값). null이면 당첨 행을 1회로 센다. */
+    val w: Int? = null,
 )
 
 data class PrefillState(val done: Boolean, val floor: LocalDate, val nextEnd: LocalDate)
@@ -61,6 +63,7 @@ private fun LedgerRow.toJson() = JSONObject()
     .apply {
         rk?.let { put("rk", it) }
         if (u) put("u", true)
+        w?.let { put("w", it) }
     }
 
 fun parseLedger(json: String, product: String): Ledger = try {
@@ -91,11 +94,19 @@ private fun parseRow(o: JSONObject) = LedgerRow(
     amt = o.getLong("amt"),
     rk = o.optString("rk").takeIf { it.isNotEmpty() },
     u = o.optBoolean("u", false),
+    w = if (o.has("w")) o.getInt("w") else null,
 )
 
 /** 키가 같은 행은 서버 값으로 덮어쓰고 새 키는 더한다. 서버에 없는 원장 행은 남긴다(서버 보관 한도 밖 기록 보존). */
-fun applyWindow(rows: List<LedgerRow>, serverRows: List<LedgerRow>): List<LedgerRow> =
-    (rows + serverRows).associateBy { it.k }.values.sortedByDescending { it.d }
+fun applyWindow(rows: List<LedgerRow>, serverRows: List<LedgerRow>): List<LedgerRow> {
+    val old = rows.associateBy { it.k }
+    // 서버 행에는 당첨 게임 수가 없다. 결과가 그대로면 이미 센 값을 유지한다.
+    val fresh = serverRows.map { s ->
+        val o = old[s.k]
+        if (s.w == null && o?.w != null && o.st == s.st && o.amt == s.amt) s.copy(w = o.w) else s
+    }
+    return (rows + fresh).associateBy { it.k }.values.sortedByDescending { it.d }
+}
 
 /** 서버는 `from + 3개월 < to`인 창을 거부한다. 월말 보정(05-29 − 3개월 = 02-28)이 걸리면 시작일을 그만큼 늦춘다. */
 private fun threeMonthsBefore(end: LocalDate): LocalDate =

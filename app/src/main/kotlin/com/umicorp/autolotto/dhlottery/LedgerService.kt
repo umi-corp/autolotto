@@ -15,13 +15,39 @@ class LedgerService(private val session: DhlotterySession) : WindowFetcher {
 
     private var visited = false
 
+    // 원장 페이지 방문(Referer·쿠키)은 프리필 창마다가 아니라 실행당 한 번이면 된다.
+    private fun visitOnce() {
+        if (visited) return
+        session.get(session.base(ApiConstants.MYPAGE_LEDGER)).close()
+        visited = true
+    }
+
     override suspend fun fetch(w: Window): List<LedgerRow> = withContext(Dispatchers.IO) {
-        // 원장 페이지 방문(Referer·쿠키)은 프리필 창마다가 아니라 실행당 한 번이면 된다.
-        if (!visited) {
-            session.get(session.base(ApiConstants.MYPAGE_LEDGER)).close()
-            visited = true
-        }
+        visitOnce()
         fetchLedgerPages(session, w).filter { it.optString("ltGdsNm") == "로또6/45" }.mapNotNull(::toRow)
+    }
+
+    /**
+     * 당첨 주문의 당첨 게임 수. 목록은 주문 단위 금액만 주므로 티켓 상세의 게임별 등수로 센다.
+     * 상세 조회에 바코드(gmInfo)가 필요해 구매일 하루 창 목록에서 주문을 다시 찾는다. 알 수 없으면 null.
+     */
+    suspend fun winCount(row: LedgerRow): Int? = withContext(Dispatchers.IO) {
+        visitOnce()
+        val item = fetchLedgerPages(session, Window(row.d, row.d)).firstOrNull { it.optString("ntslOrdrNo") == row.k }
+        val barcode = item?.optString("gmInfo").orEmpty().ifEmpty { return@withContext null }
+        val body = session.get(
+            session.base(ApiConstants.TICKET_DETAIL) +
+                "?ntslOrdrNo=${row.k}&srchStrDt=${YMD.format(row.d.minusDays(7))}&srchEndDt=${YMD.format(row.d.plusDays(7))}&barcd=$barcode",
+            mapOf("X-Requested-With" to "XMLHttpRequest", "Referer" to session.base(ApiConstants.MYPAGE_LEDGER)),
+        ).use {
+            if (!it.isSuccessful) throw IOException("ledger_detail_http_${it.code}")
+            it.body?.string().orEmpty()
+        }
+        if (!body.trimStart().startsWith("{")) throw IOException("ledger_detail_not_json")
+        val ticket = JSONObject(body).optJSONObject("data")?.takeIf { it.optBoolean("success") }?.optJSONObject("ticket")
+            ?.takeIf { it.optBoolean("drawed") } ?: return@withContext null
+        val games = ticket.optJSONArray("game_dtl") ?: return@withContext null
+        (0 until games.length()).count { games.getJSONObject(it).optInt("rank", 0) in 1..5 }.takeIf { it > 0 }
     }
 
     private fun toRow(o: JSONObject): LedgerRow? {
@@ -37,6 +63,20 @@ class LedgerService(private val session: DhlotterySession) : WindowFetcher {
             amt = if (st == RowStatus.PENDING) 0 else o.optString("ltWnAmt").filter(Char::isDigit).toLongOrNull() ?: 0,
         )
     }
+}
+
+/** 게임 수를 모르는 당첨 주문만 상세로 센다. 연결이 실패하면 남은 행은 다음 동기화로 미룬다. */
+suspend fun resolveWinCounts(rows: List<LedgerRow>, service: LedgerService): List<LedgerRow> {
+    val counts = mutableMapOf<String, Int>()
+    for (row in rows.filter { it.st == RowStatus.WIN && it.w == null }) {
+        val n = try {
+            service.winCount(row)
+        } catch (_: IOException) {
+            break
+        }
+        if (n != null) counts[row.k] = n
+    }
+    return rows.map { row -> counts[row.k]?.let { row.copy(w = it) } ?: row }
 }
 
 private const val PAGE_SIZE = 100

@@ -76,6 +76,17 @@ class LedgerSummaryTest {
         assertEquals(3, pages[0].months.count { it != null })
     }
 
+    // 6/45 한 주문(5게임)에서 두 게임이 당첨되면 당첨 2회다. 게임 수를 모르면 주문 1회로 센다.
+    @Test fun wins_countWinningGamesWhenKnown() {
+        val rows = listOf(
+            LedgerRow("a", LocalDate.parse("2026-06-14"), 1229, 5, RowStatus.WIN, 10_000, w = 2),
+            LedgerRow("b", LocalDate.parse("2026-06-07"), 1228, 5, RowStatus.WIN, 5_000),
+        )
+        val s = summarize(rows)
+        assertEquals(3, s.wins)
+        assertEquals(3, s.monthly.single().wins)
+    }
+
     @Test fun empty_hasNullSinceAndRatio() {
         val s = summarize(emptyList())
         assertNull(s.since)

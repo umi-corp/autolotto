@@ -94,6 +94,12 @@ class LedgerSyncTest {
         assertTrue(keys.any { it.startsWith("B") })
     }
 
+    // 프리필로 받은 행도 같은 실행에서 resolve된다(6/45 당첨 게임 수, 720 재판정).
+    @Test fun run_resolveAppliedToPrefillRowsInSameRun() = runBlocking {
+        sync(resolve = { rows -> rows.map { it.copy(u = false) } }).run("user1", Recorder(u = true))
+        assertFalse(store.load("user1").rows.any { it.u })
+    }
+
     @Test fun run_resolveApplied() = runBlocking {
         sync(resolve = { rows -> rows.map { it.copy(u = false) } }).run("user1", Recorder(u = true))
         sync(resolve = { rows -> rows.map { it.copy(u = false) } }).run("user1", Recorder(u = true))

@@ -19,6 +19,7 @@ class LedgerTest {
             listOf(
                 row("A", "2026-11-21"),
                 LedgerRow("B|1:123456", LocalDate.parse("2026-07-23"), 326, 1, RowStatus.WIN, 1000, rk = "SEVENTH", u = true),
+                LedgerRow("C", LocalDate.parse("2026-06-14"), 1229, 5, RowStatus.WIN, 10_000, w = 2),
             ),
         )
         assertEquals(l, parseLedger(l.toJson(), "645"))
@@ -37,6 +38,13 @@ class LedgerTest {
         assertEquals(setOf("A", "OLD", "N"), out.keys)
         assertEquals(RowStatus.WIN, out.getValue("A").st)
         assertEquals(5000L, out.getValue("A").amt)
+    }
+
+    // 회귀 방지: 최근 구간을 다시 받을 때 상세 조회로 센 당첨 게임 수를 잃지 않는다.
+    @Test fun applyWindow_keepsWinCountWhileResultUnchanged() {
+        val local = listOf(row("A", "2026-06-14", RowStatus.WIN, 10_000).copy(w = 2))
+        assertEquals(2, applyWindow(local, listOf(row("A", "2026-06-14", RowStatus.WIN, 10_000))).single().w)
+        assertEquals(null, applyWindow(local, listOf(row("A", "2026-06-14", RowStatus.WIN, 15_000))).single().w)
     }
 
     @Test fun applyWindow_idempotent() {
