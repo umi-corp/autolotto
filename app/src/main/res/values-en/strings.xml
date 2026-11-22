@@ -32,7 +32,7 @@
 
     <string name="numberSetupTitle">Number Setup</string>
     <string name="bannerEnableAutoPurchase">Please enable auto purchase in Settings</string>
-    <string name="numberSetupInstruction">Set numbers for weekly auto purchase.\nManual numbers are fixed weekly, auto numbers are randomly generated.</string>
+    <string name="numberSetupInstruction">Set numbers for weekly auto purchase.\nManual numbers are fixed weekly, auto numbers are randomly generated.\nPick just 1–5 numbers and the rest are filled in automatically each time.</string>
     <string name="modeManual">✏️ Manual</string>
     <string name="modeAuto">🎲 Auto</string>
     <string name="autoNumberTitle">Auto Numbers</string>
@@ -40,6 +40,7 @@
     <string name="buttonAllAuto">All Auto</string>
     <string name="buttonReset">Reset</string>
     <string name="buttonConfirmGame">Confirm Game %1$s ✓</string>
+    <string name="buttonConfirmSemiAuto">Auto-fill %1$d more ✓</string>
     <string name="selectionCount">Selected: %1$d/6</string>
     <string name="gameSummaryTitle">📋 Game Settings</string>
     <string name="gameSummarySelecting">Now picking</string>
@@ -163,6 +164,7 @@
     <!-- accessibility (contentDescription) -->
     <string name="cdRefresh">Refresh</string>
     <string name="cdRemoveGame">Remove game</string>
+    <string name="cdSemiAutoGame">%1$s, %2$d more filled automatically</string>
     <string name="cdShowPassword">Show password</string>
     <string name="cdHidePassword">Hide password</string>
 

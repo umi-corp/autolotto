@@ -24,6 +24,12 @@ class InstantPurchaseLogicTest {
     }
 
     @Test
+    fun `반자동 슬롯(1~5개)은 복원 후 수동 목록으로 간다`() {
+        val parsed = parseManualGames("""[[7,33],[],null,null,null]""")
+        assertEquals(1 to listOf(listOf(7, 33)), splitSlots(parsed))
+    }
+
+    @Test
     fun `tapSlotsOutcome - null은 저장소 오류, 0게임은 설정 유도, 그 외 진행`() {
         assertEquals(TapSlotsOutcome.STORE_ERROR, tapSlotsOutcome(null))                       // 읽기 실패 ≠ 미설정
         assertEquals(TapSlotsOutcome.NEEDS_SETUP, tapSlotsOutcome(List(5) { null }))

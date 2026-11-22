@@ -1,6 +1,7 @@
 package com.umicorp.autolotto.dhlottery
 
 import kotlinx.coroutines.runBlocking
+import okhttp3.HttpUrl
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -18,6 +19,7 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import kotlin.random.Random
 
 /**
  * PurchaseService 테스트.
@@ -149,6 +151,28 @@ class PurchaseServiceTest {
         assertEquals("E", arr.getJSONObject(4).getString("alpabet"))
     }
 
+    // ---------- fillSemiAuto ----------
+
+    @Test
+    fun `fillSemiAuto fills to six distinct numbers keeping the fixed ones`() {
+        for (size in 1..5) {
+            val fixed = (1..size).map { it * 7 }
+            repeat(50) { seed ->
+                val out = PurchaseService.fillSemiAuto(fixed, Random(seed))
+                assertEquals(6, out.size)
+                assertEquals(6, out.toSet().size)
+                assertTrue(out.all { it in 1..45 })
+                assertTrue(out.containsAll(fixed))
+            }
+        }
+    }
+
+    @Test
+    fun `fillSemiAuto keeps a full manual game as is`() {
+        val manual = listOf(3, 9, 14, 22, 30, 41)
+        assertEquals(manual, PurchaseService.fillSemiAuto(manual, Random(0)))
+    }
+
     // ---------- parseNumbersFromResponse ----------
 
     @Test
@@ -252,6 +276,32 @@ class PurchaseServiceTest {
         assertEquals(0, result.autoCount)
         assertEquals(1, result.manualCount)
         assertEquals(listOf(listOf(1, 2, 3, 4, 5, 6)), result.numbers)
+    }
+
+    @Test
+    fun `execBuy sends a semi-auto game as six manual numbers`() = runBlocking {
+        val (auth, session) = loggedIn()
+        var param: String? = null
+        server.dispatcher = object : Dispatcher() {
+            override fun dispatch(request: RecordedRequest): MockResponse =
+                when (request.path?.substringBefore('?')) {
+                    ApiConstants.READY_SOCKET -> ok("{\"ready_ip\":\"10.0.0.1\"}")
+                    ApiConstants.EXEC_BUY -> {
+                        param = HttpUrl.Builder().scheme("http").host("x")
+                            .encodedQuery(request.body.readUtf8()).build().queryParameter("param")
+                        ok("{\"result\":{\"resultCode\":\"100\",\"arrGameChoiceNum\":[]}}")
+                    }
+                    else -> ok("")
+                }
+        }
+        PurchaseService(auth, session)
+            .purchase(autoGames = 0, manualNumbers = listOf(listOf(7, 33)))
+
+        val game = JSONArray(param).getJSONObject(0)
+        assertEquals("1", game.getString("genType"))
+        val nums = game.getString("arrGameChoiceNum").split(",").map { it.toInt() }
+        assertEquals(6, nums.toSet().size)
+        assertTrue(nums.containsAll(listOf(7, 33)))
     }
 
     @Test
