@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AutoLotto: Lotto 6/45 auto purchase and win checking for Android</title>
-<meta name="description" content="Schedule a weekly auto purchase of DHLottery Lotto 6/45 and get results and notifications after Saturday&#x27;s draw. Choose manual or automatic numbers for up to 5 games. Account information is encrypted on your device. Free, ad-free and open source. Requires Android 12 or later.">
+<meta name="description" content="Schedule a weekly auto purchase of DHLottery Lotto 6/45 and get results and notifications after Saturday&#x27;s draw. Choose manual, semi-auto or automatic numbers for up to 5 games, and review past spending and winnings in totals and monthly records. Account information is encrypted on your device. Free, ad-free and open source. Requires Android 12 or later.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f1e7">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#15161b">
@@ -17,7 +17,7 @@
 <meta property="og:locale:alternate" content="ja_JP">
 <meta property="og:type" content="website">
 <meta property="og:title" content="AutoLotto: Lotto 6/45 auto purchase and win checking for Android">
-<meta property="og:description" content="Schedule a weekly auto purchase of DHLottery Lotto 6/45 and get results and notifications after Saturday&#x27;s draw. Choose manual or automatic numbers for up to 5 games. Account information is encrypted on your device. Free, ad-free and open source. Requires Android 12 or later.">
+<meta property="og:description" content="Schedule a weekly auto purchase of DHLottery Lotto 6/45 and get results and notifications after Saturday&#x27;s draw. Choose manual, semi-auto or automatic numbers for up to 5 games, and review past spending and winnings in totals and monthly records. Account information is encrypted on your device. Free, ad-free and open source. Requires Android 12 or later.">
 <meta property="og:url" content="https://autolotto.umicorp.kr/en/">
 <meta property="og:image" content="https://autolotto.umicorp.kr/assets/og.jpg">
 <meta property="og:image:width" content="1200">
@@ -39,7 +39,7 @@
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q2ZL599WPJ"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-Q2ZL599WPJ');</script>
 <link rel="preload" href="../assets/fonts/space-grotesk.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="../assets/site.css?v=20261112a">
+<link rel="stylesheet" href="../assets/site.css?v=20261122a">
 <script defer src="../assets/site.js"></script>
 <script type="application/ld+json">
 {
@@ -77,7 +77,7 @@
    "alternateName": "오토로또",
    "operatingSystem": "Android 12+",
    "applicationCategory": "UtilitiesApplication",
-   "description": "Schedule a weekly auto purchase of DHLottery Lotto 6/45 and get results and notifications after Saturday's draw. Choose manual or automatic numbers for up to 5 games. Account information is encrypted on your device. Free, ad-free and open source. Requires Android 12 or later.",
+   "description": "Schedule a weekly auto purchase of DHLottery Lotto 6/45 and get results and notifications after Saturday's draw. Choose manual, semi-auto or automatic numbers for up to 5 games, and review past spending and winnings in totals and monthly records. Account information is encrypted on your device. Free, ad-free and open source. Requires Android 12 or later.",
    "url": "https://autolotto.umicorp.kr/en/",
    "installUrl": "https://github.com/umi-corp/autolotto/releases/latest",
    "downloadUrl": "https://github.com/umi-corp/autolotto/releases/latest",
@@ -86,7 +86,10 @@
     "https://autolotto.umicorp.kr/assets/shots/home.webp",
     "https://autolotto.umicorp.kr/assets/shots/numbers.webp",
     "https://autolotto.umicorp.kr/assets/shots/history.webp",
-    "https://autolotto.umicorp.kr/assets/shots/settings.webp"
+    "https://autolotto.umicorp.kr/assets/shots/settings.webp",
+    "https://autolotto.umicorp.kr/assets/shots/summary.webp",
+    "https://autolotto.umicorp.kr/assets/shots/monthly.webp",
+    "https://autolotto.umicorp.kr/assets/shots/semi-auto.webp"
    ],
    "offers": {
     "@type": "Offer",
@@ -104,6 +107,9 @@
     "Instant purchase",
     "Low balance alerts",
     "Purchase history",
+    "Spending and winnings totals",
+    "Monthly records",
+    "Semi-auto numbers",
     "Secure storage"
    ]
   },
@@ -146,6 +152,14 @@
     },
     {
      "@type": "Question",
+     "name": "How do semi-auto numbers work?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "In the Numbers tab, pick just 1–5 numbers for a game and confirm to make it a semi-auto game. Your picked numbers stay the same every time, and the remaining spots are filled with new random numbers at each purchase."
+     }
+    },
+    {
+     "@type": "Question",
      "name": "Does auto purchase work when the app is closed?",
      "acceptedAnswer": {
       "@type": "Answer",
@@ -181,6 +195,7 @@
     <a class="brand" href="../en/"><img src="../assets/icon-160.webp" alt="" width="32" height="32"><span>AutoLotto</span></a>
     <div class="nav-right">
       <div class="nav-links">
+        <a href="#whats-new">What's new</a>
         <a href="#flow">How it works</a>
         <a href="#features">Features</a>
         <a href="#how">Getting started</a>
@@ -213,11 +228,39 @@
     </div>
   </section>
 
+  <section class="band alt" id="whats-new" aria-labelledby="whats-new-title">
+    <div class="wrap">
+      <h2 class="band-title" id="whats-new-title">New features</h2>
+      <p class="band-desc">Purchase history totals and semi-auto numbers are now available</p>
+      <div class="feature">
+        <div>
+          <h3>Spending and winnings totals</h3>
+          <p>The Totals card at the top of the History tab shows what you have spent, what you have won, and Winnings vs. spent for past purchases. It adds up records available from DHLottery as far back as January 1 five years ago and shows the date the totals start from.</p>
+        </div>
+        <div class="feature-media"><div class="phone"><img src="../assets/shots/summary.webp" alt="Totals card in the History tab showing amount spent and games, winnings and wins, Winnings vs. spent, and Monthly view" width="540" height="1200" loading="lazy" decoding="async"></div></div>
+      </div>
+      <div class="feature rev">
+        <div>
+          <h3>Monthly records</h3>
+          <p>Open Monthly view from the Totals card and swipe between years to see each month's spending and winnings as bars. The table below lists each month's spending, winnings and number of wins.</p>
+        </div>
+        <div class="feature-media"><div class="phone"><img src="../assets/shots/monthly.webp" alt="Monthly spending and winnings sheet with a year switcher, bars for January to December, and a monthly table" width="540" height="1200" loading="lazy" decoding="async"></div></div>
+      </div>
+      <div class="feature">
+        <div>
+          <h3>Semi-auto numbers</h3>
+          <p>Pick just 1–5 numbers for a game, and the rest are filled in automatically at each purchase. Picked numbers appear as balls, and spots to be filled automatically appear as dice.</p>
+        </div>
+        <div class="feature-media"><div class="phone"><img src="../assets/shots/semi-auto.webp" alt="Semi-auto setup in the Numbers tab with 3 picked numbers shown as balls, 3 dice for the remaining spots, and the Auto-fill 3 more button" width="540" height="1200" loading="lazy" decoding="async"></div></div>
+      </div>
+    </div>
+  </section>
+
   <section class="band" id="flow" aria-labelledby="flow-title">
     <div class="wrap">
       <h2 class="band-title" id="flow-title">From number setup to automatic win notifications</h2>
       <p class="band-desc">The app automatically purchases, checks results and sends notifications at the set time without being open</p>
-      <ol class="stages"><li class="stage"><span class="stage-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><circle cx="17.5" cy="17.5" r="3.5"/></svg></span><h3>Number setup</h3><p>Choose up to 5 games, A–E, with fixed manual numbers or new automatic numbers each week for each game</p></li><li class="stage"><span class="stage-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><h3>Auto purchase</h3><p>Buy with saved numbers on your chosen day and time, with Sunday at 9 a.m. as the default</p></li><li class="stage"><span class="stage-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg></span><h3>Results check</h3><p>The app automatically checks that week's draw results every Saturday at 21:00 and shows each game's rank and prize</p></li><li class="stage"><span class="stage-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4l2-2z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></span><h3>Notifications</h3><p>Get push notifications for completed purchases, results and low deposit balances</p></li></ol>
+      <ol class="stages"><li class="stage"><span class="stage-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><circle cx="17.5" cy="17.5" r="3.5"/></svg></span><h3>Number setup</h3><p>Choose up to 5 games, A–E, and give each game fixed manual numbers, semi-auto numbers with only some fixed, or new automatic numbers each week</p></li><li class="stage"><span class="stage-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><h3>Auto purchase</h3><p>Buy with saved numbers on your chosen day and time, with Sunday at 9 a.m. as the default</p></li><li class="stage"><span class="stage-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg></span><h3>Results check</h3><p>The app automatically checks that week's draw results every Saturday at 21:00 and shows each game's rank and prize</p></li><li class="stage"><span class="stage-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4l2-2z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></span><h3>Notifications</h3><p>Get push notifications for completed purchases, results and low deposit balances</p></li></ol>
     </div>
   </section>
 
@@ -228,14 +271,14 @@
       <div class="feature">
         <div>
           <h3>Numbers for each game</h3>
-          <p>Choose manual or automatic numbers for each game. Pick 6 numbers from 1–45 manually, or use the All auto button to switch every game to automatic numbers.</p>
+          <p>Choose manual or automatic numbers for each game. Pick 6 numbers from 1–45 manually, or pick just 1–5 to save a semi-auto game whose remaining numbers are filled in at each purchase. Use the All Auto button to switch every game to automatic numbers.</p>
         </div>
         <div class="feature-media"><div class="phone"><img src="../assets/shots/numbers.webp" alt="Number settings screen showing game selection A–E, manual and automatic options, and numbered balls 1–45" width="540" height="1200" loading="lazy" decoding="async"></div></div>
       </div>
       <div class="feature rev">
         <div>
           <h3>Purchase history</h3>
-          <p>The app automatically loads the last 3 months of purchases; select Show more to see up to 1 year. Each draw shows game numbers, winning numbers, prize tiers and winnings.</p>
+          <p>The Totals card at the top shows your spending and winnings. The list by draw loads the last 3 months of purchases automatically; select Load More to see up to 1 year. Each draw shows game numbers, winning numbers, prize tiers and winnings.</p>
         </div>
         <div class="feature-media"><div class="phone"><img src="../assets/shots/history.webp" alt="Purchase history screen showing game numbers and win status by draw" width="540" height="1200" loading="lazy" decoding="async"></div></div>
       </div>
@@ -253,14 +296,14 @@
   <section class="band" id="how" aria-labelledby="how-title">
     <div class="wrap">
       <h2 class="band-title" id="how-title">How to use</h2>
-      <ol class="steps"><li class="step" data-n="1"><h3>App installation</h3><p>Download the APK from this page and install it, allowing “Install unknown apps” when prompted</p></li><li class="step" data-n="2"><h3>DHLottery login</h3><p>Sign in with your DHLottery ID and password in the Settings tab</p></li><li class="step" data-n="3"><h3>Number selection</h3><p>Choose manual or automatic numbers for each game in the Numbers tab, then save them</p></li><li class="step" data-n="4"><h3>Enable auto purchase</h3><p>Enable auto purchase in the Settings tab, and purchases will run automatically each week</p></li></ol>
+      <ol class="steps"><li class="step" data-n="1"><h3>App installation</h3><p>Download the APK from this page and install it, allowing “Install unknown apps” when prompted</p></li><li class="step" data-n="2"><h3>DHLottery login</h3><p>Sign in with your DHLottery ID and password in the Settings tab</p></li><li class="step" data-n="3"><h3>Number selection</h3><p>Choose manual, semi-auto or automatic numbers for each game in the Numbers tab, then save them</p></li><li class="step" data-n="4"><h3>Enable auto purchase</h3><p>Enable auto purchase in the Settings tab, and purchases will run automatically each week</p></li></ol>
     </div>
   </section>
 
   <section class="band alt" id="faq" aria-labelledby="faq-title">
     <div class="wrap">
       <h2 class="band-title" id="faq-title">Frequently asked questions</h2>
-      <div class="faq"><details><summary>What do I need to use AutoLotto?</summary><p>You need a DHLottery account at dhlottery.co.kr and enough deposit to cover your purchase. Add funds on the DHLottery website; the app links to the deposit page.</p></details><details><summary>Is my DHLottery account information secure?</summary><p>Your account information is encrypted with Android Keystore, stored only on your device, and used only to sign in to DHLottery; the app has no server of its own. You can verify this in the public source code on GitHub.</p></details><details><summary>Why isn't AutoLotto on Google Play?</summary><p>Google Play's gambling policy does not allow lottery purchase apps. The APK is distributed through GitHub releases, and you can install new versions through in-app updates.</p></details><details><summary>How many games can I buy per draw?</summary><p>DHLottery limits online purchases to 5 games (5,000 won) per draw. The DHLottery server determines whether you have exceeded the limit, and AutoLotto displays the DHLottery error message unchanged if you have.</p></details><details><summary>Does auto purchase work when the app is closed?</summary><p>The app makes an auto purchase at your scheduled time without being open, but it needs an internet connection. Exclude it from battery optimization to help it run on time.</p></details><details><summary>Does AutoLotto support iPhone?</summary><p>AutoLotto requires Android 12 or later. There is no iPhone app.</p></details><details><summary>Is AutoLotto an official DHLottery app?</summary><p>AutoLotto is not an official DHLottery app; it was developed by UMI Corp. You are responsible for your use of the app, and anyone under 19 cannot buy lottery tickets.</p></details></div>
+      <div class="faq"><details><summary>What do I need to use AutoLotto?</summary><p>You need a DHLottery account at dhlottery.co.kr and enough deposit to cover your purchase. Add funds on the DHLottery website; the app links to the deposit page.</p></details><details><summary>Is my DHLottery account information secure?</summary><p>Your account information is encrypted with Android Keystore, stored only on your device, and used only to sign in to DHLottery; the app has no server of its own. You can verify this in the public source code on GitHub.</p></details><details><summary>Why isn't AutoLotto on Google Play?</summary><p>Google Play's gambling policy does not allow lottery purchase apps. The APK is distributed through GitHub releases, and you can install new versions through in-app updates.</p></details><details><summary>How many games can I buy per draw?</summary><p>DHLottery limits online purchases to 5 games (5,000 won) per draw. The DHLottery server determines whether you have exceeded the limit, and AutoLotto displays the DHLottery error message unchanged if you have.</p></details><details><summary>How do semi-auto numbers work?</summary><p>In the Numbers tab, pick just 1–5 numbers for a game and confirm to make it a semi-auto game. Your picked numbers stay the same every time, and the remaining spots are filled with new random numbers at each purchase.</p></details><details><summary>Does auto purchase work when the app is closed?</summary><p>The app makes an auto purchase at your scheduled time without being open, but it needs an internet connection. Exclude it from battery optimization to help it run on time.</p></details><details><summary>Does AutoLotto support iPhone?</summary><p>AutoLotto requires Android 12 or later. There is no iPhone app.</p></details><details><summary>Is AutoLotto an official DHLottery app?</summary><p>AutoLotto is not an official DHLottery app; it was developed by UMI Corp. You are responsible for your use of the app, and anyone under 19 cannot buy lottery tickets.</p></details></div>
     </div>
   </section>
 

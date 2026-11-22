@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="naver-site-verification" content="dc8b35a87d1bb23ec42b38031267ed1cdc16c831">
 <title>AutoLotto | 로또 6/45 자동 구매·당첨 확인 안드로이드 앱</title>
-<meta name="description" content="동행복권 로또 6/45를 지정한 요일과 시간에 매주 자동 구매하고 토요일 추첨 후 당첨 확인과 알림을 제공합니다. 최대 5게임의 번호를 수동·자동으로 설정하며, 계정 정보는 기기에 암호화해 저장합니다. 무료이며 광고가 없는 오픈소스 앱으로 Android 12 이상에서 사용할 수 있습니다">
+<meta name="description" content="동행복권 로또 6/45를 지정한 요일과 시간에 매주 자동 구매하고 토요일 추첨 후 당첨 확인과 알림을 제공합니다. 최대 5게임의 번호를 수동·반자동·자동으로 설정하고, 지난 구매의 구매액과 당첨금을 누적 요약과 월별 기록으로 확인합니다. 계정 정보는 기기에 암호화해 저장합니다. 무료이며 광고가 없는 오픈소스 앱으로 Android 12 이상에서 사용할 수 있습니다">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f1e7">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#15161b">
@@ -18,7 +18,7 @@
 <meta property="og:locale:alternate" content="ja_JP">
 <meta property="og:type" content="website">
 <meta property="og:title" content="AutoLotto | 로또 6/45 자동 구매·당첨 확인 안드로이드 앱">
-<meta property="og:description" content="동행복권 로또 6/45를 지정한 요일과 시간에 매주 자동 구매하고 토요일 추첨 후 당첨 확인과 알림을 제공합니다. 최대 5게임의 번호를 수동·자동으로 설정하며, 계정 정보는 기기에 암호화해 저장합니다. 무료이며 광고가 없는 오픈소스 앱으로 Android 12 이상에서 사용할 수 있습니다">
+<meta property="og:description" content="동행복권 로또 6/45를 지정한 요일과 시간에 매주 자동 구매하고 토요일 추첨 후 당첨 확인과 알림을 제공합니다. 최대 5게임의 번호를 수동·반자동·자동으로 설정하고, 지난 구매의 구매액과 당첨금을 누적 요약과 월별 기록으로 확인합니다. 계정 정보는 기기에 암호화해 저장합니다. 무료이며 광고가 없는 오픈소스 앱으로 Android 12 이상에서 사용할 수 있습니다">
 <meta property="og:url" content="https://autolotto.umicorp.kr/">
 <meta property="og:image" content="https://autolotto.umicorp.kr/assets/og.jpg">
 <meta property="og:image:width" content="1200">
@@ -41,7 +41,7 @@
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-Q2ZL599WPJ');</script>
 <link rel="preload" href="assets/fonts/noto-sans-kr.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/space-grotesk.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/site.css?v=20261112a">
+<link rel="stylesheet" href="assets/site.css?v=20261122a">
 <script defer src="assets/site.js"></script>
 <script type="application/ld+json">
 {
@@ -79,7 +79,7 @@
    "alternateName": "오토로또",
    "operatingSystem": "Android 12+",
    "applicationCategory": "UtilitiesApplication",
-   "description": "동행복권 로또 6/45를 지정한 요일과 시간에 매주 자동 구매하고 토요일 추첨 후 당첨 확인과 알림을 제공합니다. 최대 5게임의 번호를 수동·자동으로 설정하며, 계정 정보는 기기에 암호화해 저장합니다. 무료이며 광고가 없는 오픈소스 앱으로 Android 12 이상에서 사용할 수 있습니다",
+   "description": "동행복권 로또 6/45를 지정한 요일과 시간에 매주 자동 구매하고 토요일 추첨 후 당첨 확인과 알림을 제공합니다. 최대 5게임의 번호를 수동·반자동·자동으로 설정하고, 지난 구매의 구매액과 당첨금을 누적 요약과 월별 기록으로 확인합니다. 계정 정보는 기기에 암호화해 저장합니다. 무료이며 광고가 없는 오픈소스 앱으로 Android 12 이상에서 사용할 수 있습니다",
    "url": "https://autolotto.umicorp.kr/",
    "installUrl": "https://github.com/umi-corp/autolotto/releases/latest",
    "downloadUrl": "https://github.com/umi-corp/autolotto/releases/latest",
@@ -88,7 +88,10 @@
     "https://autolotto.umicorp.kr/assets/shots/home.webp",
     "https://autolotto.umicorp.kr/assets/shots/numbers.webp",
     "https://autolotto.umicorp.kr/assets/shots/history.webp",
-    "https://autolotto.umicorp.kr/assets/shots/settings.webp"
+    "https://autolotto.umicorp.kr/assets/shots/settings.webp",
+    "https://autolotto.umicorp.kr/assets/shots/summary.webp",
+    "https://autolotto.umicorp.kr/assets/shots/monthly.webp",
+    "https://autolotto.umicorp.kr/assets/shots/semi-auto.webp"
    ],
    "offers": {
     "@type": "Offer",
@@ -106,6 +109,9 @@
     "즉시 구매",
     "잔액 부족 알림",
     "구매 기록",
+    "누적 구매·당첨 요약",
+    "월별 기록",
+    "반자동 번호",
     "보안 저장"
    ]
   },
@@ -144,6 +150,14 @@
      "acceptedAnswer": {
       "@type": "Answer",
       "text": "동행복권 온라인 구매 한도는 회차당 5게임(5,000원)입니다. 동행복권 서버가 한도 초과 여부를 판정하며, 초과 시 앱에 동행복권 오류 메시지를 그대로 표시합니다."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "반자동 번호는 어떻게 동작하나요?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "번호 탭에서 한 게임에 번호를 1~5개만 고르고 확정하면 반자동 게임이 됩니다. 고른 번호는 매번 그대로 쓰고, 나머지 자리는 구매할 때마다 무작위로 새로 채웁니다."
      }
     },
     {
@@ -199,6 +213,7 @@
     <a class="brand" href=""><img src="assets/icon-160.webp" alt="" width="32" height="32"><span>AutoLotto</span></a>
     <div class="nav-right">
       <div class="nav-links">
+        <a href="#whats-new">새 기능</a>
         <a href="#flow">처리 흐름</a>
         <a href="#features">기능</a>
         <a href="#how">사용 방법</a>
@@ -249,11 +264,39 @@
     </div>
   </section>
 
+  <section class="band alt" id="whats-new" aria-labelledby="whats-new-title">
+    <div class="wrap">
+      <h2 class="band-title" id="whats-new-title">새로 추가된 기능</h2>
+      <p class="band-desc">구매 기록 요약과 반자동 번호를 추가했습니다</p>
+      <div class="feature">
+        <div>
+          <h3>누적 구매·당첨 요약</h3>
+          <p>내역 탭 맨 위에서 지난 구매의 구매액과 당첨금, 구매 대비 당첨금을 확인합니다. 동행복권에서 조회되는 기록을 최대 5년 전 1월 1일까지 모아 집계하며, 집계 시작일을 함께 표시합니다.</p>
+        </div>
+        <div class="feature-media"><div class="phone"><img src="assets/shots/summary.webp" alt="내역 탭 누적 요약 카드: 구매액과 게임 수, 당첨금과 당첨 횟수, 구매 대비 당첨금, 월별 보기" width="540" height="1200" loading="lazy" decoding="async"></div></div>
+      </div>
+      <div class="feature rev">
+        <div>
+          <h3>월별 기록</h3>
+          <p>요약 카드의 '월별 보기'에서 연도를 좌우로 넘기며 월별 구매액과 당첨금을 막대로 확인합니다. 아래 표에는 월별 구매액과 당첨금, 당첨 횟수를 표시합니다.</p>
+        </div>
+        <div class="feature-media"><div class="phone"><img src="assets/shots/monthly.webp" alt="월별 구매·당첨 시트: 연도 전환, 1~12월 구매액과 당첨금 막대, 월별 표" width="540" height="1200" loading="lazy" decoding="async"></div></div>
+      </div>
+      <div class="feature">
+        <div>
+          <h3>반자동 번호</h3>
+          <p>게임마다 번호를 1~5개만 고르면 나머지는 구매할 때마다 자동으로 채웁니다. 고른 번호는 볼로, 자동으로 채울 자리는 주사위로 표시합니다.</p>
+        </div>
+        <div class="feature-media"><div class="phone"><img src="assets/shots/semi-auto.webp" alt="번호 탭 반자동 설정: 고른 번호 3개는 볼, 나머지 3자리는 주사위, '나머지 3개 자동' 확정 버튼" width="540" height="1200" loading="lazy" decoding="async"></div></div>
+      </div>
+    </div>
+  </section>
+
   <section class="band" id="flow" aria-labelledby="flow-title">
     <div class="wrap">
       <h2 class="band-title" id="flow-title">번호 설정부터 당첨 알림까지 자동 처리</h2>
       <p class="band-desc">앱 실행 없이 정해 둔 시각에 구매와 당첨 확인, 알림을 자동으로 진행합니다</p>
-      <ol class="stages"><li class="stage"><span class="stage-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><circle cx="17.5" cy="17.5" r="3.5"/></svg></span><h3>번호 설정</h3><p>게임 A~E 중 최대 5게임 각각에 매주 고정되는 수동 번호 또는 매주 새로 생성되는 자동 번호를 선택합니다</p></li><li class="stage"><span class="stage-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><h3>자동 구매</h3><p>지정한 요일과 시간에 저장한 번호로 구매하며, 기본 구매 요일과 시간은 일요일 오전 9시입니다</p></li><li class="stage"><span class="stage-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg></span><h3>당첨 확인</h3><p>매주 토요일 21:00에 추첨 결과를 자동 확인하고 게임별 등수와 당첨금을 표시합니다</p></li><li class="stage"><span class="stage-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4l2-2z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></span><h3>알림</h3><p>구매 완료와 당첨 결과, 예치금 잔액 부족을 푸시 알림으로 알려 드립니다</p></li></ol>
+      <ol class="stages"><li class="stage"><span class="stage-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><circle cx="17.5" cy="17.5" r="3.5"/></svg></span><h3>번호 설정</h3><p>게임 A~E 중 최대 5게임 각각에 매주 고정되는 수동 번호, 일부만 고정하는 반자동 번호, 매주 새로 생성되는 자동 번호 중 하나를 선택합니다</p></li><li class="stage"><span class="stage-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><h3>자동 구매</h3><p>지정한 요일과 시간에 저장한 번호로 구매하며, 기본 구매 요일과 시간은 일요일 오전 9시입니다</p></li><li class="stage"><span class="stage-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg></span><h3>당첨 확인</h3><p>매주 토요일 21:00에 추첨 결과를 자동 확인하고 게임별 등수와 당첨금을 표시합니다</p></li><li class="stage"><span class="stage-ic"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4l2-2z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></span><h3>알림</h3><p>구매 완료와 당첨 결과, 예치금 잔액 부족을 푸시 알림으로 알려 드립니다</p></li></ol>
     </div>
   </section>
 
@@ -264,14 +307,14 @@
       <div class="feature">
         <div>
           <h3>게임별 번호 설정</h3>
-          <p>게임별로 수동 또는 자동을 선택하고, 수동 번호는 1~45 중 6개를 직접 선택합니다. '전부 자동' 버튼으로 모든 게임을 자동으로 전환합니다.</p>
+          <p>게임별로 수동 또는 자동을 선택하고, 수동 번호는 1~45 중 6개를 직접 선택합니다. 1~5개만 고르면 반자동으로 저장되며, 나머지는 구매할 때마다 자동으로 채웁니다. '전부 자동' 버튼으로 모든 게임을 자동으로 전환합니다.</p>
         </div>
         <div class="feature-media"><div class="phone"><img src="assets/shots/numbers.webp" alt="번호 설정 화면: 게임 A~E 선택, 수동·자동 전환, 1~45 번호 공" width="540" height="1200" loading="lazy" decoding="async"></div></div>
       </div>
       <div class="feature rev">
         <div>
           <h3>구매 기록</h3>
-          <p>최근 3개월의 구매 기록을 자동 조회하며, '더 보기'로 최대 1년까지 조회합니다. 회차별 게임 번호와 당첨 번호, 등수, 당첨금을 표시합니다.</p>
+          <p>맨 위의 누적 요약 카드에서 구매액과 당첨금을 확인합니다. 회차별 목록은 최근 3개월의 구매 기록을 자동 조회하며, '더 보기'로 최대 1년까지 조회합니다. 회차별 게임 번호와 당첨 번호, 등수, 당첨금을 표시합니다.</p>
         </div>
         <div class="feature-media"><div class="phone"><img src="assets/shots/history.webp" alt="구매 기록 화면: 회차별 게임 번호와 당첨 여부" width="540" height="1200" loading="lazy" decoding="async"></div></div>
       </div>
@@ -289,14 +332,14 @@
   <section class="band" id="how" aria-labelledby="how-title">
     <div class="wrap">
       <h2 class="band-title" id="how-title">사용 방법</h2>
-      <ol class="steps"><li class="step" data-n="1"><h3>앱 설치</h3><p>이 페이지에서 APK를 다운로드해 설치하며 설치 시 '출처를 알 수 없는 앱' 허용이 필요합니다</p></li><li class="step" data-n="2"><h3>동행복권 로그인</h3><p>설정 탭에서 동행복권 아이디와 비밀번호로 로그인합니다</p></li><li class="step" data-n="3"><h3>번호 저장</h3><p>번호 탭에서 게임별로 수동 또는 자동 번호를 지정해 저장합니다</p></li><li class="step" data-n="4"><h3>자동 구매 켜기</h3><p>설정 탭에서 자동 구매 활성화 후 매주 자동으로 구매합니다</p></li></ol>
+      <ol class="steps"><li class="step" data-n="1"><h3>앱 설치</h3><p>이 페이지에서 APK를 다운로드해 설치하며 설치 시 '출처를 알 수 없는 앱' 허용이 필요합니다</p></li><li class="step" data-n="2"><h3>동행복권 로그인</h3><p>설정 탭에서 동행복권 아이디와 비밀번호로 로그인합니다</p></li><li class="step" data-n="3"><h3>번호 저장</h3><p>번호 탭에서 게임별로 수동·반자동·자동 번호를 지정해 저장합니다</p></li><li class="step" data-n="4"><h3>자동 구매 켜기</h3><p>설정 탭에서 자동 구매 활성화 후 매주 자동으로 구매합니다</p></li></ol>
     </div>
   </section>
 
   <section class="band alt" id="faq" aria-labelledby="faq-title">
     <div class="wrap">
       <h2 class="band-title" id="faq-title">자주 묻는 질문</h2>
-      <div class="faq"><details><summary>AutoLotto를 사용하려면 무엇이 필요한가요?</summary><p>동행복권(dhlottery.co.kr) 회원 계정과 구매 금액만큼의 예치금이 필요합니다. 예치금은 동행복권 홈페이지에서 충전하며 앱에서 충전 페이지로 이동할 수 있습니다.</p></details><details><summary>동행복권 계정 정보는 안전한가요?</summary><p>계정 정보는 Android Keystore로 암호화해 기기 안에만 저장하며 동행복권 로그인에만 사용합니다. 자체 서버는 없습니다. GitHub에 공개된 소스 코드에서 확인할 수 있습니다.</p></details><details><summary>Google Play에는 왜 없나요?</summary><p>Google Play 도박 정책상 복권 구매 앱을 등록할 수 없습니다. APK는 GitHub 릴리스로 배포하며 새 버전은 앱 안에서 업데이트할 수 있습니다.</p></details><details><summary>한 회차에 몇 게임까지 구매할 수 있나요?</summary><p>동행복권 온라인 구매 한도는 회차당 5게임(5,000원)입니다. 동행복권 서버가 한도 초과 여부를 판정하며, 초과 시 앱에 동행복권 오류 메시지를 그대로 표시합니다.</p></details><details><summary>앱을 열지 않아도 자동 구매가 되나요?</summary><p>인터넷 연결 시 앱 실행 없이 지정 시각에 자동 구매합니다. 정시 실행을 위해 배터리 최적화 제외를 권장합니다.</p></details><details><summary>iPhone을 지원하나요?</summary><p>Android 12 이상 전용이며 iPhone 앱은 없습니다.</p></details><details><summary>동행복권 공식 앱인가요?</summary><p>UMI Corp에서 개발한 앱으로 동행복권 공식 앱이 아니며, 사용에 따른 책임은 사용자에게 있습니다. 19세 미만은 복권을 구매할 수 없습니다.</p></details></div>
+      <div class="faq"><details><summary>AutoLotto를 사용하려면 무엇이 필요한가요?</summary><p>동행복권(dhlottery.co.kr) 회원 계정과 구매 금액만큼의 예치금이 필요합니다. 예치금은 동행복권 홈페이지에서 충전하며 앱에서 충전 페이지로 이동할 수 있습니다.</p></details><details><summary>동행복권 계정 정보는 안전한가요?</summary><p>계정 정보는 Android Keystore로 암호화해 기기 안에만 저장하며 동행복권 로그인에만 사용합니다. 자체 서버는 없습니다. GitHub에 공개된 소스 코드에서 확인할 수 있습니다.</p></details><details><summary>Google Play에는 왜 없나요?</summary><p>Google Play 도박 정책상 복권 구매 앱을 등록할 수 없습니다. APK는 GitHub 릴리스로 배포하며 새 버전은 앱 안에서 업데이트할 수 있습니다.</p></details><details><summary>한 회차에 몇 게임까지 구매할 수 있나요?</summary><p>동행복권 온라인 구매 한도는 회차당 5게임(5,000원)입니다. 동행복권 서버가 한도 초과 여부를 판정하며, 초과 시 앱에 동행복권 오류 메시지를 그대로 표시합니다.</p></details><details><summary>반자동 번호는 어떻게 동작하나요?</summary><p>번호 탭에서 한 게임에 번호를 1~5개만 고르고 확정하면 반자동 게임이 됩니다. 고른 번호는 매번 그대로 쓰고, 나머지 자리는 구매할 때마다 무작위로 새로 채웁니다.</p></details><details><summary>앱을 열지 않아도 자동 구매가 되나요?</summary><p>인터넷 연결 시 앱 실행 없이 지정 시각에 자동 구매합니다. 정시 실행을 위해 배터리 최적화 제외를 권장합니다.</p></details><details><summary>iPhone을 지원하나요?</summary><p>Android 12 이상 전용이며 iPhone 앱은 없습니다.</p></details><details><summary>동행복권 공식 앱인가요?</summary><p>UMI Corp에서 개발한 앱으로 동행복권 공식 앱이 아니며, 사용에 따른 책임은 사용자에게 있습니다. 19세 미만은 복권을 구매할 수 없습니다.</p></details></div>
     </div>
   </section>
 
