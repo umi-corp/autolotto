@@ -26,6 +26,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -57,7 +58,6 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 private val SYNCED_FMT: DateTimeFormatter = DateTimeFormatter.ofPattern("MM-dd HH:mm")
-private val TABLE_BODY_HEIGHT = 220.dp
 private const val SKELETON_ROWS = 4
 private val MONTH_FMT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM")
 
@@ -144,8 +144,10 @@ fun LedgerMonthlySheet(summary: LedgerSummary, onDismiss: () -> Unit) {
     val pager = rememberPagerState(initialPage = pages.lastIndex) { pages.size }
     val scope = rememberCoroutineScope()
     val page = pages[pager.currentPage]
-    ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
+    // 처음에는 화면 절반 높이로 열고, 끌어 올리면 전체 높이로 한 단계 커진다. 커지면 표 영역이 늘어난다.
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+        Column(Modifier.fillMaxWidth().fillMaxHeight().padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.ledgerSheetTitle), fontWeight = FontWeight.ExtraBold, fontSize = 17.sp, modifier = Modifier.weight(1f))
                 YearStep("‹", pager.currentPage > 0, "${page.year - 1}") { scope.launch { pager.animateScrollToPage(pager.currentPage - 1) } }
@@ -162,10 +164,10 @@ fun LedgerMonthlySheet(summary: LedgerSummary, onDismiss: () -> Unit) {
                 stringResource(R.string.ledgerColMonth), stringResource(R.string.ledgerPurchase),
                 stringResource(R.string.ledgerPrize), stringResource(R.string.ledgerColWins), header = true,
             )
-            // 연도를 넘겨도 시트 높이가 같도록 표 본문은 고정 높이 안에서 스크롤한다.
+            // 연도를 넘겨도 시트 높이가 같도록 표 본문은 남은 높이 안에서 스크롤한다.
             key(page.year) {
                 val rows = page.months.filterNotNull().filter { it.purchaseWon > 0 || it.prizeWon > 0 }.asReversed()
-                Column(Modifier.fillMaxWidth().height(TABLE_BODY_HEIGHT).verticalScroll(rememberScrollState(), enabled = rows.isNotEmpty())) {
+                Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState(), enabled = rows.isNotEmpty())) {
                     rows.forEach { m ->
                         HorizontalDivider()
                         TableRow(MONTH_FMT.format(m.month), formatNumber(m.purchaseWon), formatNumber(m.prizeWon), m.wins.toString())
