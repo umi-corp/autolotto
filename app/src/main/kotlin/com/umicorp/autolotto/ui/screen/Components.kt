@@ -23,6 +23,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Casino
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +40,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
@@ -49,6 +52,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.umicorp.autolotto.ui.theme.LgAmber
+import com.umicorp.autolotto.ui.theme.LgTeal
 import com.umicorp.autolotto.ui.theme.MotionSpecs
 import com.umicorp.autolotto.ui.theme.ctaGradient
 import com.umicorp.autolotto.ui.theme.heroGradient
@@ -110,7 +114,6 @@ fun LottoBall(
         label = "ballElev",
     )
 
-    val highlight = lerp(base, Color.White, 0.65f)
     val rim = lerp(base, Color.Black, if (selected && !dimmed) 0.28f else 0.12f)
     // 강조 림은 볼 색상과 같은 계열(진한 톤) — 파랑볼→진파랑, 노랑볼→진노랑 (사용자 피드백)
     val bonusRim = lerp(ballColor(n), Color.Black, 0.38f)
@@ -132,27 +135,9 @@ fun LottoBall(
             .clip(CircleShape)
             .drawBehind {
                 val w = this.size.width
-                val h = this.size.height
                 // 할로 시엔 볼 전체를 링 안쪽 크기로 스케일 — 그라디언트 가장자리를 자르면 물빠져 보임.
                 val ballScale = if (matched) (w / 2 - 4.dp.toPx()) / (w / 2) else 1f
-                scale(ballScale) {
-                    // 캔디 방사형 셰이딩: 좌상단 하이라이트 → base → 하단 어두운 림.
-                    drawCircle(
-                        brush = Brush.radialGradient(
-                            colors = listOf(highlight, base, rim),
-                            center = Offset(w * 0.35f, h * 0.30f),
-                            radius = w * 0.85f,
-                        ),
-                    )
-                    // 상단 스페큘러 하이라이트.
-                    drawCircle(
-                        brush = Brush.radialGradient(
-                            colors = listOf(Color.White.copy(alpha = 0.55f), Color.Transparent),
-                            center = Offset(w * 0.36f, h * 0.24f),
-                            radius = w * 0.28f,
-                        ),
-                    )
-                }
+                scale(ballScale) { drawCandyBall(base, rim) }
                 if (matched) {
                     // 갭(R-4..R-2, 그림자 가림용 불투명)·링(외곽 R 고정) — 갭을 살짝 넓혀 AA 이음새를 덮는다.
                     val ringPx = matchRingWidth.toPx()
@@ -194,6 +179,39 @@ fun LottoBall(
             ),
         )
     }
+}
+
+/** 캔디 방사형 셰이딩(좌상단 하이라이트 → base → 하단 어두운 림) + 상단 스페큘러. */
+private fun DrawScope.drawCandyBall(base: Color, rim: Color) {
+    val w = size.width
+    val h = size.height
+    drawCircle(
+        brush = Brush.radialGradient(
+            colors = listOf(lerp(base, Color.White, 0.65f), base, rim),
+            center = Offset(w * 0.35f, h * 0.30f),
+            radius = w * 0.85f,
+        ),
+    )
+    drawCircle(
+        brush = Brush.radialGradient(
+            colors = listOf(Color.White.copy(alpha = 0.55f), Color.Transparent),
+            center = Offset(w * 0.36f, h * 0.24f),
+            radius = w * 0.28f,
+        ),
+    )
+}
+
+/** 구매 때 랜덤으로 채울 자리. [LottoBall]과 같은 질감(그림자·캔디 셰이딩)의 청록 볼에 주사위. */
+@Composable
+fun DiceBall(modifier: Modifier = Modifier, size: Dp = 36.dp) {
+    Box(
+        modifier
+            .size(size)
+            .shadow(5.dp, CircleShape, clip = false)
+            .clip(CircleShape)
+            .drawBehind { drawCandyBall(LgTeal, lerp(LgTeal, Color.Black, 0.28f)) },
+        contentAlignment = Alignment.Center,
+    ) { Icon(Icons.Rounded.Casino, null, tint = Color.White, modifier = Modifier.size(size * 0.52f)) }
 }
 
 /** 라운드 카드(넉넉한 여백) — 화면 공용. 프로스트 표면(surfaceContainerLowest). */

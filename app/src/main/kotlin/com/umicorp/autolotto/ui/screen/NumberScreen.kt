@@ -637,12 +637,7 @@ private fun SelectedNumbers(selected: Set<Int>) {
 private fun SixSlots(numbers: List<Int>, size: Dp, gap: Dp, modifier: Modifier = Modifier) {
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(gap)) {
         numbers.forEach { LottoBall(it, size = size) }
-        repeat(6 - numbers.size) {
-            Box(
-                Modifier.size(size).background(LgTeal, CircleShape),
-                contentAlignment = Alignment.Center,
-            ) { Icon(Icons.Rounded.Casino, null, tint = Color.White, modifier = Modifier.size(size * 0.57f)) }
-        }
+        repeat(6 - numbers.size) { DiceBall(size = size) }
     }
 }
 
