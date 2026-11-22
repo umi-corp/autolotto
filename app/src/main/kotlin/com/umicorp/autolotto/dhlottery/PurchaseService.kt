@@ -10,6 +10,7 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import kotlin.random.Random
 
 /**
  * 로또 6/45 구매 서비스 (Flutter PurchaseService 포트).
@@ -29,7 +30,7 @@ class PurchaseService(
     /**
      * 로또 6/45 구매 실행.
      * @param autoGames 자동 게임 수
-     * @param manualNumbers 수동 번호 리스트 (예: [[1,2,3,4,5,6], ...])
+     * @param manualNumbers 수동 번호 리스트 (예: [[1,2,3,4,5,6], ...]). 1~5개면 반자동
      */
     suspend fun purchase(
         autoGames: Int,
@@ -64,7 +65,7 @@ class PurchaseService(
         val payLimitStr = DATE_FMT.format(dates.payLimitDate)
 
         // 4. 구매 요청 (execBuy). postForm으로 모든 값 문자열화.
-        val param = buildParam(autoGames, manualNumbers)
+        val param = buildParam(autoGames, manualNumbers.map { fillSemiAuto(it) })
         val buyData = mapOf(
             "round" to round.toString(),
             "direct" to directIp,
@@ -153,6 +154,10 @@ class PurchaseService(
             val payLimitDate = drawDate.plusDays(365)
             return DrawDates(drawDate, payLimitDate)
         }
+
+        /** 반자동 게임(고정 1~5개)의 빈 자리를 구매 때마다 랜덤으로 채운다. 6개면 그대로. */
+        fun fillSemiAuto(fixed: List<Int>, random: Random = Random.Default): List<Int> =
+            fixed + (1..45).filterNot { it in fixed }.shuffled(random).take(6 - fixed.size)
 
         /**
          * 구매 파라미터 빌드 (org.json JSONArray 문자열).

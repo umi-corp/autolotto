@@ -79,6 +79,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -182,7 +184,7 @@ fun NumberScreen(modifier: Modifier = Modifier) {
     }
 
     fun confirmSlot() {
-        if (!isAuto && selected.size != 6) return
+        if (!isAuto && selected.isEmpty()) return
         games[currentSlot] = if (isAuto) emptyList() else selected.sorted()
         saved = false
         if (currentSlot < 4) currentSlot++
@@ -303,14 +305,18 @@ fun NumberScreen(modifier: Modifier = Modifier) {
                 ) { Text(stringResource(R.string.buttonReset), fontWeight = FontWeight.SemiBold) }
                 CtaButton(
                     onClick = { confirmSlot() },
-                    enabled = isAuto || selected.size == 6,
+                    enabled = isAuto || selected.isNotEmpty(),
                     modifier = Modifier.weight(2f).graphicsLayer {
                         scaleX = confirmPop.value
                         scaleY = confirmPop.value
                     },
                 ) {
                     Text(
-                        stringResource(R.string.buttonConfirmGame, ('A' + currentSlot).toString()),
+                        if (!isAuto && selected.size in 1..5) {
+                            stringResource(R.string.buttonConfirmSemiAuto, 6 - selected.size)
+                        } else {
+                            stringResource(R.string.buttonConfirmGame, ('A' + currentSlot).toString())
+                        },
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                     )
@@ -673,8 +679,11 @@ private fun GameSummary(
                 g == null -> if (selecting) stringResource(R.string.gameSummarySelecting)
                 else stringResource(R.string.gameSummaryNotSet)
                 g.isEmpty() -> stringResource(R.string.gameSummaryAuto)
-                else -> g.joinToString(", ")
+                else -> g.joinToString(", ") + ", ?".repeat(6 - g.size)
             }
+            val semiAutoDescription = if (g != null && g.size in 1..5) {
+                stringResource(R.string.cdSemiAutoGame, g.joinToString(", "), 6 - g.size)
+            } else null
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -718,7 +727,9 @@ private fun GameSummary(
                 }
                 Text(
                     label,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).semantics {
+                        semiAutoDescription?.let { contentDescription = it }
+                    },
                     color = when {
                         selecting -> LgTeal
                         confirmed -> MaterialTheme.colorScheme.onSurface

@@ -32,7 +32,7 @@
 
     <string name="numberSetupTitle">番号設定</string>
     <string name="bannerEnableAutoPurchase">設定で自動購入を有効にしてください</string>
-    <string name="numberSetupInstruction">毎週自動購入する番号を設定してください。\n手動番号は毎週固定、自動は毎週ランダム生成されます。</string>
+    <string name="numberSetupInstruction">毎週自動購入する番号を設定してください。\n手動番号は毎週固定、自動は毎週ランダム生成されます。\n番号を1〜5個だけ選ぶと、残りは毎回自動で選ばれます。</string>
     <string name="modeManual">✏️ 手動</string>
     <string name="modeAuto">🎲 自動</string>
     <string name="autoNumberTitle">自動番号</string>
@@ -40,6 +40,7 @@
     <string name="buttonAllAuto">すべて自動</string>
     <string name="buttonReset">リセット</string>
     <string name="buttonConfirmGame">ゲーム%1$s 確定 ✓</string>
+    <string name="buttonConfirmSemiAuto">残り%1$d個は自動 ✓</string>
     <string name="selectionCount">選択: %1$d/6</string>
     <string name="gameSummaryTitle">📋 ゲーム設定</string>
     <string name="gameSummarySelecting">いま設定中</string>
@@ -163,6 +164,7 @@
     <!-- アクセシビリティ(contentDescription) -->
     <string name="cdRefresh">更新</string>
     <string name="cdRemoveGame">ゲーム削除</string>
+    <string name="cdSemiAutoGame">%1$s、残り%2$d個は自動</string>
     <string name="cdShowPassword">パスワードを表示</string>
     <string name="cdHidePassword">パスワードを非表示</string>
 

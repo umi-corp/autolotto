@@ -37,7 +37,7 @@
     <!-- 번호 설정 -->
     <string name="numberSetupTitle">번호 설정</string>
     <string name="bannerEnableAutoPurchase">설정에서 자동 구매를 활성화해주세요</string>
-    <string name="numberSetupInstruction">매주 자동 구매할 번호를 설정하세요.\n수동 번호는 매주 고정, 자동은 매주 랜덤 생성됩니다.</string>
+    <string name="numberSetupInstruction">매주 자동 구매할 번호를 설정하세요.\n수동 번호는 매주 고정, 자동은 매주 랜덤 생성됩니다.\n번호를 1~5개만 고르면 나머지는 매번 자동으로 채웁니다.</string>
     <string name="modeManual">✏️ 수동</string>
     <string name="modeAuto">🎲 자동</string>
     <string name="autoNumberTitle">자동 번호</string>
@@ -45,6 +45,7 @@
     <string name="buttonAllAuto">전부 자동</string>
     <string name="buttonReset">초기화</string>
     <string name="buttonConfirmGame">게임 %1$s 확정 ✓</string>
+    <string name="buttonConfirmSemiAuto">나머지 %1$d개 자동 ✓</string>
     <string name="selectionCount">선택: %1$d/6</string>
     <string name="gameSummaryTitle">📋 게임 설정</string>
     <string name="gameSummarySelecting">지금 설정 중</string>
@@ -171,6 +172,7 @@
     <!-- 접근성(contentDescription) -->
     <string name="cdRefresh">새로고침</string>
     <string name="cdRemoveGame">게임 삭제</string>
+    <string name="cdSemiAutoGame">%1$s, 나머지 %2$d개 자동</string>
     <string name="cdShowPassword">비밀번호 표시</string>
     <string name="cdHidePassword">비밀번호 숨기기</string>
 
