@@ -208,6 +208,13 @@ private fun PrizePage(
 private fun PrizeRankRow(rank: Int, prize: RankPrize, games: List<Char>, afterTax: Boolean) {
     val colors = MaterialTheme.colorScheme
     val rankLabel = localizedRank("rank$rank")
+    val matchLabel = stringResource(when (rank) {
+        1 -> R.string.prizeByRankMatch1
+        2 -> R.string.prizeByRankMatch2
+        3 -> R.string.prizeByRankMatch3
+        4 -> R.string.prizeByRankMatch4
+        else -> R.string.prizeByRankMatch5
+    })
     val amount = if (prize.games == 0) stringResource(R.string.prizeByRankNone)
     else stringResource(R.string.ledgerWon, formatNumber(prize.amount))
     val perGame = if (prize.games == 0) amount else stringResource(R.string.cdPrizeByRankPerGame, amount)
@@ -217,7 +224,7 @@ private fun PrizeRankRow(rank: Int, prize: RankPrize, games: List<Char>, afterTa
         stringResource(R.string.prizeByRankAfterTaxValue, net)
     } else null
     val mine = if (games.isNotEmpty()) stringResource(R.string.prizeByRankMine, games.joinToString(", ")) else null
-    val description = listOfNotNull(rankLabel, perGame, tax, count, mine).joinToString(", ")
+    val description = listOfNotNull(rankLabel, matchLabel, perGame, tax, count, mine).joinToString(", ")
     Box(
         Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = description }
             .then(if (mine == null) Modifier else Modifier.background(lerp(LgGold, colors.surfaceContainerLowest, 0.70f))),
@@ -227,12 +234,25 @@ private fun PrizeRankRow(rank: Int, prize: RankPrize, games: List<Char>, afterTa
         }
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(rankLabel, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold)
-                Text(amount, Modifier.weight(1.7f), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
+                FlowRow(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        rankLabel,
+                        Modifier.alignByBaseline(),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                    )
+                    Text(
+                        matchLabel,
+                        Modifier.alignByBaseline(),
+                        color = colors.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                Text(amount, Modifier.weight(1.4f), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(count, Modifier.weight(1f), color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
-                if (tax != null) Text(tax, Modifier.weight(1.7f), style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.End)
+                if (tax != null) Text(tax, Modifier.weight(1.4f), style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.End)
             }
             if (mine != null) StatusPill(mine, PillTone.Win, Modifier.padding(top = 2.dp))
         }
