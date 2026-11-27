@@ -145,6 +145,9 @@ class PurchaseService(
             return round
         }
 
+        fun latestCompletedRound(now: ZonedDateTime = ZonedDateTime.now(KST)): Int =
+            (getCurrentRound(now.withZoneSameInstant(KST)) - 1).coerceAtLeast(1)
+
         /**
          * 추첨일·지급기한 계산. 추첨일을 회차에서 단일소스화한다(토 20:45 이후 회차/추첨일 불일치 제거).
          * FIRST_ROUND가 토요일이므로 drawDate는 항상 해당 회차의 토요일.

@@ -112,6 +112,10 @@ class AppContainer(context: Context) {
     private val _language = MutableStateFlow("system")     // "system"/"ko"/"en"/"ja"
     val language: StateFlow<String> = _language.asStateFlow()
 
+    private val _showPrizeAfterTax = MutableStateFlow(false)
+    val showPrizeAfterTax: StateFlow<Boolean> = _showPrizeAfterTax.asStateFlow()
+    private val prizeTaxMutex = Mutex()
+
     private val _loggedInUserId = MutableStateFlow<String?>(null)
     val loggedInUserId: StateFlow<String?> = _loggedInUserId.asStateFlow()
 
@@ -156,6 +160,7 @@ class AppContainer(context: Context) {
         val alertEnabled = store.getBalanceAlertEnabled()
         val alertThreshold = store.getBalanceAlertThreshold()
         val language = store.getLanguage()
+        val showPrizeAfterTax = store.getShowPrizeAfterTax()
         val userId = store.getCredentials().userId
         val lastRound = store.getLastPurchasedRound()
 
@@ -167,6 +172,7 @@ class AppContainer(context: Context) {
         _balanceAlertEnabled.value = alertEnabled
         _balanceAlertThreshold.value = alertThreshold
         _language.value = language
+        _showPrizeAfterTax.value = showPrizeAfterTax
         _loggedInUserId.value = userId
         _lastPurchasedRound.value = lastRound
         // 앱 실행마다 알람 재무장(자동구매 활성 시). 업데이트·강제종료·OEM 정리로 소실된 알람 복구 — 멱등.
@@ -445,6 +451,14 @@ class AppContainer(context: Context) {
         store.setLanguage(lang)
     }
 
+    suspend fun setShowPrizeAfterTax(show: Boolean) = withContext(Dispatchers.IO) {
+        prizeTaxMutex.withLock {
+            if (runCatching { store.setShowPrizeAfterTax(show) }.getOrDefault(false)) {
+                _showPrizeAfterTax.value = show
+            }
+        }
+    }
+
     suspend fun setBalanceAlertEnabled(v: Boolean) = withContext(Dispatchers.IO) {
         _balanceAlertEnabled.value = v
         store.setBalanceAlertEnabled(v)
@@ -490,7 +504,10 @@ class AppContainer(context: Context) {
 
     // === 데이터 초기화 (원본 설정 화면 `_showResetDialog`) ===
     suspend fun resetAll() = withContext(Dispatchers.IO) {
-        store.clearAll()
+        prizeTaxMutex.withLock {
+            store.clearAll()
+            _showPrizeAfterTax.value = false
+        }
         LedgerLock.mutex.withLock { ledgerStore.clearAll() }
         loginMutex.withLock { auth.logout() }
         scheduler.cancelAll()  // 삭제된 설정을 참조하는 알람 제거 (원본 대비 의도된 보강)

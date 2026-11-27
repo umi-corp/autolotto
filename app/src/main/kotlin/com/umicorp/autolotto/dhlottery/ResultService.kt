@@ -1,9 +1,13 @@
 package com.umicorp.autolotto.dhlottery
 
+import com.umicorp.autolotto.data.DrawPrizes
+import com.umicorp.autolotto.data.RankPrize
 import com.umicorp.autolotto.data.WinningResult
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * 당첨 확인 서비스 (Flutter ResultService 포트). 로그인 불필요.
@@ -14,47 +18,63 @@ import org.json.JSONObject
  */
 class ResultService(private val session: DhlotterySession = DhlotterySession()) {
 
-    /**
-     * 당첨번호 조회. [roundNo] null이면 최신 회차.
-     * 실패(비200 / HTML / 빈 목록 / 예외) 시 null — 원본과 동일.
-     */
-    suspend fun getWinningNumbers(roundNo: Int? = null): WinningResult? = withContext(Dispatchers.IO) {
+    private val published = ConcurrentHashMap<Int, DrawPrizes.Published>()
+
+    suspend fun getWinningNumbers(roundNo: Int? = null): WinningResult? =
+        (if (roundNo == null) fetchDraw(null) else getDrawPrizes(roundNo)).winning
+
+    suspend fun getDrawPrizes(round: Int): DrawPrizes = published[round] ?: fetchDraw(round)
+
+    private suspend fun fetchDraw(round: Int?): DrawPrizes = withContext(Dispatchers.IO) {
         try {
-            // 쿠키 획득용 메인 방문
             session.get(session.baseUrl, follow = true).close()
-
             val url = session.base(ApiConstants.WINNING_NUMBER) +
-                if (roundNo != null) "?drwNo=$roundNo" else ""
+                if (round == null) "" else "?srchLtEpsd=$round"
 
-            session.get(url, follow = true).use { resp ->
-                if (resp.code != 200) return@withContext null
-                val body = resp.body?.string().orEmpty()
-                val items = JSONObject(body).optJSONObject("data")?.optJSONArray("list")
-                if (items == null || items.length() == 0) return@withContext null
+            session.get(url, follow = true).use { response ->
+                if (!response.isSuccessful) return@withContext DrawPrizes.Error
+                val body = JSONObject(response.body?.string().orEmpty())
+                val items = body.getJSONObject("data").getJSONArray("list")
+                if (items.length() == 0) return@withContext DrawPrizes.Pending()
 
                 val item = items.getJSONObject(0)
-                val numbers = listOf(
-                    item.getInt("tm1WnNo"),
-                    item.getInt("tm2WnNo"),
-                    item.getInt("tm3WnNo"),
-                    item.getInt("tm4WnNo"),
-                    item.getInt("tm5WnNo"),
-                    item.getInt("tm6WnNo"),
-                ).sorted()
-
-                WinningResult(
-                    round = item.getInt("ltEpsd"),
-                    numbers = numbers,
-                    bonus = item.getInt("bnsWnNo"),
-                    date = parseDate(item.optString("ltRflYmd", "")),
-                    prize1st = item.optLong("rnk1WnAmt", 0), // Long — Int.MAX(21.4억) 초과 가능
-                    prize2nd = item.optLong("rnk2WnAmt", 0),
-                    prize3rd = item.optLong("rnk3WnAmt", 0),
-                )
+                val result = parseDraw(item, round)
+                if (result is DrawPrizes.Published) published[result.winning.round] = result
+                result
             }
-        } catch (e: Exception) {
-            null
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            DrawPrizes.Error
         }
+    }
+
+    private fun parseDraw(item: JSONObject, requestedRound: Int?): DrawPrizes {
+        val round = item.getInt("ltEpsd")
+        if (round < 1 || (requestedRound != null && round != requestedRound)) return DrawPrizes.Error
+
+        val numbers = (1..6).map { item.optInt("tm${it}WnNo") }.sorted()
+        val bonus = item.optInt("bnsWnNo")
+        if ((numbers + bonus).any { it !in 1..45 } || (numbers + bonus).distinct().size != 7) {
+            return DrawPrizes.Pending()
+        }
+        val winning = WinningResult(
+            round = round,
+            numbers = numbers,
+            bonus = bonus,
+            date = parseDate(item.optString("ltRflYmd")),
+            prize1st = item.optLong("rnk1WnAmt"),
+            prize2nd = item.optLong("rnk2WnAmt"),
+            prize3rd = item.optLong("rnk3WnAmt"),
+        )
+        val ranks = (1..5).map { rank ->
+            val games = item.optInt("rnk${rank}WnNope", -1)
+            val amount = item.optLong("rnk${rank}WnAmt", -1)
+            if (games < 0 || amount < 0 || (games > 0 && amount == 0L)) return DrawPrizes.Pending(winning)
+            RankPrize(games, amount)
+        }
+        if (ranks.all { it.games == 0 }) return DrawPrizes.Pending(winning)
+        return DrawPrizes.Published(winning, ranks)
     }
 
     companion object {
