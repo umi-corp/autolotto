@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -150,9 +151,9 @@ fun LedgerMonthlySheet(summary: LedgerSummary, onDismiss: () -> Unit) {
         Column(Modifier.fillMaxWidth().fillMaxHeight().padding(horizontal = 20.dp).padding(bottom = 24.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.ledgerSheetTitle), fontWeight = FontWeight.ExtraBold, fontSize = 17.sp, modifier = Modifier.weight(1f))
-                YearStep("‹", pager.currentPage > 0, "${page.year - 1}") { scope.launch { pager.animateScrollToPage(pager.currentPage - 1) } }
+                PagerStep("‹", pager.currentPage > 0, "${page.year - 1}") { scope.launch { pager.animateScrollToPage(pager.currentPage - 1) } }
                 Text(page.year.toString(), fontWeight = FontWeight.Bold)
-                YearStep("›", pager.currentPage < pages.lastIndex, "${page.year + 1}") { scope.launch { pager.animateScrollToPage(pager.currentPage + 1) } }
+                PagerStep("›", pager.currentPage < pages.lastIndex, "${page.year + 1}") { scope.launch { pager.animateScrollToPage(pager.currentPage + 1) } }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Legend(purchaseColor, stringResource(R.string.ledgerPurchase))
@@ -183,9 +184,16 @@ fun LedgerMonthlySheet(summary: LedgerSummary, onDismiss: () -> Unit) {
 }
 
 @Composable
-private fun YearStep(label: String, enabled: Boolean, target: String, onClick: () -> Unit) {
-    IconButton(onClick = onClick, enabled = enabled, modifier = Modifier.semantics { contentDescription = target }) {
-        Text(label, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+internal fun PagerStep(label: String, enabled: Boolean, target: String, onClick: () -> Unit) {
+    IconButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier.size(48.dp).semantics {
+            contentDescription = target
+            if (!enabled) disabled()
+        },
+    ) {
+        Text(label, fontWeight = FontWeight.Bold, fontSize = 20.sp, modifier = Modifier.clearAndSetSemantics {})
     }
 }
 
@@ -226,7 +234,7 @@ private fun Bar(fraction: Float, color: Color) {
 
 /** 기록이 없는 해의 표 자리. 표 행과 같은 칸 비율의 회색 막대만 그린다. */
 @Composable
-private fun SkeletonRow() {
+internal fun SkeletonRow() {
     val tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.12f)
     Row(Modifier.fillMaxWidth().padding(vertical = 11.dp).clearAndSetSemantics {}) {
         listOf(1f to Alignment.Start, 1.2f to Alignment.End, 1.2f to Alignment.End, 0.7f to Alignment.End).forEach { (w, align) ->

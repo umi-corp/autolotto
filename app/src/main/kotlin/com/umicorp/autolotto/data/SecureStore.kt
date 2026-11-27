@@ -20,6 +20,7 @@ object SecureKeys {
     const val AUTO_PURCHASE_HOUR = "auto_purchase_hour"
     const val AUTO_PURCHASE_MINUTE = "auto_purchase_minute"
     const val LANGUAGE = "app_language"
+    const val SHOW_PRIZE_AFTER_TAX = "show_prize_after_tax"
     const val BALANCE_ALERT_ENABLED = "balance_alert_enabled"
     const val BALANCE_ALERT_THRESHOLD = "balance_alert_threshold"
     const val BALANCE_ALERT_LAST_DATE = "balance_alert_last_date"
@@ -211,6 +212,10 @@ class SecureStore(context: Context) {
     fun setLanguage(lang: String) = putString(SecureKeys.LANGUAGE, lang)
 
     fun getLanguage(): String = read(SecureKeys.LANGUAGE) ?: "system"
+
+    fun setShowPrizeAfterTax(show: Boolean) = putString(SecureKeys.SHOW_PRIZE_AFTER_TAX, show.toString())
+
+    fun getShowPrizeAfterTax(): Boolean = read(SecureKeys.SHOW_PRIZE_AFTER_TAX) == "true"
 
     // === 잔액 부족 알림 ===
 

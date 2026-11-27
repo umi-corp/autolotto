@@ -74,7 +74,7 @@ import kotlinx.coroutines.delay
  * 시그니처 모션: 카드 스태거 등장(fade + rise, MotionSpecs.staggerDelay).
  */
 @Composable
-fun HistoryScreen(modifier: Modifier = Modifier, visible: Boolean = true) {
+fun HistoryScreen(modifier: Modifier = Modifier, visible: Boolean = true, onShowPrizes: (Int) -> Unit) {
     val vm: HistoryViewModel = appViewModel()
     // 탭은 keep-alive라 재진입·앱 복귀 때 누적 요약을 다시 맞춘다(워커가 원장을 갱신했을 수 있다).
     LifecycleResumeEffect(visible) {
@@ -157,7 +157,7 @@ fun HistoryScreen(modifier: Modifier = Modifier, visible: Boolean = true) {
                             verticalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
                             if (isLoggedIn) item { summaryCard(Modifier) }
-                            itemsIndexed(purchases) { i, item -> HistoryCard(item, index = i) }
+                            itemsIndexed(purchases) { i, item -> HistoryCard(item, index = i, onShowPrizes = onShowPrizes) }
                             if (canLoadMore) {
                                 item { LoadMoreButton(loading = loadingMore, onClick = vm::loadMore) }
                             }
@@ -204,16 +204,20 @@ private fun EmptyState(
  * 원인을 단정하지 않는다 — 같은 타임아웃이 사용자 폰이 오프라인일 때도 난다.
  */
 @Composable
-private fun ConnectionErrorState(onRetry: () -> Unit) {
+internal fun ConnectionErrorState(
+    onRetry: () -> Unit,
+    title: Int = R.string.connectionErrorTitle,
+    modifier: Modifier = Modifier.fillMaxSize(),
+) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 32.dp),
+        modifier = modifier.padding(horizontal = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         GlossyIconTile(Icons.Rounded.CloudOff, tint = LgAmber, size = 64.dp)
         Spacer(Modifier.height(16.dp))
         Text(
-            stringResource(R.string.connectionErrorTitle),
+            stringResource(title),
             color = MaterialTheme.colorScheme.onSurface,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
@@ -259,7 +263,7 @@ private fun LoadMoreButton(loading: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun HistoryCard(item: Purchase, index: Int) {
+private fun HistoryCard(item: Purchase, index: Int, onShowPrizes: (Int) -> Unit) {
     val winner = item.rank != null && item.rank != "nowin"
     val dateStr = "%04d-%02d-%02d".format(item.date.year, item.date.monthValue, item.date.dayOfMonth)
 
@@ -376,6 +380,7 @@ private fun HistoryCard(item: Purchase, index: Int) {
                 )
             }
         }
+        if (item.checked) PrizeByRankLink { onShowPrizes(item.round) }
     }
 }
 

@@ -80,6 +80,7 @@ import com.umicorp.autolotto.scheduler.Notifications
 import com.umicorp.autolotto.update.AppUpdater
 import com.umicorp.autolotto.update.UpdateInfo
 import com.umicorp.autolotto.ui.screen.HistoryScreen
+import com.umicorp.autolotto.ui.screen.PrizeByRankSheet
 import com.umicorp.autolotto.ui.screen.HomeScreen
 import com.umicorp.autolotto.ui.screen.NumberScreen
 import com.umicorp.autolotto.ui.screen.SettingsScreen
@@ -142,6 +143,7 @@ fun AppShell(pendingTab: MutableStateFlow<String?>? = null) {
     )
     val pagerState = rememberPagerState(pageCount = { tabs.size })
     val scope = rememberCoroutineScope()
+    var prizeRound by remember { mutableStateOf<Int?>(null) }
 
     // 알림 탭 진입: 지정 탭으로 즉시 이동 후 소비 — cold(스플래시 뒤)/warm(onNewIntent) 공용.
     LaunchedEffect(pendingTab) {
@@ -186,9 +188,14 @@ fun AppShell(pendingTab: MutableStateFlow<String?>? = null) {
                 0 -> HomeScreen(
                     modifier = screenModifier,
                     onNavigateToNumbers = { scope.launch { pagerState.animateScrollToPage(1) } },
+                    onShowPrizes = { prizeRound = it },
                 )
                 1 -> NumberScreen(modifier = screenModifier)
-                2 -> HistoryScreen(modifier = screenModifier, visible = pagerState.currentPage == 2)
+                2 -> HistoryScreen(
+                    modifier = screenModifier,
+                    visible = pagerState.currentPage == 2,
+                    onShowPrizes = { prizeRound = it },
+                )
                 else -> SettingsScreen(
                     modifier = screenModifier,
                     onNavigateToNumbers = { scope.launch { pagerState.animateScrollToPage(1) } },
@@ -197,6 +204,15 @@ fun AppShell(pendingTab: MutableStateFlow<String?>? = null) {
         }
     }
 
+    prizeRound?.let { round ->
+        val showAfterTax by container.showPrizeAfterTax.collectAsState()
+        PrizeByRankSheet(
+            startRound = round,
+            showAfterTax = showAfterTax,
+            onShowAfterTax = { show -> scope.launch { container.setShowPrizeAfterTax(show) } },
+            onDismiss = { prizeRound = null },
+        )
+    }
     updateInfo?.let { UpdateDialog(it) }
 }
 

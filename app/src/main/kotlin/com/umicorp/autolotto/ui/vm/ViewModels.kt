@@ -70,11 +70,11 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
 
     init { fetchWinningNumbers() }
 
-    /** 지난 회차(현재-1) 당첨번호 조회. 실패는 무시(원본 debugPrint 후 무시). */
+    /** 동행복권에 게시된 최신 당첨번호 조회. */
     fun fetchWinningNumbers() {
         viewModelScope.launch {
             _loadingNumbers.value = true
-            runCatching { container.resultService.getWinningNumbers(currentRound - 1) }
+            runCatching { container.resultService.getWinningNumbers() }
                 .getOrNull()?.let { _winning.value = it }
             _loadingNumbers.value = false
         }

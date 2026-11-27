@@ -218,4 +218,30 @@
     <string name="ledgerSheetTitle">월별 구매·당첨</string>
     <string name="ledgerColMonth">월</string>
     <string name="ledgerColWins">당첨</string>
+    <string name="prizeByRankLink">등수별 당첨금 ›</string>
+    <string name="prizeByRankTitle">등수별 당첨금</string>
+    <string name="prizeByRankDrawDate">%1$s 추첨</string>
+    <string name="prizeByRankAfterTax">세후 금액</string>
+    <string name="prizeByRankAfterTaxValue">세후 %1$s</string>
+    <string name="prizeByRankMatch1">6개 일치</string>
+    <string name="prizeByRankMatch2">5개+보너스</string>
+    <string name="prizeByRankMatch3">5개 일치</string>
+    <string name="prizeByRankMatch4">4개 일치</string>
+    <string name="prizeByRankMatch5">3개 일치</string>
+    <string name="prizeByRankMine">내 게임 %1$s</string>
+    <string name="prizeByRankNone">당첨 없음</string>
+    <string name="prizeByRankCountNote">당첨 게임 수는 동행복권 집계입니다. 한 사람이 여러 게임으로 당첨되면 여러 번 셉니다.</string>
+    <string name="prizeByRankTaxNote">세후 금액은 동행복권이 안내한 원천징수(소득세·지방소득세)를 뺀 금액입니다. 실제 수령액과 다를 수 있습니다.</string>
+    <string name="prizeByRankTaxFormula" formatted="false">당첨금 200만 원 이하는 비과세입니다. 200만 원을 초과하면 구입비 1,000원을 뺀 금액 중 3억 원까지는 22%, 3억 원 초과분에 33%를 적용합니다. 소득세와 지방소득세는 각각 10원 미만을 버립니다.</string>
+    <string name="prizeByRankTaxSource">기준 보기</string>
+    <string name="prizeByRankTaxLaw">소득세법 제84조</string>
+    <string name="prizeByRankPendingTitle">아직 발표 전입니다</string>
+    <string name="prizeByRankPendingBody">결과가 올라오면 여기서 볼 수 있습니다. 잠시 뒤 새로고침해 주세요.</string>
+    <string name="prizeByRankRefresh">새로고침</string>
+    <string name="prizeByRankError">당첨금을 불러올 수 없습니다</string>
+    <string name="cdPrizeByRankBalls">당첨번호 %1$s, 보너스 %2$d</string>
+    <string name="cdPrizeByRankPerGame">1게임당 %1$s</string>
+    <plurals name="prizeByRankGames">
+        <item quantity="other">당첨 %1$s게임</item>
+    </plurals>
 </resources>

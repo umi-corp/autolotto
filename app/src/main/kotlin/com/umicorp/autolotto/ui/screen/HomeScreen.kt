@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -63,6 +64,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.umicorp.autolotto.R
+import com.umicorp.autolotto.data.WinningResult
 import com.umicorp.autolotto.ui.appViewModel
 import com.umicorp.autolotto.ui.theme.CountdownNumberStyle
 import com.umicorp.autolotto.ui.theme.LgAmber
@@ -86,7 +88,7 @@ import java.time.LocalDateTime
  * 스태거 팝인) · 예치금 잔액(틸 컬러 드렌치) · 자동구매 상태(그린 톤얼) · 네이비 CTA.
  */
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier, onNavigateToNumbers: () -> Unit) {
+fun HomeScreen(modifier: Modifier = Modifier, onNavigateToNumbers: () -> Unit, onShowPrizes: (Int) -> Unit) {
     val vm: HomeViewModel = appViewModel()
     val isLoggedIn by vm.isLoggedIn.collectAsState()
     val autoLoginFailed by vm.autoLoginFailed.collectAsState()
@@ -150,7 +152,7 @@ fun HomeScreen(modifier: Modifier = Modifier, onNavigateToNumbers: () -> Unit) {
             ) {
                 CountdownHero(vm.currentRound)
                 Spacer(Modifier.height(24.dp))
-                WinningNumbers(winning, loadingNumbers)
+                WinningNumbers(winning, loadingNumbers, onShowPrizes)
                 Spacer(Modifier.height(24.dp))
                 BalanceCard(balance, alertEnabled, threshold)
                 Spacer(Modifier.height(16.dp))
@@ -257,7 +259,7 @@ private fun PopIn(index: Int, key: Any, content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun WinningNumbers(winning: com.umicorp.autolotto.data.WinningResult?, loading: Boolean) {
+private fun WinningNumbers(winning: WinningResult?, loading: Boolean, onShowPrizes: (Int) -> Unit) {
     Column {
         SectionHeader(
             // 이모지는 R.string에 이미 포함(🏆 …) — 코드에서 덧붙이면 중복 표시
@@ -265,47 +267,13 @@ private fun WinningNumbers(winning: com.umicorp.autolotto.data.WinningResult?, l
             else stringResource(R.string.winningNumbersPrevious),
         )
         Spacer(Modifier.height(8.dp))
-        SectionCard {
-            // 로딩→당첨번호→에러 전환을 부드럽게(표준 Crossfade — 1.4.0엔 Expressive 컴포넌트 미수록).
+        SectionCard(contentPadding = PaddingValues(0.dp)) {
             val phase = if (loading) 0 else if (winning != null) 1 else 2
-            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Box(Modifier.fillMaxWidth().padding(20.dp), contentAlignment = Alignment.Center) {
                 Crossfade(targetState = phase, label = "winningNumbers") { p ->
                     when (p) {
-                        0 -> CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            strokeWidth = 2.dp,
-                        )
-                        1 -> winning?.let { w ->
-                            // 좁은 기기(유효 폭 ≤400dp, 예: 갤럭시 기본 384dp)에서 38dp 고정 볼이
-                            // 카드 폭을 넘어 보너스 볼이 잘림 — 가용 폭에 맞춰 볼 크기 축소.
-                            // 하한 없음: 극단 폭(분할 화면 등)에서도 잘리는 대신 계속 줄어든다.
-                            BoxWithConstraints {
-                                val plusWidth = 20.dp
-                                val balls = w.numbers.size + 1 // 본번호 + 보너스
-                                val ball = ((maxWidth - plusWidth - 6.dp * balls) / balls)
-                                    .coerceIn(0.dp, 38.dp)
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                ) {
-                                    w.numbers.forEachIndexed { i, n ->
-                                        PopIn(index = i, key = w.round) { LottoBall(n, size = ball) }
-                                    }
-                                    // 고정 폭 슬롯 — 폰트 스케일이 커져도 산식이 예약한 폭과 어긋나지 않게
-                                    Box(Modifier.width(plusWidth), contentAlignment = Alignment.Center) {
-                                        Text(
-                                            "+",
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            fontWeight = FontWeight.Bold,
-                                            maxLines = 1,
-                                        )
-                                    }
-                                    PopIn(index = w.numbers.size, key = w.round) {
-                                        LottoBall(w.bonus, size = ball, bordered = true)
-                                    }
-                                }
-                            }
-                        }
+                        0 -> CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                        1 -> winning?.let { WinningBallRow(it) }
                         else -> Text(
                             stringResource(R.string.winningNumbersLoadError),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -313,6 +281,30 @@ private fun WinningNumbers(winning: com.umicorp.autolotto.data.WinningResult?, l
                         )
                     }
                 }
+            }
+            if (!loading && winning != null) PrizeByRankLink { onShowPrizes(winning.round) }
+        }
+    }
+}
+
+@Composable
+internal fun WinningBallRow(winning: WinningResult, modifier: Modifier = Modifier) {
+    BoxWithConstraints(modifier) {
+        val plusWidth = 20.dp
+        val balls = winning.numbers.size + 1
+        val ball = ((maxWidth - plusWidth - 6.dp * balls) / balls).coerceIn(0.dp, 38.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            winning.numbers.forEachIndexed { i, n ->
+                PopIn(index = i, key = winning.round) { LottoBall(n, size = ball) }
+            }
+            Box(Modifier.width(plusWidth), contentAlignment = Alignment.Center) {
+                Text("+", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold, maxLines = 1)
+            }
+            PopIn(index = winning.numbers.size, key = winning.round) {
+                LottoBall(winning.bonus, size = ball, bordered = true)
             }
         }
     }
