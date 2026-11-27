@@ -2,6 +2,7 @@ package com.umicorp.autolotto.data
 
 import com.umicorp.autolotto.dhlottery.PurchaseService.Companion.latestCompletedRound
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 import java.time.LocalDateTime
 import java.time.ZonedDateTime
@@ -53,10 +54,21 @@ class PrizeByRankTest {
     }
 
     @Test
+    fun `confirmed games remain highlighted when another ticket is pending`() {
+        val pending = purchase.copy(numbers = purchase.numbers.take(1), checked = false, gameRanks = listOf("pending"))
+        val confirmed = purchase.copy(numbers = purchase.numbers.take(2), gameRanks = listOf("rank5", "rank4"))
+        val merged = mergePurchasesByRound(listOf(pending, confirmed))
+
+        assertFalse(merged.single().checked)
+        assertEquals(mapOf(5 to listOf('B'), 4 to listOf('C')), myPrizeGames(1251, true, merged))
+    }
+
+    @Test
     fun `guest missing unchecked and losing purchases have no winning rows`() {
         assertEquals(emptyMap<Int, List<Char>>(), myPrizeGames(1251, false, listOf(purchase)))
         assertEquals(emptyMap<Int, List<Char>>(), myPrizeGames(1250, true, listOf(purchase)))
-        assertEquals(emptyMap<Int, List<Char>>(), myPrizeGames(1251, true, listOf(purchase.copy(checked = false))))
+        val unchecked = purchase.copy(checked = false, gameRanks = List(6) { "pending" })
+        assertEquals(emptyMap<Int, List<Char>>(), myPrizeGames(1251, true, listOf(unchecked)))
         assertEquals(emptyMap<Int, List<Char>>(), myPrizeGames(1251, true, listOf(purchase.copy(gameRanks = List(6) { "nowin" }))))
     }
 

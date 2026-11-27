@@ -57,11 +57,12 @@ object SecureKeys {
  *
  * 백그라운드 리시버도 같은 `Context`로 인스턴스를 만들어 직접 읽는다(원본의 백그라운드 isolate 직접읽기 패턴 유지).
  */
-class SecureStore(context: Context) {
+class SecureStore internal constructor(context: Context, preferences: SharedPreferences?) {
+    constructor(context: Context) : this(context, null)
 
     private val appContext = context.applicationContext
 
-    private val prefs: SharedPreferences = retryOnce { createPrefs(PREFS_FILE) }
+    private val prefs: SharedPreferences = preferences ?: retryOnce { createPrefs(PREFS_FILE) }
 
     init {
         migrateFromFlutterIfNeeded()
@@ -213,7 +214,13 @@ class SecureStore(context: Context) {
 
     fun getLanguage(): String = read(SecureKeys.LANGUAGE) ?: "system"
 
-    fun setShowPrizeAfterTax(show: Boolean) = putString(SecureKeys.SHOW_PRIZE_AFTER_TAX, show.toString())
+    fun setShowPrizeAfterTax(show: Boolean): Boolean {
+        val key = SecureKeys.SHOW_PRIZE_AFTER_TAX
+        val previous = getShowPrizeAfterTax()
+        val saved = runCatching { prefs.edit().putString(key, show.toString()).commit() }.getOrDefault(false)
+        if (!saved) putString(key, previous.toString())
+        return saved
+    }
 
     fun getShowPrizeAfterTax(): Boolean = read(SecureKeys.SHOW_PRIZE_AFTER_TAX) == "true"
 

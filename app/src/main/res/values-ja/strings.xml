@@ -224,7 +224,7 @@
     <string name="prizeByRankNone">当選なし</string>
     <string name="prizeByRankCountNote">当選ゲーム数は同行宝くじの集計です。同じ人が複数のゲームで当選した場合も、当選したゲームごとに数えます。</string>
     <string name="prizeByRankTaxNote">税引後の金額は、同行宝くじの案内に基づき源泉徴収額（所得税・地方所得税）を差し引いた金額です。実際の受取額とは異なる場合があります。</string>
-    <string name="prizeByRankTaxFormula" formatted="false">当選金が200万ウォン以下の場合は非課税です。200万ウォンを超える場合は、購入費1,000ウォンを差し引いた額のうち、3億ウォンまでの部分に22%、3億ウォンを超える部分に33%の税率（所得税・地方所得税の合計）が適用されます。所得税と地方所得税はそれぞれ10ウォン未満を切り捨てます。</string>
+    <string name="prizeByRankTaxFormula" formatted="false">当選金が200万ウォン以下の場合は非課税です。200万ウォンを超える場合は、購入費1,000ウォンを差し引いた額のうち、3億ウォンまでの部分に22%、3億ウォンを超える部分に33%の税率（所得税・地方所得税の合計）が適用されます。所得税率はそれぞれ20%、30%で、地方所得税は所得税額の10%です。所得税と地方所得税はそれぞれ10ウォン未満を切り捨てます。</string>
     <string name="prizeByRankTaxSource">計算基準を見る</string>
     <string name="prizeByRankTaxLaw">所得税法第84条</string>
     <string name="prizeByRankPendingTitle">発表前です</string>

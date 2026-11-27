@@ -224,7 +224,7 @@
     <string name="prizeByRankNone">No winners</string>
     <string name="prizeByRankCountNote">DHLottery counts each winning game separately, including multiple wins by the same person.</string>
     <string name="prizeByRankTaxNote">After-tax amounts reflect deductions for income tax and local income tax as described by DHLottery. Actual payouts may vary.</string>
-    <string name="prizeByRankTaxFormula" formatted="false">Prizes of ₩2 million or less are tax-free. For larger prizes, the combined tax applies to the amount left after deducting the ₩1,000 ticket cost, at 22% on the first ₩300 million and 33% on the rest. Round each tax down to the nearest ₩10.</string>
+    <string name="prizeByRankTaxFormula" formatted="false">Prizes of ₩2 million or less are tax-free. For larger prizes, the combined tax applies to the amount left after deducting the ₩1,000 ticket cost, at 22% on the first ₩300 million and 33% on the rest. The income tax rates for these brackets are 20% and 30%. Local income tax is 10% of income tax. Round each tax down to the nearest ₩10.</string>
     <string name="prizeByRankTaxSource">View tax guide</string>
     <string name="prizeByRankTaxLaw">Income Tax Act, Art. 84</string>
     <string name="prizeByRankPendingTitle">Results pending</string>

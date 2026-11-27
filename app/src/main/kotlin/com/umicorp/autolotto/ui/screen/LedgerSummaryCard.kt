@@ -39,7 +39,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -189,8 +189,7 @@ internal fun PagerStep(label: String, enabled: Boolean, target: String, onClick:
         onClick = onClick,
         enabled = enabled,
         modifier = Modifier.size(48.dp).semantics {
-            contentDescription = target
-            if (!enabled) disabled()
+            if (enabled) contentDescription = target else hideFromAccessibility()
         },
     ) {
         Text(label, fontWeight = FontWeight.Bold, fontSize = 20.sp, modifier = Modifier.clearAndSetSemantics {})

@@ -24,7 +24,7 @@ fun prizeAfterTax(prize: Long): Long {
 
 fun myPrizeGames(round: Int, loggedIn: Boolean, purchases: List<Purchase>): Map<Int, List<Char>> {
     if (!loggedIn) return emptyMap()
-    val ranks = purchases.find { it.round == round && it.checked }?.gameRanks.orEmpty()
+    val ranks = purchases.find { it.round == round }?.gameRanks.orEmpty()
     return (1..5).mapNotNull { rank ->
         val games = ranks.indices.filter { ranks[it] == "rank$rank" }.map { 'A' + it }
         if (games.isEmpty()) null else rank to games

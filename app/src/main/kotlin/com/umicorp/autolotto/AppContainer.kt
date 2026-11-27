@@ -453,8 +453,9 @@ class AppContainer(context: Context) {
 
     suspend fun setShowPrizeAfterTax(show: Boolean) = withContext(Dispatchers.IO) {
         prizeTaxMutex.withLock {
-            store.setShowPrizeAfterTax(show)
-            _showPrizeAfterTax.value = show
+            if (runCatching { store.setShowPrizeAfterTax(show) }.getOrDefault(false)) {
+                _showPrizeAfterTax.value = show
+            }
         }
     }
 
