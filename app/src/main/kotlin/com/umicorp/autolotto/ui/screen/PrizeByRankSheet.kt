@@ -46,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -73,6 +74,8 @@ import com.umicorp.autolotto.ui.util.launchActivitySafely
 import com.umicorp.autolotto.ui.util.localizedRank
 import com.umicorp.autolotto.ui.vm.HistoryViewModel
 import kotlinx.coroutines.launch
+
+private const val WORD_JOINER = "\u2060"
 
 @Composable
 internal fun PrizeByRankLink(onClick: () -> Unit) {
@@ -109,21 +112,24 @@ internal fun PrizeByRankSheet(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(Modifier.fillMaxWidth().fillMaxHeight().padding(horizontal = 20.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            PrizeSheetLine(start = {
                 Text(
                     stringResource(R.string.prizeByRankTitle),
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 17.sp,
-                    modifier = Modifier.weight(1f).semantics { heading() },
+                    modifier = Modifier.semantics { heading() },
                 )
-                PagerStep("‹", round > 1, stringResource(R.string.roundLabel, round - 1)) {
-                    scope.launch { pager.animateScrollToPage(prizePage(round - 1, latest)) }
+            }, end = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    PagerStep("‹", round > 1, stringResource(R.string.roundLabel, round - 1)) {
+                        scope.launch { pager.animateScrollToPage(prizePage(round - 1, latest)) }
+                    }
+                    Text(stringResource(R.string.roundLabel, round), fontWeight = FontWeight.Bold)
+                    PagerStep("›", round < latest, stringResource(R.string.roundLabel, round + 1)) {
+                        scope.launch { pager.animateScrollToPage(prizePage(round + 1, latest)) }
+                    }
                 }
-                Text(stringResource(R.string.roundLabel, round), fontWeight = FontWeight.Bold)
-                PagerStep("›", round < latest, stringResource(R.string.roundLabel, round + 1)) {
-                    scope.launch { pager.animateScrollToPage(prizePage(round + 1, latest)) }
-                }
-            }
+            })
             HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth()) { page ->
                 val pageRound = page + 1
                 var result by remember(pageRound) { mutableStateOf<DrawPrizes?>(null) }
@@ -219,10 +225,10 @@ private fun PrizeRankRow(rank: Int, prize: RankPrize, games: List<Char>, afterTa
     else stringResource(R.string.ledgerWon, formatNumber(prize.amount))
     val perGame = if (prize.games == 0) amount else stringResource(R.string.cdPrizeByRankPerGame, amount)
     val count = pluralStringResource(R.plurals.prizeByRankGames, prize.games, formatNumber(prize.games))
-    val tax = if (afterTax && prize.games > 0) {
-        val net = stringResource(R.string.ledgerWon, formatNumber(prizeAfterTax(prize.amount)))
-        stringResource(R.string.prizeByRankAfterTaxValue, net)
+    val net = if (afterTax && prize.games > 0) {
+        stringResource(R.string.ledgerWon, formatNumber(prizeAfterTax(prize.amount)))
     } else null
+    val tax = net?.let { stringResource(R.string.prizeByRankAfterTaxValue, it) }
     val mine = if (games.isNotEmpty()) stringResource(R.string.prizeByRankMine, games.joinToString(", ")) else null
     val description = listOfNotNull(rankLabel, matchLabel, perGame, tax, count, mine).joinToString(", ")
     Box(
@@ -233,28 +239,63 @@ private fun PrizeRankRow(rank: Int, prize: RankPrize, games: List<Char>, afterTa
             Canvas(Modifier.matchParentSize()) { drawRect(LgGold, size = Size(4.dp.toPx(), size.height)) }
         }
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FlowRow(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            PrizeSheetLine(start = {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
                         rankLabel,
                         Modifier.alignByBaseline(),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold,
+                        softWrap = false,
                     )
                     Text(
                         matchLabel,
                         Modifier.alignByBaseline(),
                         color = colors.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall,
+                        softWrap = false,
                     )
                 }
-                Text(amount, Modifier.weight(1.4f), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
-            }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(count, Modifier.weight(1f), color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
-                if (tax != null) Text(tax, Modifier.weight(1.4f), style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.End)
-            }
+            }, end = {
+                Text(amount, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, softWrap = false)
+            })
+            PrizeSheetLine(start = {
+                Text(count, color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+            }, end = {
+                if (net != null) {
+                    val taxDisplay = stringResource(
+                        R.string.prizeByRankAfterTaxValue,
+                        net.asIterable().joinToString(WORD_JOINER),
+                    )
+                    Text(taxDisplay, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.End)
+                }
+            })
             if (mine != null) StatusPill(mine, PillTone.Win, Modifier.padding(top = 2.dp))
+        }
+    }
+}
+
+@Composable
+private fun PrizeSheetLine(start: @Composable () -> Unit, end: @Composable () -> Unit) {
+    Layout(
+        content = {
+            start()
+            end()
+        },
+        modifier = Modifier.fillMaxWidth(),
+    ) { measurables, constraints ->
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val left = measurables.first().measure(loose)
+        val right = measurables.getOrNull(1)?.measure(loose)
+        val stacked = right != null && left.width + 8.dp.roundToPx() + right.width > constraints.maxWidth
+        val rightHeight = right?.height ?: 0
+        val height = if (stacked) left.height + 2.dp.roundToPx() + rightHeight else maxOf(left.height, rightHeight)
+        layout(constraints.maxWidth, height) {
+            left.placeRelative(0, if (stacked) 0 else (height - left.height) / 2)
+            right?.placeRelative(
+                constraints.maxWidth - right.width,
+                if (stacked) height - rightHeight else (height - rightHeight) / 2,
+            )
         }
     }
 }
